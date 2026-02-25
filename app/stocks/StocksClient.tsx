@@ -380,8 +380,9 @@ export default function StocksClient() {
         const totalInvestment = existing.investmentAmount + stock.investmentAmount;
 
         // Calculate weighted average previous price to preserve Day's P&L correctly
-        const existingPrevPrice = existing.previousPrice || existing.currentPrice;
-        const stockPrevPrice = stock.previousPrice || stock.currentPrice;
+        // Use ?? (nullish coalescing) instead of || to handle previousPrice = 0 correctly
+        const existingPrevPrice = existing.previousPrice ?? existing.currentPrice;
+        const stockPrevPrice = stock.previousPrice ?? stock.currentPrice;
         const totalPrevValue =
           existingPrevPrice * existing.quantity + stockPrevPrice * stock.quantity;
 
@@ -405,22 +406,30 @@ export default function StocksClient() {
 
   // Calculate portfolio metrics
   // Calculate portfolio metrics using groupedStocks to ensure only active positions are counted
-  const { totalInvestment, totalCurrentValue, totalPnL, totalDayPnL } = useMemo(() => {
-    let inv = 0,
-      cv = 0,
-      dayPnl = 0;
-    groupedStocks.forEach((stock) => {
-      inv += stock.investmentAmount;
-      cv += stock.currentValue;
-      dayPnl += (stock.currentPrice - (stock.previousPrice || stock.currentPrice)) * stock.quantity;
-    });
-    return {
-      totalInvestment: inv,
-      totalCurrentValue: cv,
-      totalPnL: cv - inv,
-      totalDayPnL: dayPnl,
-    };
-  }, [groupedStocks]);
+  const { totalInvestment, totalCurrentValue, totalPnL, totalDayPnL, totalDayPnLPercentage } =
+    useMemo(() => {
+      let inv = 0,
+        cv = 0,
+        dayPnl = 0,
+        prevDayValue = 0;
+      groupedStocks.forEach((stock) => {
+        inv += stock.investmentAmount;
+        cv += stock.currentValue;
+        // Zerodha formula: Day P&L = (LTP - Previous Close) × Qty
+        // Use ?? (nullish coalescing) so previousPrice=0 is NOT treated as missing
+        const prevClose = stock.previousPrice ?? stock.currentPrice;
+        dayPnl += (stock.currentPrice - prevClose) * stock.quantity;
+        prevDayValue += prevClose * stock.quantity;
+      });
+      return {
+        totalInvestment: inv,
+        totalCurrentValue: cv,
+        totalPnL: cv - inv,
+        totalDayPnL: dayPnl,
+        // Day's P&L % = total day change / previous day's total value × 100
+        totalDayPnLPercentage: prevDayValue > 0 ? (dayPnl / prevDayValue) * 100 : 0,
+      };
+    }, [groupedStocks]);
 
   // Lifetime Metrics Calculation
   const { totalBuys, totalSells, totalCharges, lifetimeEarned, lifetimeReturnPercentage } =
@@ -678,6 +687,18 @@ export default function StocksClient() {
             {totalDayPnL >= 0 ? '+' : ''}₹
             {totalDayPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </div>
+          <div
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              color: totalDayPnL >= 0 ? '#34d399' : '#f87171',
+              opacity: 0.85,
+              marginTop: '4px',
+            }}
+          >
+            ({totalDayPnLPercentage >= 0 ? '+' : ''}
+            {totalDayPnLPercentage.toFixed(2)}%)
+          </div>
         </div>
         <div
           style={{
@@ -890,35 +911,36 @@ export default function StocksClient() {
                     }}
                   >
                     <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <div
-                        style={{
-                          color:
-                            stock.currentPrice - (stock.previousPrice || stock.currentPrice) >= 0
-                              ? '#10b981'
-                              : '#f43f5e',
-                          fontSize: '0.75rem',
-                          fontWeight: '800',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          background:
-                            stock.currentPrice - (stock.previousPrice || stock.currentPrice) >= 0
-                              ? 'rgba(16, 185, 129, 0.08)'
-                              : 'rgba(244, 63, 94, 0.08)',
-                          padding: '4px 10px',
-                          borderRadius: '8px',
-                        }}
-                      >
-                        Day:{' '}
-                        {stock.currentPrice - (stock.previousPrice || stock.currentPrice) >= 0
-                          ? '+'
-                          : ''}
-                        ₹
-                        {(
-                          (stock.currentPrice - (stock.previousPrice || stock.currentPrice)) *
-                          stock.quantity
-                        ).toFixed(2)}
-                      </div>
+                      {(() => {
+                        const prevClose = stock.previousPrice ?? stock.currentPrice;
+                        const dayChange = (stock.currentPrice - prevClose) * stock.quantity;
+                        const dayChangePct =
+                          prevClose > 0 ? ((stock.currentPrice - prevClose) / prevClose) * 100 : 0;
+                        return (
+                          <div
+                            style={{
+                              color: dayChange >= 0 ? '#10b981' : '#f43f5e',
+                              fontSize: '0.75rem',
+                              fontWeight: '800',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background:
+                                dayChange >= 0
+                                  ? 'rgba(16, 185, 129, 0.08)'
+                                  : 'rgba(244, 63, 94, 0.08)',
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                            }}
+                          >
+                            Day: {dayChange >= 0 ? '+' : ''}₹{dayChange.toFixed(2)}
+                            <span style={{ opacity: 0.8, fontSize: '0.65rem' }}>
+                              ({dayChangePct >= 0 ? '+' : ''}
+                              {dayChangePct.toFixed(2)}%)
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
@@ -1156,35 +1178,29 @@ export default function StocksClient() {
                         ₹{stock.currentValue.toLocaleString()}
                       </td>
                       <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                        <div
-                          style={{
-                            fontWeight: '800',
-                            color:
-                              stock.currentPrice - (stock.previousPrice || stock.currentPrice) >= 0
-                                ? '#10b981'
-                                : '#f43f5e',
-                          }}
-                        >
-                          {stock.currentPrice - (stock.previousPrice || stock.currentPrice) >= 0
-                            ? '+'
-                            : ''}
-                          ₹
-                          {(
-                            (stock.currentPrice - (stock.previousPrice || stock.currentPrice)) *
-                            stock.quantity
-                          ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                          <div style={{ fontSize: '0.65rem', fontWeight: '600', opacity: 0.8 }}>
-                            (
-                            {stock.previousPrice
-                              ? (
-                                  ((stock.currentPrice - stock.previousPrice) /
-                                    stock.previousPrice) *
-                                  100
-                                ).toFixed(2)
-                              : '0.00'}
-                            %)
-                          </div>
-                        </div>
+                        {(() => {
+                          const prevClose = stock.previousPrice ?? stock.currentPrice;
+                          const dayChange = (stock.currentPrice - prevClose) * stock.quantity;
+                          const dayChangePct =
+                            prevClose > 0
+                              ? ((stock.currentPrice - prevClose) / prevClose) * 100
+                              : 0;
+                          return (
+                            <div
+                              style={{
+                                fontWeight: '800',
+                                color: dayChange >= 0 ? '#10b981' : '#f43f5e',
+                              }}
+                            >
+                              {dayChange >= 0 ? '+' : ''}₹
+                              {dayChange.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                              <div style={{ fontSize: '0.65rem', fontWeight: '600', opacity: 0.8 }}>
+                                ({dayChangePct >= 0 ? '+' : ''}
+                                {dayChangePct.toFixed(2)}%)
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td
                         style={{

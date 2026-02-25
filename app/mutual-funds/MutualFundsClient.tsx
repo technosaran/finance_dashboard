@@ -101,9 +101,18 @@ export default function MutualFundsClient() {
   const totalCurrentValue = activeMutualFunds.reduce((sum, mf) => sum + mf.currentValue, 0);
   const totalPnL = totalCurrentValue - totalInvestment;
   const totalDayPnL = activeMutualFunds.reduce((sum, mf) => {
-    const dayChange = (mf.currentNav - (mf.previousNav || mf.currentNav)) * mf.units;
+    // Zerodha formula: Day P&L = (Current NAV - Previous NAV) × Units
+    // Use ?? (nullish coalescing) so previousNav=0 is NOT treated as missing
+    const prevNav = mf.previousNav ?? mf.currentNav;
+    const dayChange = (mf.currentNav - prevNav) * mf.units;
     return sum + dayChange;
   }, 0);
+  // Day's P&L percentage = total day change / previous day's total value × 100
+  const totalPrevDayValue = activeMutualFunds.reduce((sum, mf) => {
+    const prevNav = mf.previousNav ?? mf.currentNav;
+    return sum + prevNav * mf.units;
+  }, 0);
+  const totalDayPnLPercentage = totalPrevDayValue > 0 ? (totalDayPnL / totalPrevDayValue) * 100 : 0;
 
   // Lifetime Metrics Calculation
   const totalBuys = mutualFundTransactions
@@ -600,6 +609,18 @@ export default function MutualFundsClient() {
             {totalDayPnL >= 0 ? '+' : ''}₹
             {totalDayPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </div>
+          <div
+            style={{
+              fontSize: '0.7rem',
+              fontWeight: '700',
+              color: totalDayPnL >= 0 ? '#34d399' : '#f87171',
+              opacity: 0.85,
+              marginTop: '4px',
+            }}
+          >
+            ({totalDayPnLPercentage >= 0 ? '+' : ''}
+            {totalDayPnLPercentage.toFixed(2)}%)
+          </div>
         </div>
       </div>
 
@@ -789,21 +810,27 @@ export default function MutualFundsClient() {
                     }}
                   >
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <div
-                        style={{
-                          color:
-                            mf.currentNav - (mf.previousNav || mf.currentNav) >= 0
-                              ? '#10b981'
-                              : '#f87171',
-                          fontSize: '0.75rem',
-                          fontWeight: '800',
-                        }}
-                      >
-                        Day: {mf.currentNav - (mf.previousNav || mf.currentNav) >= 0 ? '+' : ''}
-                        {((mf.currentNav - (mf.previousNav || mf.currentNav)) * mf.units).toFixed(
-                          2
-                        )}
-                      </div>
+                      {(() => {
+                        const prevNav = mf.previousNav ?? mf.currentNav;
+                        const dayChange = (mf.currentNav - prevNav) * mf.units;
+                        const dayChangePct =
+                          prevNav > 0 ? ((mf.currentNav - prevNav) / prevNav) * 100 : 0;
+                        return (
+                          <div
+                            style={{
+                              color: dayChange >= 0 ? '#10b981' : '#f87171',
+                              fontSize: '0.75rem',
+                              fontWeight: '800',
+                            }}
+                          >
+                            Day: {dayChange >= 0 ? '+' : ''}₹{dayChange.toFixed(2)}
+                            <span style={{ opacity: 0.8, fontSize: '0.65rem', marginLeft: '4px' }}>
+                              ({dayChangePct >= 0 ? '+' : ''}
+                              {dayChangePct.toFixed(2)}%)
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <button

@@ -1022,7 +1022,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 // This ensures day's P&L is always relative to the previous session's close
                 // and resets correctly each trading day.
                 const previousPrice =
-                  apiPreviousClose > 0 ? apiPreviousClose : stock.previousPrice || currentPrice;
+                  apiPreviousClose > 0 ? apiPreviousClose : (stock.previousPrice ?? currentPrice);
 
                 const currentValue = stock.quantity * currentPrice;
                 const pnl = currentValue - stock.investmentAmount;
@@ -1085,7 +1085,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const currentNav = update.currentNav;
                 // Always prefer the API's previousNav when valid, so day's P&L resets daily.
                 const previousNav =
-                  update.previousNav > 0 ? update.previousNav : mf.previousNav || currentNav;
+                  update.previousNav > 0 ? update.previousNav : (mf.previousNav ?? currentNav);
                 const currentValue = mf.units * currentNav;
                 const pnl = currentValue - mf.investmentAmount;
                 const pnlPercentage =
