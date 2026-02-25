@@ -68,14 +68,27 @@ export async function fetchGoogleFinancePrice(
       }
     }
 
-    // Meta Prev Close
+    // Extract Previous Close from Google Finance HTML
+    // HTML structure: >Previous close</div><div class="tooltip">text</div></span><div class="P6K39c">₹2,573.70</div>
+    // Class name changes periodically (was P639yc, now P6K39c), so use multiple known patterns:
+
+    // 1. Current known class name P6K39c
+    const labelPrevMatch = html.match(/>Previous close<\/div>[\s\S]*?class="P6K39c">([^<]+)</);
+    // 2. Historical class name P639yc
+    const labelPrevOld = html.match(/>Previous close<\/div>[\s\S]*?class="P639yc">([^<]+)</);
+    // 3. JSON/data attribute patterns (other sources)
     const metaPrevMatch = html.match(/"?previousClose"?\s*:\s*"?([\d,.]+)"?/i);
     const lastCloseMatch = html.match(/data-last-close-price="([\d,.]+)"/);
-    const labelPrevMatch = html.match(/>Previous close<\/div>.*?class="P639yc">([^<]+)</);
 
-    const prevStr = metaPrevMatch?.[1] || lastCloseMatch?.[1] || labelPrevMatch?.[1];
+    const prevStr =
+      labelPrevMatch?.[1] || labelPrevOld?.[1] || metaPrevMatch?.[1] || lastCloseMatch?.[1];
     if (prevStr) {
-      previousClose = parseFloat(prevStr.replace(/,/g, '').replace(/[^\d.]/g, ''));
+      const parsed = parseFloat(prevStr.replace(/,/g, '').replace(/[^\d.]/g, ''));
+      if (!isNaN(parsed) && parsed > 0) {
+        previousClose = parsed;
+      } else {
+        previousClose = price;
+      }
     } else {
       previousClose = price;
     }
