@@ -87,10 +87,10 @@ export async function fetchGoogleFinancePrice(
       if (!isNaN(parsed) && parsed > 0) {
         previousClose = parsed;
       } else {
-        previousClose = price;
+        previousClose = 0;
       }
     } else {
-      previousClose = price;
+      previousClose = 0;
     }
 
     if (price > 0) {

@@ -48,8 +48,8 @@ function groupStocks(stocks: Stock[]): Stock[] {
       const totalQty = existing.quantity + stock.quantity;
       const totalInvestment = existing.investmentAmount + stock.investmentAmount;
 
-      const existingPrevPrice = existing.previousPrice || existing.currentPrice;
-      const stockPrevPrice = stock.previousPrice || stock.currentPrice;
+      const existingPrevPrice = existing.previousPrice ?? existing.currentPrice;
+      const stockPrevPrice = stock.previousPrice ?? stock.currentPrice;
       const totalPrevValue =
         existingPrevPrice * existing.quantity + stockPrevPrice * stock.quantity;
 
@@ -75,7 +75,7 @@ function calcPortfolioMetrics(grouped: Stock[]) {
   const totalCurrentValue = grouped.reduce((sum, s) => sum + s.currentValue, 0);
   const totalPnL = totalCurrentValue - totalInvestment;
   const totalDayPnL = grouped.reduce((sum, s) => {
-    return sum + (s.currentPrice - (s.previousPrice || s.currentPrice)) * s.quantity;
+    return sum + (s.currentPrice - (s.previousPrice ?? s.currentPrice)) * s.quantity;
   }, 0);
   return { totalInvestment, totalCurrentValue, totalPnL, totalDayPnL };
 }

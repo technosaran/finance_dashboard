@@ -158,11 +158,11 @@ export default function Dashboard() {
       .filter((s) => s.quantity > 0)
       .reduce((sum, stock) => {
         const dayChange =
-          (stock.currentPrice - (stock.previousPrice || stock.currentPrice)) * stock.quantity;
+          (stock.currentPrice - (stock.previousPrice ?? stock.currentPrice)) * stock.quantity;
         return sum + dayChange;
       }, 0);
     const mfDayChange = mutualFunds.reduce((sum, mf) => {
-      const dayChange = (mf.currentNav - (mf.previousNav || mf.currentNav)) * mf.units;
+      const dayChange = (mf.currentNav - (mf.previousNav ?? mf.currentNav)) * mf.units;
       return sum + dayChange;
     }, 0);
     const totalDayChange = stockDayChange + mfDayChange;

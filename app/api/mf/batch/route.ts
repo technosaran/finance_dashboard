@@ -74,12 +74,11 @@ async function handleMFBatchQuote(request: Request): Promise<NextResponse> {
           const data = (await response.json()) as MFAPIResponse;
           if (data?.meta && data.data && data.data.length > 0) {
             const latestNav = data.data[0];
-            const previousNav = data.data.length > 1 ? data.data[1] : latestNav;
             const mfData: MFQuoteData = {
               schemeCode: data.meta.scheme_code || code,
               schemeName: data.meta.scheme_name || code,
               currentNav: parseFloat(latestNav.nav) || 0,
-              previousNav: parseFloat(previousNav.nav) || 0,
+              previousNav: data.data.length > 1 ? parseFloat(data.data[1].nav) || 0 : 0,
               date: latestNav.date,
             };
             results[code] = mfData;

@@ -58,7 +58,7 @@ export async function fetchStockQuote(symbol: string): Promise<StockQuote | null
             return {
               symbol: sanitizedSymbol,
               currentPrice: result.regularMarketPrice,
-              previousClose: result.regularMarketPreviousClose || result.regularMarketPrice,
+              previousClose: result.regularMarketPreviousClose || 0,
               currency: result.currency || 'INR',
               exchange: 'NSE',
               displayName: result.shortName || sanitizedSymbol,
@@ -70,7 +70,7 @@ export async function fetchStockQuote(symbol: string): Promise<StockQuote | null
             return {
               symbol: sanitizedSymbol,
               currentPrice: result.meta.regularMarketPrice,
-              previousClose: result.meta.previousClose || result.meta.regularMarketPrice,
+              previousClose: result.meta.previousClose || 0,
               currency: result.meta.currency || 'INR',
               exchange: 'NSE',
             };
@@ -133,7 +133,7 @@ export async function fetchBatchStockQuotes(
               results[baseSym] = {
                 symbol: baseSym,
                 currentPrice: quote.regularMarketPrice,
-                previousClose: quote.regularMarketPreviousClose || quote.regularMarketPrice,
+                previousClose: quote.regularMarketPreviousClose || 0,
                 currency: quote.currency || 'INR',
                 exchange: quote.symbol.endsWith('.NS') ? 'NSE' : 'BSE',
                 displayName: quote.shortName || baseSym,

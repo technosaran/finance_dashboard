@@ -383,7 +383,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           quantity: stock.quantity,
           avg_price: stock.avgPrice,
           current_price: stock.currentPrice,
-          previous_price: stock.previousPrice || stock.currentPrice,
+          previous_price: stock.previousPrice ?? stock.currentPrice,
           exchange: stock.exchange,
           sector: stock.sector,
           investment_amount: stock.investmentAmount,
@@ -496,7 +496,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           units: mf.units,
           avg_nav: mf.avgNav,
           current_nav: mf.currentNav,
-          previous_nav: mf.previousNav || mf.currentNav,
+          previous_nav: mf.previousNav ?? mf.currentNav,
           investment_amount: mf.investmentAmount,
           current_value: mf.currentValue,
           pnl: mf.pnl,
@@ -1000,6 +1000,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const res = await fetch(
             `/api/stocks/batch?symbols=${stockSymbols.join(',')}&t=${Date.now()}`
           );
+          if (!res.ok) throw new Error(`Stock batch fetch failed: ${res.status}`);
           const updates = await res.json();
           if (updates && typeof updates === 'object' && !updates.error) {
             let updatedCount = 0;
@@ -1070,6 +1071,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (mfCodes.length > 0) {
           if (!silent) console.log(`Fetching NAVs for ${mfCodes.length} mutual funds...`);
           const res = await fetch(`/api/mf/batch?codes=${mfCodes.join(',')}&t=${Date.now()}`);
+          if (!res.ok) throw new Error(`MF batch fetch failed: ${res.status}`);
           const updates = await res.json();
           if (updates && typeof updates === 'object' && !updates.error) {
             let updatedCount = 0;

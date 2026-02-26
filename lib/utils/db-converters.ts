@@ -340,6 +340,7 @@ export const dbMutualFundToMutualFund = (dbMF: MutualFundRow): MutualFund => ({
   pnl: Number(dbMF.pnl),
   pnlPercentage: Number(dbMF.pnl_percentage),
   folioNumber: dbMF.folio_number || undefined,
+  isin: dbMF.isin || undefined,
   previousNav: dbMF.previous_nav ? Number(dbMF.previous_nav) : undefined,
 });
 
