@@ -48,10 +48,10 @@ function AuthConsumer({
   children: React.ReactNode;
   isAuthPage: boolean;
 }) {
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  if (authLoading && !isAuthPage) {
+  if ((authLoading || !user) && !isAuthPage) {
     return (
       <div
         style={{
