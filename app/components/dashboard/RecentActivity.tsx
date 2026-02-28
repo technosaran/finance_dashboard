@@ -1,6 +1,7 @@
 'use client';
 
-import { Sparkles, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
 import { Transaction } from '@/lib/types';
 
 interface RecentActivityProps {
@@ -37,24 +38,52 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
       />
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-        <div
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '20px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '10px',
+              background: 'rgba(99, 102, 241, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#6366f1',
+            }}
+          >
+            <Sparkles size={16} />
+          </div>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: '#e2e8f0' }}>
+            Recent Activity
+          </h3>
+        </div>
+        <Link
+          href="/ledger"
           style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '10px',
-            background: 'rgba(99, 102, 241, 0.1)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: '4px',
+            fontSize: '0.75rem',
+            fontWeight: '700',
             color: '#6366f1',
+            textDecoration: 'none',
+            padding: '4px 10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(99, 102, 241, 0.15)',
+            background: 'rgba(99, 102, 241, 0.05)',
+            transition: 'all 0.2s',
           }}
         >
-          <Sparkles size={16} />
-        </div>
-        <h3 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: '#e2e8f0' }}>
-          Recent Activity
-        </h3>
+          View All <ChevronRight size={12} />
+        </Link>
       </div>
 
       {/* Transaction List */}

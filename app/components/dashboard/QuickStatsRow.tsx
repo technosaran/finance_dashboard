@@ -7,11 +7,13 @@ interface QuickStatsRowProps {
   totalInvestment: number;
   totalUnrealizedPnl: number;
   stockDayChange: number;
+  investmentPnlPercent?: number;
 }
 
 interface StatCard {
   label: string;
   value: string;
+  subValue?: string;
   icon: React.ReactNode;
   color: string;
   bgGrad: string;
@@ -22,6 +24,7 @@ export function QuickStatsRow({
   totalInvestment,
   totalUnrealizedPnl,
   stockDayChange,
+  investmentPnlPercent = 0,
 }: QuickStatsRowProps) {
   const stats: StatCard[] = [
     {
@@ -41,6 +44,7 @@ export function QuickStatsRow({
     {
       label: 'Unrealized P&L',
       value: `${totalUnrealizedPnl >= 0 ? '+' : ''}₹${totalUnrealizedPnl.toLocaleString()}`,
+      subValue: `${investmentPnlPercent >= 0 ? '+' : ''}${investmentPnlPercent.toFixed(2)}%`,
       icon: totalUnrealizedPnl >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />,
       color: totalUnrealizedPnl >= 0 ? '#34d399' : '#f87171',
       bgGrad:
@@ -132,6 +136,19 @@ export function QuickStatsRow({
           >
             {stat.value}
           </div>
+          {stat.subValue && (
+            <div
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: '700',
+                color: stat.color,
+                opacity: 0.85,
+                marginTop: '4px',
+              }}
+            >
+              {stat.subValue}
+            </div>
+          )}
         </div>
       ))}
     </section>

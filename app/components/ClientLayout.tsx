@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { FinanceProvider, useFinance } from './FinanceContext';
 import { NotificationProvider } from './NotificationContext';
 import { ErrorBoundary } from './error-boundaries/ErrorBoundary';
+import { CommandPalette } from './CommandPalette';
 
 const AddTransactionModal = dynamic(() => import('./AddTransactionModal'), {
   ssr: false,
@@ -92,6 +93,7 @@ function AuthConsumer({
 
   return (
     <FinanceProvider>
+      <CommandPalette />
       <TransactionModalWrapper />
       {/* Skip to main content link for accessibility */}
       <a

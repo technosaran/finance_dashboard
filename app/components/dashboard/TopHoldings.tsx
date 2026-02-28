@@ -59,57 +59,80 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
 
       {/* Holdings List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {holdings.map((stock) => (
-          <div
-            key={stock.id}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.03)',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.03)';
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#fff' }}>
-                {stock.symbol}
+        {holdings.map((stock) => {
+          const dayChange =
+            (stock.currentPrice - (stock.previousPrice ?? stock.currentPrice)) * stock.quantity;
+          return (
+            <div
+              key={stock.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.03)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.03)';
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#fff' }}>
+                  {stock.symbol}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#475569', fontWeight: '600' }}>
+                  {stock.exchange} • {stock.quantity} shares
+                </div>
               </div>
-              <div style={{ fontSize: '0.7rem', color: '#475569', fontWeight: '600' }}>
-                {stock.exchange} • {stock.quantity} shares
+              <div style={{ textAlign: 'right', marginRight: '12px' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#fff' }}>
+                  ₹{stock.currentValue.toLocaleString()}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: '800',
+                    color: stock.pnl >= 0 ? '#10b981' : '#ef4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  {stock.pnl >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                  {stock.pnlPercentage.toFixed(1)}%
+                </div>
               </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: '800', color: '#fff' }}>
-                ₹{stock.currentValue.toLocaleString()}
-              </div>
+              {/* Day change mini badge */}
               <div
                 style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: stock.pnl >= 0 ? '#10b981' : '#ef4444',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px',
-                  justifyContent: 'flex-end',
+                  padding: '4px 8px',
+                  borderRadius: '8px',
+                  background:
+                    dayChange >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                  border: `1px solid ${dayChange >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`,
+                  fontSize: '0.65rem',
+                  fontWeight: '700',
+                  color: dayChange >= 0 ? '#34d399' : '#f87171',
+                  whiteSpace: 'nowrap',
+                  minWidth: '55px',
+                  textAlign: 'center',
                 }}
               >
-                {stock.pnl >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                {stock.pnlPercentage.toFixed(1)}%
+                {dayChange >= 0 ? '+' : ''}₹
+                {Math.abs(dayChange).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

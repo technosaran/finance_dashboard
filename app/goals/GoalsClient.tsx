@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { useFinance } from '../components/FinanceContext';
 import { Goal } from '@/lib/types';
-import { exportGoalsToCSV } from '../../lib/exportUtils';
+import { exportGoalsToCSV } from '../../lib/utils/export';
 import { Plus, X, Trophy, Trash2, Edit3, CheckCircle2, Clock, Flame, Download } from 'lucide-react';
 import { EmptyGoalsVisual } from '../components/Visuals';
 

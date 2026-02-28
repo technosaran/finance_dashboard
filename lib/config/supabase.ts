@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from './database.types';
-import { env } from './config/env';
+import { Database } from '../types/database.types';
+import { env } from './env';
 
 /**
  * Supabase client instance with validated environment configuration

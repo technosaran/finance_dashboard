@@ -19,9 +19,9 @@ import {
 export default function SettingsPage() {
   const { settings, updateSettings, accounts, loading } = useFinance();
   const { showNotification, confirm: customConfirm } = useNotifications();
-  const [activeTab, setActiveTab] = useState<'general' | 'modules' | 'sidebar' | 'system'>(
-    'general'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'general' | 'modules' | 'sidebar' | 'charges' | 'system'
+  >('general');
 
   const resetToDefaults = async () => {
     const isConfirmed = await customConfirm({
@@ -65,6 +65,7 @@ export default function SettingsPage() {
     { id: 'general', label: 'General', icon: <Settings size={18} /> },
     { id: 'modules', label: 'Modules', icon: <Eye size={18} /> },
     { id: 'sidebar', label: 'Sidebar', icon: <LayoutPanelLeft size={18} /> },
+    { id: 'charges', label: 'Charges', icon: <Info size={18} /> },
     { id: 'system', label: 'System', icon: <Monitor size={18} /> },
   ];
 
@@ -119,7 +120,9 @@ export default function SettingsPage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'general' | 'modules' | 'sidebar' | 'system')}
+              onClick={() =>
+                setActiveTab(tab.id as 'general' | 'modules' | 'sidebar' | 'charges' | 'system')
+              }
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -353,6 +356,148 @@ export default function SettingsPage() {
                     compact
                   />
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Charges Settings */}
+        {activeTab === 'charges' && (
+          <div className="grid-responsive-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="premium-card">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '24px',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  paddingBottom: '16px',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '10px',
+                    borderRadius: '10px',
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    color: '#3b82f6',
+                  }}
+                >
+                  <Info size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
+                    Trading Charges
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                    Configure brokerage and regulatory charges
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Auto Calculate Toggle */}
+                <ToggleItem
+                  label="Auto Calculate Charges"
+                  description="Automatically compute charges on every trade"
+                  isActive={settings.autoCalculateCharges}
+                  onToggle={() =>
+                    updateSettings({ autoCalculateCharges: !settings.autoCalculateCharges })
+                  }
+                  color="#3b82f6"
+                  icon="⚡"
+                />
+
+                {/* Brokerage Type */}
+                <div>
+                  <label
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      color: '#94a3b8',
+                      marginBottom: '8px',
+                      display: 'block',
+                    }}
+                  >
+                    💹 Brokerage Type
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {(['flat', 'percentage'] as const).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => updateSettings({ brokerageType: type })}
+                        style={{
+                          flex: 1,
+                          padding: '12px',
+                          borderRadius: '12px',
+                          border: `1px solid ${settings.brokerageType === type ? '#3b82f6' : '#334155'}`,
+                          background:
+                            settings.brokerageType === type ? 'rgba(59, 130, 246, 0.1)' : '#020617',
+                          color: settings.brokerageType === type ? '#3b82f6' : '#94a3b8',
+                          fontWeight: '700',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {type === 'flat' ? '₹ Flat' : '% Percentage'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Charge Value Inputs */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '16px',
+                  }}
+                >
+                  <ChargeInput
+                    label="Brokerage"
+                    value={settings.brokerageValue}
+                    onChange={(v) => updateSettings({ brokerageValue: v })}
+                    suffix={settings.brokerageType === 'percentage' ? '%' : '₹'}
+                  />
+                  <ChargeInput
+                    label="STT Rate"
+                    value={settings.sttRate}
+                    onChange={(v) => updateSettings({ sttRate: v })}
+                    suffix="%"
+                  />
+                  <ChargeInput
+                    label="Transaction Charges"
+                    value={settings.transactionChargeRate}
+                    onChange={(v) => updateSettings({ transactionChargeRate: v })}
+                    suffix="%"
+                  />
+                  <ChargeInput
+                    label="SEBI Charges"
+                    value={settings.sebiChargeRate}
+                    onChange={(v) => updateSettings({ sebiChargeRate: v })}
+                    suffix="%"
+                  />
+                  <ChargeInput
+                    label="Stamp Duty"
+                    value={settings.stampDutyRate}
+                    onChange={(v) => updateSettings({ stampDutyRate: v })}
+                    suffix="%"
+                  />
+                  <ChargeInput
+                    label="GST"
+                    value={settings.gstRate}
+                    onChange={(v) => updateSettings({ gstRate: v })}
+                    suffix="%"
+                  />
+                  <ChargeInput
+                    label="DP Charges"
+                    value={settings.dpCharges}
+                    onChange={(v) => updateSettings({ dpCharges: v })}
+                    suffix="₹"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -616,6 +761,68 @@ function ToggleItem({
             boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
           }}
         />
+      </div>
+    </div>
+  );
+}
+
+function ChargeInput({
+  label,
+  value,
+  onChange,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  suffix: string;
+}) {
+  return (
+    <div>
+      <label
+        style={{
+          fontSize: '0.75rem',
+          fontWeight: '700',
+          color: '#94a3b8',
+          marginBottom: '6px',
+          display: 'block',
+        }}
+      >
+        {label}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          step="0.001"
+          style={{
+            width: '100%',
+            background: '#020617',
+            border: '1px solid #334155',
+            padding: '10px 14px',
+            paddingRight: '40px',
+            borderRadius: '12px',
+            color: '#fff',
+            fontSize: '0.9rem',
+            outline: 'none',
+            transition: 'all 0.2s',
+          }}
+        />
+        <span
+          style={{
+            position: 'absolute',
+            right: '14px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            fontSize: '0.75rem',
+            fontWeight: '700',
+            color: '#475569',
+            pointerEvents: 'none',
+          }}
+        >
+          {suffix}
+        </span>
       </div>
     </div>
   );

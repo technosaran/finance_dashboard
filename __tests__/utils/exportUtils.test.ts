@@ -1,4 +1,4 @@
-import { arrayToCSV } from '@/lib/exportUtils';
+import { arrayToCSV } from '@/lib/utils/export';
 
 describe('arrayToCSV', () => {
   it('returns empty string for empty array', () => {

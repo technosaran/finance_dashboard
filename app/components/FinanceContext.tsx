@@ -9,8 +9,8 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
-import { supabase } from '../../lib/supabase';
-import type { Database } from '../../lib/database.types';
+import { supabase } from '../../lib/config/supabase';
+import type { Database } from '../../lib/types/database.types';
 import { useAuth } from './AuthContext';
 import {
   Account,

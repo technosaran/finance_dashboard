@@ -6,7 +6,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useFinance } from '../components/FinanceContext';
 import { Transaction } from '@/lib/types';
-import { exportTransactionsToCSV } from '../../lib/exportUtils';
+import { exportTransactionsToCSV } from '../../lib/utils/export';
 import {
   Book,
   Plus,

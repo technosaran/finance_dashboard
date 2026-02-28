@@ -5,7 +5,7 @@ import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFinance } from '../components/FinanceContext';
 import { Account, AccountType } from '@/lib/types';
-import { exportAccountsToCSV } from '../../lib/exportUtils';
+import { exportAccountsToCSV } from '../../lib/utils/export';
 import {
   Wallet,
   CreditCard,
