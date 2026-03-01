@@ -156,14 +156,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       <style jsx>{`
         aside {
-          width: 260px;
-          min-width: 260px;
+          width: 230px;
+          min-width: 230px;
           background: linear-gradient(180deg, #020617 0%, #0a0f1e 50%, #020617 100%);
           border-right: 1px solid rgba(99, 102, 241, 0.08);
           display: flex;
           flex-direction: column;
           position: fixed;
-          left: ${isOpen ? '0' : '-260px'};
+          left: ${isOpen ? '0' : '-230px'};
           top: 0;
           bottom: 0;
           height: 100dvh;
