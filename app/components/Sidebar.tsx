@@ -17,8 +17,6 @@ import {
   LogOut,
   Command,
   ShoppingBag,
-  Landmark,
-  DollarSign,
   ChevronRight,
 } from 'lucide-react';
 
@@ -85,32 +83,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           settingsKey: 'mutualFundsVisible',
         },
         {
-          label: 'Bonds',
-          href: '/bonds',
-          icon: <Landmark size={18} />,
-          enabled: settings.bondsEnabled,
-          color: '#ec4899',
-          settingsKey: 'bondsEnabled',
-        },
-        {
           label: 'FnO',
           href: '/fno',
           icon: <Zap size={18} />,
           color: '#a78bfa',
           settingsKey: 'fnoVisible',
         },
-        {
-          label: 'Forex',
-          href: '/forex',
-          icon: <DollarSign size={18} />,
-          enabled: settings.forexEnabled,
-          color: '#2dd4bf',
-          settingsKey: 'forexEnabled',
-        },
-      ].filter((item) => {
-        if (item.enabled === false) return false;
-        return isVisible(item.settingsKey);
-      }),
+      ].filter((item) => isVisible(item.settingsKey)),
     },
     {
       title: 'TRACKING',

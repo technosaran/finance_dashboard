@@ -65,7 +65,7 @@ export default function StocksClient() {
   const [editId, setEditId] = useState<number | null>(null);
   type ChargeViewData = Pick<Stock, 'symbol' | 'quantity' | 'currentPrice'>;
   const [viewingCharges, setViewingCharges] = useState<{
-    type: 'stock' | 'mf' | 'bond';
+    type: 'stock' | 'mf';
     data: ChargeViewData;
   } | null>(null);
 

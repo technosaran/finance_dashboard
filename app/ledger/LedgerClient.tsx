@@ -709,7 +709,7 @@ export default function LedgerClient() {
                                     </span>
                                   )}
                                   {/* Detect Source (Automated entries usually have keywords) */}
-                                  {['Stock', 'MF:', 'FnO', 'Bond:', 'Forex'].some((key) =>
+                                  {['Stock', 'MF:', 'FnO'].some((key) =>
                                     tx.description.includes(key)
                                   ) && (
                                     <span

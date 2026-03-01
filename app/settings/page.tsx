@@ -43,8 +43,6 @@ export default function SettingsPage() {
         gstRate: 18,
         dpCharges: 15.93,
         autoCalculateCharges: true,
-        bondsEnabled: true,
-        forexEnabled: true,
         stocksVisible: true,
         mutualFundsVisible: true,
         fnoVisible: true,
@@ -246,23 +244,13 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <ToggleItem
-                  label="Bonds Tracking"
-                  description="Track Corporate Bonds, NCDs and SGBs"
-                  isActive={settings.bondsEnabled}
-                  onToggle={() => updateSettings({ bondsEnabled: !settings.bondsEnabled })}
-                  color="#10b981"
-                  icon="📜"
-                />
-                <ToggleItem
-                  label="Forex Trading"
-                  description="Manage multi-currency accounts and trades"
-                  isActive={settings.forexEnabled}
-                  onToggle={() => updateSettings({ forexEnabled: !settings.forexEnabled })}
-                  color="#2dd4bf"
-                  icon="💱"
-                />
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                <p style={{ fontSize: '0.95rem', fontWeight: '600' }}>
+                  All modules are currently active.
+                </p>
+                <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>
+                  Use the Sidebar tab to toggle navigation visibility.
+                </p>
               </div>
             </div>
           </div>

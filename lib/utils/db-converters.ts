@@ -10,11 +10,6 @@ import {
   MutualFund,
   MutualFundTransaction,
   FnoTrade,
-  Bond,
-  BondTransaction,
-  BondTransactionType,
-  ForexTransaction,
-  ForexTransactionType,
   AppSettings,
 } from '../types';
 
@@ -143,50 +138,7 @@ export type FnoTradeRow = {
   account_id?: number | null;
   [key: string]: unknown;
 };
-export type BondRow = {
-  id: number;
-  name: string;
-  company_name?: string | null;
-  isin?: string | null;
-  face_value?: number | null;
-  coupon_rate?: number | null;
-  maturity_date?: string | null;
-  quantity?: number | null;
-  avg_price?: number | null;
-  current_price?: number | null;
-  investment_amount?: number | null;
-  current_value?: number | null;
-  pnl?: number | null;
-  pnl_percentage?: number | null;
-  yield_to_maturity?: number | null;
-  interest_frequency?: string | null;
-  next_interest_date?: string | null;
-  status?: string | null;
-  previous_price?: number | null;
-  [key: string]: unknown;
-};
-export type BondTransactionRow = {
-  id: number;
-  bond_id?: number | null;
-  transaction_type: string;
-  quantity?: number | null;
-  price?: number | null;
-  total_amount: number;
-  transaction_date?: string | null;
-  notes?: string | null;
-  account_id?: number | null;
-  [key: string]: unknown;
-};
-export type ForexTransactionRow = {
-  id: number;
-  transaction_type: string;
-  amount: number;
-  date?: string | null;
-  transaction_date?: string | null;
-  notes?: string | null;
-  account_id?: number | null;
-  [key: string]: unknown;
-};
+
 export type AppSettingsRow = {
   user_id: string;
   brokerage_type: string;
@@ -198,8 +150,8 @@ export type AppSettingsRow = {
   gst_rate: number;
   dp_charges: number;
   auto_calculate_charges: boolean;
-  bonds_enabled: boolean;
-  forex_enabled: boolean;
+  bonds_enabled?: boolean;
+  forex_enabled?: boolean;
   default_stock_account_id?: number | null;
   default_mf_account_id?: number | null;
   default_salary_account_id?: number | null;
@@ -224,8 +176,7 @@ export const dbSettingsToSettings = (dbSettings: AppSettingsRow): AppSettings =>
   gstRate: Number(dbSettings.gst_rate),
   dpCharges: Number(dbSettings.dp_charges),
   autoCalculateCharges: dbSettings.auto_calculate_charges,
-  bondsEnabled: dbSettings.bonds_enabled ?? true,
-  forexEnabled: dbSettings.forex_enabled ?? true,
+
   defaultStockAccountId: dbSettings.default_stock_account_id
     ? Number(dbSettings.default_stock_account_id)
     : undefined,
@@ -370,51 +321,6 @@ export const dbFnoTradeToFnoTrade = (dbTx: FnoTradeRow): FnoTrade => ({
   exitDate: dbTx.exit_date || undefined,
   status: dbTx.status as FnoTrade['status'],
   pnl: dbTx.pnl ? Number(dbTx.pnl) : 0,
-  notes: dbTx.notes || undefined,
-  accountId: dbTx.account_id ? Number(dbTx.account_id) : undefined,
-});
-
-export const dbBondToBond = (dbBond: BondRow): Bond => ({
-  id: Number(dbBond.id),
-  name: dbBond.name,
-  companyName: dbBond.company_name || undefined,
-  isin: dbBond.isin || undefined,
-  faceValue: dbBond.face_value ? Number(dbBond.face_value) : 1000,
-  couponRate: dbBond.coupon_rate ? Number(dbBond.coupon_rate) : 0,
-  maturityDate: dbBond.maturity_date || '',
-  quantity: dbBond.quantity ? Number(dbBond.quantity) : 0,
-  avgPrice: dbBond.avg_price ? Number(dbBond.avg_price) : 0,
-  currentPrice: dbBond.current_price ? Number(dbBond.current_price) : 0,
-  investmentAmount: dbBond.investment_amount ? Number(dbBond.investment_amount) : 0,
-  currentValue: dbBond.current_value ? Number(dbBond.current_value) : 0,
-  pnl: dbBond.pnl ? Number(dbBond.pnl) : 0,
-  pnlPercentage: dbBond.pnl_percentage ? Number(dbBond.pnl_percentage) : 0,
-  yieldToMaturity: dbBond.yield_to_maturity ? Number(dbBond.yield_to_maturity) : undefined,
-  interestFrequency: dbBond.interest_frequency || 'Yearly',
-  nextInterestDate: dbBond.next_interest_date || undefined,
-  status: (dbBond.status as Bond['status']) || 'ACTIVE',
-  previousPrice: dbBond.previous_price ? Number(dbBond.previous_price) : undefined,
-});
-
-export const dbBondTransactionToBondTransaction = (dbTx: BondTransactionRow): BondTransaction => ({
-  id: Number(dbTx.id),
-  bondId: Number(dbTx.bond_id),
-  transactionType: dbTx.transaction_type as BondTransactionType,
-  quantity: dbTx.quantity ? Number(dbTx.quantity) : 0,
-  price: dbTx.price ? Number(dbTx.price) : 0,
-  totalAmount: Number(dbTx.total_amount),
-  transactionDate: dbTx.transaction_date || '',
-  notes: dbTx.notes || undefined,
-  accountId: dbTx.account_id ? Number(dbTx.account_id) : undefined,
-});
-
-export const dbForexTransactionToForexTransaction = (
-  dbTx: ForexTransactionRow
-): ForexTransaction => ({
-  id: Number(dbTx.id),
-  transactionType: dbTx.transaction_type as ForexTransactionType,
-  amount: Number(dbTx.amount),
-  date: dbTx.date || dbTx.transaction_date || '',
   notes: dbTx.notes || undefined,
   accountId: dbTx.account_id ? Number(dbTx.account_id) : undefined,
 });

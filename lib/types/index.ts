@@ -116,24 +116,6 @@ export interface FamilyTransfer {
 }
 
 // ============================================================================
-// Forex Types
-// ============================================================================
-
-export type ForexTransactionType = 'DEPOSIT' | 'WITHDRAWAL' | 'PROFIT' | 'LOSS';
-
-export interface ForexTransaction {
-  id: number;
-  transactionType: ForexTransactionType;
-  amount: number;
-  date: string;
-  notes?: string;
-  accountId?: number;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// ============================================================================
 // Stock Types
 // ============================================================================
 
@@ -265,52 +247,6 @@ export interface FnoTrade {
 }
 
 // ============================================================================
-// Bond Types
-// ============================================================================
-
-export type BondTransactionType = 'BUY' | 'SELL' | 'MATURITY' | 'INTEREST';
-export type InterestFrequency = 'Monthly' | 'Quarterly' | 'Half-Yearly' | 'Yearly' | 'Cumulative';
-
-export interface Bond {
-  id: number;
-  name: string;
-  isin?: string;
-  companyName?: string;
-  faceValue: number;
-  couponRate: number;
-  maturityDate: string;
-  quantity: number;
-  avgPrice: number;
-  currentPrice: number;
-  investmentAmount: number;
-  currentValue: number;
-  pnl: number;
-  pnlPercentage: number;
-  yieldToMaturity?: number;
-  interestFrequency: InterestFrequency | string;
-  nextInterestDate?: string;
-  previousPrice?: number;
-  status: 'ACTIVE' | 'MATURED' | 'SOLD';
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface BondTransaction {
-  id: number;
-  bondId: number;
-  transactionType: BondTransactionType;
-  quantity: number;
-  price: number;
-  totalAmount: number;
-  transactionDate: string;
-  notes?: string;
-  accountId?: number;
-  userId?: string;
-  createdAt?: string;
-}
-
-// ============================================================================
 // Settings Types
 // ============================================================================
 
@@ -326,8 +262,6 @@ export interface AppSettings {
   gstRate: number;
   dpCharges: number;
   autoCalculateCharges: boolean;
-  bondsEnabled: boolean;
-  forexEnabled: boolean;
   defaultStockAccountId?: number;
   defaultMfAccountId?: number;
   defaultSalaryAccountId?: number;
@@ -421,26 +355,11 @@ export interface FinanceContextState {
   addMutualFundTransaction: (tx: Omit<MutualFundTransaction, 'id'>) => Promise<void>;
   deleteMutualFundTransaction: (id: number) => Promise<void>;
 
-  // Bonds
-  bonds: Bond[];
-  addBond: (bond: Omit<Bond, 'id'>) => Promise<Bond>;
-  updateBond: (id: number, bond: Partial<Bond>) => Promise<void>;
-  deleteBond: (id: number) => Promise<void>;
-  bondTransactions: BondTransaction[];
-  addBondTransaction: (tx: Omit<BondTransaction, 'id'>) => Promise<void>;
-  deleteBondTransaction: (id: number) => Promise<void>;
-
   // F&O
   fnoTrades: FnoTrade[];
   addFnoTrade: (trade: Omit<FnoTrade, 'id'>) => Promise<void>;
   updateFnoTrade: (id: number, trade: Partial<FnoTrade>) => Promise<void>;
   deleteFnoTrade: (id: number) => Promise<void>;
-
-  // Forex
-  forexTransactions: ForexTransaction[];
-  addForexTransaction: (tx: Omit<ForexTransaction, 'id'>) => Promise<void>;
-  updateForexTransaction: (id: number, tx: Partial<ForexTransaction>) => Promise<void>;
-  deleteForexTransaction: (id: number) => Promise<void>;
 
   // Family Transfers
   familyTransfers: FamilyTransfer[];

@@ -114,11 +114,9 @@ export default function Dashboard() {
     accounts,
     stocks,
     mutualFunds,
-    bonds,
     goals,
     stockTransactions,
     mutualFundTransactions,
-    bondTransactions,
     fnoTrades,
     transactions,
     loading,
@@ -165,11 +163,7 @@ export default function Dashboard() {
 
     const mfValue = mutualFunds.reduce((sum, m) => sum + m.currentValue, 0);
 
-    const bondsValue = settings.bondsEnabled
-      ? bonds.reduce((sum, b) => sum + b.currentValue, 0)
-      : 0;
-
-    const totalNetWorth = liquidityINR + stocksValue + mfValue + bondsValue;
+    const totalNetWorth = liquidityINR + stocksValue + mfValue;
 
     const stockInvestment = stocks
       .filter((s) => s.quantity > 0)
@@ -205,27 +199,11 @@ export default function Dashboard() {
       .reduce((sum, t) => sum + t.totalAmount * 0.00005, 0);
     const mfLifetime = mfSells + mfValue - (mfBuys + mfCharges);
 
-    let bondLifetime = 0;
-    if (settings.bondsEnabled) {
-      const bondBuys = bondTransactions
-        .filter((t) => t.transactionType === 'BUY')
-        .reduce((sum, t) => sum + t.totalAmount, 0);
-      const bondReturns = bondTransactions
-        .filter(
-          (t) =>
-            t.transactionType === 'SELL' ||
-            t.transactionType === 'MATURITY' ||
-            t.transactionType === 'INTEREST'
-        )
-        .reduce((sum, t) => sum + t.totalAmount, 0);
-      bondLifetime = bondReturns + bondsValue - bondBuys;
-    }
-
     const fnoLifetime = fnoTrades
       .filter((t) => t.status === 'CLOSED')
       .reduce((sum, t) => sum + t.pnl, 0);
 
-    const globalLifetimeWealth = stockLifetime + mfLifetime + bondLifetime + fnoLifetime;
+    const globalLifetimeWealth = stockLifetime + mfLifetime + fnoLifetime;
 
     const stockPnl = stocks.filter((s) => s.quantity > 0).reduce((sum, s) => sum + s.pnl, 0);
     const mfPnl = mfValue - mfInvestment;
@@ -248,24 +226,13 @@ export default function Dashboard() {
       liquidityINR,
       stocksValue,
       mfValue,
-      bondsValue,
       totalNetWorth,
       totalInvestment,
       globalLifetimeWealth,
       totalUnrealizedPnl,
       stockDayChange: totalDayChange,
     };
-  }, [
-    accounts,
-    stocks,
-    mutualFunds,
-    bonds,
-    stockTransactions,
-    mutualFundTransactions,
-    bondTransactions,
-    fnoTrades,
-    settings.bondsEnabled,
-  ]);
+  }, [accounts, stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades]);
 
   // ── Derived lists for sub-components ───────────────────────────────────────
   const allocationData = useMemo(
@@ -274,7 +241,6 @@ export default function Dashboard() {
         { name: 'Cash', value: financialMetrics.liquidityINR, color: '#818cf8' },
         { name: 'Stocks', value: financialMetrics.stocksValue, color: '#10b981' },
         { name: 'Mutual Funds', value: financialMetrics.mfValue, color: '#f59e0b' },
-        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#ec4899' },
       ].filter((a) => a.value > 0),
     [financialMetrics]
   );
@@ -535,9 +501,7 @@ export default function Dashboard() {
         totalNetWorth={financialMetrics.totalNetWorth}
         globalLifetimeWealth={financialMetrics.globalLifetimeWealth}
         liquidityINR={financialMetrics.liquidityINR}
-        investmentsTotal={
-          financialMetrics.stocksValue + financialMetrics.mfValue + financialMetrics.bondsValue
-        }
+        investmentsTotal={financialMetrics.stocksValue + financialMetrics.mfValue}
         allocationData={allocationData}
       />
 
