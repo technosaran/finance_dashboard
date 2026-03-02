@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const fs = require('fs');
+import { readFileSync, writeFileSync } from 'node:fs';
+
 const f = 'app/components/FinanceContext.tsx';
-let c = fs.readFileSync(f, 'utf8');
+let c = readFileSync(f, 'utf8');
 
 // Fix 1: Replace the table param type — use keyof Database["public"]["Tables"]
 // which includes all typed table names (accounts, bonds, fno_trades, etc.)
@@ -20,7 +20,7 @@ c = c.replace(
   '    table: keyof Database["public"]["Tables"],\n    label: string,\n    setter: React.Dispatch'
 );
 
-fs.writeFileSync(f, c, 'utf8');
+writeFileSync(f, c, 'utf8');
 
 // Verify
 if (c.includes('keyof Database["public"]["Tables"]')) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { logError } from '../utils/logger';
 
 interface FetchState<T> {
@@ -22,8 +22,7 @@ interface FetchOptions {
  */
 export function useFetch<T = unknown>(
   url: string,
-  options: FetchOptions = {},
-  deps: React.DependencyList = []
+  options: FetchOptions = {}
 ): FetchState<T> & { refetch: () => void } {
   const [state, setState] = useState<FetchState<T>>({
     data: null,
@@ -32,8 +31,12 @@ export function useFetch<T = unknown>(
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     // Abort previous request if still pending
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -47,10 +50,10 @@ export function useFetch<T = unknown>(
       // Set up timeout
       const timeoutId = setTimeout(() => {
         abortControllerRef.current?.abort();
-      }, options.timeout || 10000); // Default 10 second timeout
+      }, optionsRef.current.timeout || 10000); // Default 10 second timeout
 
       const response = await fetch(url, {
-        ...options,
+        ...optionsRef.current,
         signal: abortControllerRef.current.signal,
       });
 
@@ -89,7 +92,7 @@ export function useFetch<T = unknown>(
         });
       }
     }
-  };
+  }, [url]);
 
   useEffect(() => {
     fetchData();
@@ -100,7 +103,7 @@ export function useFetch<T = unknown>(
         abortControllerRef.current.abort();
       }
     };
-  }, [url, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchData]);
 
   return {
     ...state,
