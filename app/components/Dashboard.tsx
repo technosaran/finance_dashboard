@@ -21,32 +21,28 @@ import { GoalsProgress } from './dashboard/GoalsProgress';
  * Get dynamic, time-based greeting with inspiring messages.
  * Memoised at module level — pure function with no external dependencies.
  */
-function getGreeting(): { text: string; subtext: string; emoji: string; color: string } {
+function getGreeting(): { text: string; subtext: string; emoji: string } {
   const hour = new Date().getHours();
   const greetings = {
     morning: {
       text: 'Good Morning',
       subtext: 'Time to conquer your financial goals!',
       emoji: '✨',
-      color: '#fbbf24',
     },
     afternoon: {
       text: 'Good Afternoon',
       subtext: "Let's check in on your empire.",
       emoji: '☀️',
-      color: '#f59e0b',
     },
     evening: {
       text: 'Good Evening',
       subtext: 'Review the day\u2019s market moves.',
       emoji: '🌇',
-      color: '#818cf8',
     },
     night: {
       text: 'Good Night',
       subtext: 'Rest easy, your wealth is working.',
       emoji: '🌙',
-      color: '#6366f1',
     },
   };
 
@@ -94,8 +90,8 @@ export default function Dashboard() {
 
   const greeting = useMemo(() => getGreeting(), []);
   const displayName = useMemo(
-    () => settings.displayName || getUserDisplayName(user),
-    [settings.displayName, user]
+    () => settings?.displayName || getUserDisplayName(user),
+    [settings?.displayName, user]
   );
 
   // ── Computed financial metrics ──────────────────────────────────────────────
@@ -324,19 +320,19 @@ export default function Dashboard() {
         >
           <div>
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
             >
-              <span style={{ fontSize: '3.5rem' }}>{greeting.emoji}</span>
+              <span style={{ fontSize: '2rem' }}>{greeting.emoji}</span>
               <h1
                 style={{
-                  color: greeting.color,
-                  fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-                  fontWeight: '900',
-                  letterSpacing: '-0.04em',
+                  color: '#f8fafc',
+                  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                  fontWeight: '800',
+                  letterSpacing: '-0.02em',
                   margin: 0,
                   display: 'flex',
                   alignItems: 'baseline',
-                  gap: '12px',
+                  gap: '10px',
                 }}
               >
                 {greeting.text}, {displayName}!
