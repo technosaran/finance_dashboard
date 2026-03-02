@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Search, Loader2, TrendingUp, Activity, Zap, Banknote, Info } from 'lucide-react';
 import { useFinance } from './FinanceContext';
 import { useNotifications } from './NotificationContext';
@@ -89,15 +89,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
   const [exitPrice, setExitPrice] = useState('');
   const [exitDate, setExitDate] = useState('');
 
-  useEffect(() => {
-    if (!isOpen) {
-      resetForm();
-    }
-    // resetForm is intentionally excluded to prevent infinite re-renders
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setSearchQuery('');
     setSelectedItem(null);
     setQuantity('');
@@ -107,24 +99,33 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     setTaxes('');
     setNotes('');
     setAccountId(settings.defaultMfAccountId || '');
-  };
+  }, [settings.defaultMfAccountId]);
 
-  const handleSearch = async (query: string) => {
-    if (query.length < 2) return;
-    setIsSearching(true);
-    try {
-      const endpoint =
-        type === 'STOCK' ? `/api/stocks/search?q=${query}` : `/api/mf/search?q=${query}`;
-      const res = await fetch(endpoint);
-      const data = await res.json();
-      setSearchResults(data);
-      setShowResults(true);
-    } catch (error) {
-      logError('Search failed:', error);
-    } finally {
-      setIsSearching(false);
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
     }
-  };
+  }, [isOpen, resetForm]);
+
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (query.length < 2) return;
+      setIsSearching(true);
+      try {
+        const endpoint =
+          type === 'STOCK' ? `/api/stocks/search?q=${query}` : `/api/mf/search?q=${query}`;
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        setSearchResults(data);
+        setShowResults(true);
+      } catch (error) {
+        logError('Search failed:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [type]
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -133,9 +134,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       }
     }, 500);
     return () => clearTimeout(timer);
-    // handleSearch and selectedItem are intentionally excluded to prevent re-renders
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, type]);
+  }, [searchQuery, type, handleSearch, selectedItem]);
 
   const selectItem = async (item: SearchResult) => {
     setSearchQuery('symbol' in item ? item.symbol : item.schemeName);
