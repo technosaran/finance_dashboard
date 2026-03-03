@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Zap } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface AllocationEntry {
@@ -68,8 +68,11 @@ export function NetWorthCard({
                   style={{
                     padding: '6px 12px',
                     borderRadius: '10px',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    color: '#10b981',
+                    background:
+                      globalLifetimeWealth >= 0
+                        ? 'rgba(16, 185, 129, 0.1)'
+                        : 'rgba(239, 68, 68, 0.1)',
+                    color: globalLifetimeWealth >= 0 ? '#10b981' : '#ef4444',
                     fontSize: '0.85rem',
                     fontWeight: '800',
                     display: 'flex',
@@ -77,7 +80,13 @@ export function NetWorthCard({
                     gap: '6px',
                   }}
                 >
-                  <TrendingUp size={16} /> +₹{globalLifetimeWealth.toLocaleString()} lifetime
+                  {globalLifetimeWealth >= 0 ? (
+                    <TrendingUp size={16} />
+                  ) : (
+                    <TrendingDown size={16} />
+                  )}{' '}
+                  {globalLifetimeWealth >= 0 ? '+' : '-'}₹
+                  {Math.abs(globalLifetimeWealth).toLocaleString()} lifetime
                 </div>
               </div>
             </div>

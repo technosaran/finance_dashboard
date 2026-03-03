@@ -13,11 +13,8 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
 
   return (
     <div
-      className="fade-in"
+      className="fade-in glass-panel"
       style={{
-        background: 'linear-gradient(145deg, #0f172a 0%, #0a0f1e 100%)',
-        borderRadius: '24px',
-        border: '1px solid rgba(255,255,255,0.04)',
         padding: '24px',
         position: 'relative',
         overflow: 'hidden',
