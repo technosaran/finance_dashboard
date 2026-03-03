@@ -36,6 +36,7 @@
   --spacing-md: 20px;
   --spacing-lg: 32px;
   --spacing-xl: 48px;
+  --spacing-2xl: 64px;
 
   /* Border Radius - Modern & Fluid */
   --radius-sm: 10px;
@@ -349,11 +350,11 @@ p {
 }
 
 .fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .slide-in-right {
-  animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .slide-up {
@@ -1674,8 +1675,7 @@ select:focus {
 
 /* Page section entrance animation */
 .section-fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
+  animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .section-fade-in:nth-child(1) {
@@ -2638,99 +2638,101 @@ select:focus {
     max-width: 100%;
     overflow-x: hidden;
   }
+}
 
-  /* ====== PREMIUM UTILITIES ====== */
+/* ====== PREMIUM UTILITIES ====== */
 
-  .text-glow {
-    text-shadow: 0 0 15px var(--accent-glow);
-  }
+.text-glow {
+  text-shadow: 0 0 15px var(--accent-glow);
+}
 
-  .text-fill-gradient {
-    background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+.text-fill-gradient {
+  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-  .btn-shine {
-    position: relative;
-    overflow: hidden;
-  }
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
 
-  .btn-shine::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: rotate(45deg);
-    transition: 0.5s;
-    pointer-events: none;
-  }
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: rotate(45deg);
+  transition: 0.5s;
+  pointer-events: none;
+}
 
-  .btn-shine:hover::after {
-    left: 100%;
-    top: 100%;
-  }
+.btn-shine:hover::after {
+  left: 100%;
+  top: 100%;
+}
 
-  .glass-panel {
-    background: var(--surface);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--surface-border);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  }
+.glass-panel {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
 
-  .glow-hover {
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
+.glow-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
+@media (hover: hover) and (pointer: fine) {
   .glow-hover:hover {
     box-shadow: 0 0 20px -5px var(--accent-glow);
     border-color: var(--accent);
   }
+}
 
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-
-    100% {
-      transform: translateX(100%);
-    }
+@keyframes shimmerSlide {
+  0% {
+    transform: translateX(-100%);
   }
 
-  .animate-shimmer {
-    position: relative;
-    overflow: hidden;
+  100% {
+    transform: translateX(100%);
   }
+}
 
-  .animate-shimmer::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-    animation: shimmer 2s infinite linear;
-  }
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
 
-  .card-stack-effect {
-    position: relative;
-  }
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: shimmerSlide 2s infinite linear;
+}
 
-  .card-stack-effect::before {
-    content: '';
-    position: absolute;
-    inset: 4px -4px -4px 4px;
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--surface-border);
-    z-index: -1;
-    opacity: 0.5;
-  }
+.card-stack-effect {
+  position: relative;
+}
+
+.card-stack-effect::before {
+  content: '';
+  position: absolute;
+  inset: 4px -4px -4px 4px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--surface-border);
+  z-index: -1;
+  opacity: 0.5;
 }

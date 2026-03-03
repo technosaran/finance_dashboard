@@ -19,11 +19,8 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
 
   return (
     <div
-      className="fade-in"
+      className="fade-in glass-panel"
       style={{
-        background: 'linear-gradient(145deg, #0f172a 0%, #0a0f1e 100%)',
-        borderRadius: '24px',
-        border: '1px solid rgba(255,255,255,0.04)',
         padding: '24px',
         position: 'relative',
         overflow: 'hidden',
@@ -111,7 +108,7 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
               >
                 <div
                   style={{
-                    width: `${goal.percentage}%`,
+                    width: `${Math.min(goal.percentage, 100)}%`,
                     height: '100%',
                     background:
                       goal.percentage >= 100
