@@ -26,7 +26,7 @@ import {
   FamilyTransfer,
   FinanceContextState,
 } from '@/lib/types';
-import { logError, logInfo } from '../../lib/utils/logger';
+import { logError, logInfo, logWarn } from '../../lib/utils/logger';
 import {
   dbAccountToAccount,
   dbTransactionToTransaction,
@@ -801,7 +801,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         const stockSymbols = [...new Set(stocks.map((s) => s.symbol))].filter(Boolean);
         if (stockSymbols.length > 0) {
-          if (!silent) console.log(`Fetching updates for ${stockSymbols.length} stocks...`);
+          if (!silent) logInfo(`Fetching updates for ${stockSymbols.length} stocks...`);
           const res = await fetch(
             `/api/stocks/batch?symbols=${stockSymbols.join(',')}&t=${Date.now()}`
           );
@@ -861,9 +861,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 };
               })
             );
-            if (!silent) console.log(`âœ“ Updated ${updatedCount} stocks.`);
-            if (updatedCount === 0 && !silent)
-              console.warn('No stock prices updated. Check symbols.');
+            if (!silent) logInfo(`Updated ${updatedCount} stocks.`);
+            if (updatedCount === 0 && !silent) logWarn('No stock prices updated. Check symbols.');
           }
         }
       } catch (err) {
@@ -874,7 +873,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         const mfCodes = [...new Set(mutualFunds.map((m) => m.schemeCode))].filter(Boolean);
         if (mfCodes.length > 0) {
-          if (!silent) console.log(`Fetching NAVs for ${mfCodes.length} mutual funds...`);
+          if (!silent) logInfo(`Fetching NAVs for ${mfCodes.length} mutual funds...`);
           const res = await fetch(`/api/mf/batch?codes=${mfCodes.join(',')}&t=${Date.now()}`);
           if (!res.ok) throw new Error(`MF batch fetch failed: ${res.status}`);
           const updates = await res.json();
@@ -924,7 +923,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 };
               })
             );
-            if (!silent) console.log(`âœ“ Updated ${updatedCount} mutual funds.`);
+            if (!silent) logInfo(`Updated ${updatedCount} mutual funds.`);
           }
         }
       } catch (err) {

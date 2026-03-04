@@ -114,7 +114,7 @@ export function CommandPalette() {
         label: 'Income',
         description: 'Salary & Earnings',
         icon: <ArrowUpRight size={16} />,
-        action: () => navigate('/income'),
+        action: () => navigate('/salary'),
         category: 'navigation',
         keywords: ['salary', 'earnings', 'pay'],
       },

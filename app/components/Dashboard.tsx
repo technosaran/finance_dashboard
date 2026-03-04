@@ -46,10 +46,10 @@ function getGreeting(): { text: string; subtext: string; emoji: string } {
     },
   };
 
-  if (hour >= 5 && hour < 12) return { ...greetings.morning };
-  if (hour >= 12 && hour < 17) return { ...greetings.afternoon };
-  if (hour >= 17 && hour < 21) return { ...greetings.evening };
-  return { ...greetings.night };
+  if (hour >= 5 && hour < 12) return greetings.morning;
+  if (hour >= 12 && hour < 17) return greetings.afternoon;
+  if (hour >= 17 && hour < 21) return greetings.evening;
+  return greetings.night;
 }
 
 /** Extract first name from Supabase user email or metadata */

@@ -30,7 +30,6 @@ const USER_AGENTS = [
 export async function fetchStockQuote(symbol: string): Promise<StockQuote | null> {
   const sanitizedSymbol = symbol.trim().toUpperCase();
   const nseSymbol = sanitizedSymbol.endsWith('.NS') ? sanitizedSymbol : `${sanitizedSymbol}.NS`;
-  const _bseSymbol = sanitizedSymbol.endsWith('.BO') ? sanitizedSymbol : `${sanitizedSymbol}.BO`;
 
   // 1. Try Yahoo Finance (NSE then BSE)
   for (const endpoint of YAHOO_ENDPOINTS) {
