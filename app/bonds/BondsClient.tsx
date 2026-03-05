@@ -6,6 +6,7 @@ import { useAuth } from '@/app/components/AuthContext';
 import { useNotifications } from '@/app/components/NotificationContext';
 import { Plus, Trash2, Edit3, Search, Loader2 } from 'lucide-react';
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
+import { logError } from '@/lib/utils/logger';
 
 // Simplified type based on database schema for local use
 export interface Bond {
@@ -74,7 +75,7 @@ export default function BondsClient() {
       }
       setShowResults(true);
     } catch (error) {
-      console.error('Search failed:', error);
+      logError('Search failed:', error);
     } finally {
       setIsSearching(false);
     }
@@ -96,7 +97,7 @@ export default function BondsClient() {
         setMaturityDate(data.data.maturityDate);
       }
     } catch (error) {
-      console.error('Quote fetch failed:', error);
+      logError('Quote fetch failed:', error);
     }
   };
 

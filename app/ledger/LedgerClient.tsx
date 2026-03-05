@@ -41,7 +41,6 @@ export default function LedgerClient() {
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [filterAccount, setFilterAccount] = useState<number | 'All'>('All');
   const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense'>('All');
-  const [_viewMode, _setViewMode] = useState<'timeline' | 'calendar'>('timeline');
 
   // Form State
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
