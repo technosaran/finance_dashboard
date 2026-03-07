@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../components/AuthContext';
-import { Command, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Command, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const { signIn, user, loading } = useAuth();
@@ -149,6 +149,23 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Security badge */}
+          <div
+            style={{
+              marginTop: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              color: '#475569',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+            }}
+          >
+            <Shield size={13} color="#475569" />
+            <span>256-bit encrypted · Secured by Supabase</span>
+          </div>
         </div>
       </div>
     </div>

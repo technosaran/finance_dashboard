@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Calendar, RefreshCw } from 'lucide-react';
 import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
 import { MutualFundTransaction } from '@/lib/types';
@@ -221,6 +221,15 @@ export default function Dashboard() {
     [stocks]
   );
 
+  const todayFormatted = useMemo(() => {
+    return new Date().toLocaleDateString('en-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }, []);
+
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -312,13 +321,13 @@ export default function Dashboard() {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             flexWrap: 'wrap',
             gap: '24px',
             width: '100%',
           }}
         >
-          <div>
+          <div style={{ flex: 1 }}>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
             >
@@ -341,15 +350,73 @@ export default function Dashboard() {
             <p
               style={{
                 color: '#94a3b8',
-                fontSize: '1.2rem',
+                fontSize: '1.1rem',
                 fontWeight: '500',
-                marginTop: '12px',
+                marginTop: '8px',
                 maxWidth: '600px',
                 lineHeight: 1.6,
               }}
             >
               {greeting.subtext}
             </p>
+          </div>
+
+          {/* Date & Live indicator */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: '8px',
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.15)',
+              }}
+            >
+              <RefreshCw size={12} color="#10b981" />
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: '800',
+                  color: '#10b981',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                LIVE
+              </span>
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  boxShadow: '0 0 6px #10b981',
+                  animation: 'pulse 2s ease-in-out infinite',
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: '#475569',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+              }}
+            >
+              <Calendar size={14} />
+              {todayFormatted}
+            </div>
           </div>
         </div>
       </header>

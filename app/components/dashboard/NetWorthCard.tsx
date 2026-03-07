@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Zap, Award } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface AllocationEntry {
@@ -24,6 +24,8 @@ export function NetWorthCard({
   investmentsTotal,
   allocationData,
 }: NetWorthCardProps) {
+  const lifetimePct = investmentsTotal > 0 ? (globalLifetimeWealth / investmentsTotal) * 100 : 0;
+
   return (
     <section className="wealth-card fade-in" style={{ marginBottom: '24px' }}>
       <div className="premium-card wealth-card-content">
@@ -50,6 +52,26 @@ export function NetWorthCard({
               >
                 TOTAL NET WORTH
               </span>
+              {investmentsTotal > 0 && (
+                <div
+                  style={{
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    background: 'rgba(167, 139, 250, 0.1)',
+                    border: '1px solid rgba(167, 139, 250, 0.2)',
+                  }}
+                >
+                  <Award size={12} color="#a78bfa" />
+                  <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#a78bfa' }}>
+                    {lifetimePct >= 0 ? '+' : ''}
+                    {lifetimePct.toFixed(1)}% lifetime
+                  </span>
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: '32px' }}>

@@ -1,11 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles, ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronRight,
+  ShoppingCart,
+  DollarSign,
+  Repeat,
+} from 'lucide-react';
 import { Transaction } from '@/lib/types';
 
 interface RecentActivityProps {
   transactions: Transaction[];
+}
+
+function getCategoryIcon(type: string, category: string) {
+  if (type === 'Income') return <DollarSign size={14} />;
+  const cat = category.toLowerCase();
+  if (cat.includes('food') || cat.includes('dining') || cat.includes('restaurant'))
+    return <span style={{ fontSize: '14px' }}>🍽️</span>;
+  if (cat.includes('transport') || cat.includes('travel') || cat.includes('fuel'))
+    return <span style={{ fontSize: '14px' }}>🚗</span>;
+  if (cat.includes('shop') || cat.includes('clothing') || cat.includes('fashion'))
+    return <ShoppingCart size={14} />;
+  if (cat.includes('transfer')) return <Repeat size={14} />;
+  return <ArrowDownRight size={14} />;
 }
 
 export function RecentActivity({ transactions }: RecentActivityProps) {
@@ -54,6 +75,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
               alignItems: 'center',
               justifyContent: 'center',
               color: '#6366f1',
+              boxShadow: '0 0 15px rgba(99, 102, 241, 0.15)',
             }}
           >
             <Sparkles size={16} />
@@ -72,7 +94,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             fontWeight: '700',
             color: '#6366f1',
             textDecoration: 'none',
-            padding: '4px 10px',
+            padding: '5px 10px',
             borderRadius: '8px',
             border: '1px solid rgba(99, 102, 241, 0.15)',
             background: 'rgba(99, 102, 241, 0.05)',
@@ -84,7 +106,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
       </div>
 
       {/* Transaction List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {transactions.map((tx) => (
           <div
             key={tx.id}
@@ -94,8 +116,13 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
               gap: '12px',
               padding: '10px 12px',
               borderRadius: '12px',
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.03)',
+              background:
+                tx.type === 'Income' ? 'rgba(52, 211, 153, 0.03)' : 'rgba(255,255,255,0.02)',
+              border:
+                tx.type === 'Income'
+                  ? '1px solid rgba(52, 211, 153, 0.08)'
+                  : '1px solid rgba(255,255,255,0.03)',
+              transition: 'background 0.2s',
             }}
           >
             {/* Icon */}
@@ -105,7 +132,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                 height: '32px',
                 borderRadius: '10px',
                 background:
-                  tx.type === 'Income' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(248, 113, 113, 0.1)',
+                  tx.type === 'Income' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(248, 113, 113, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -113,7 +140,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                 flexShrink: 0,
               }}
             >
-              {tx.type === 'Income' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              {getCategoryIcon(tx.type, tx.category)}
             </div>
 
             {/* Details */}
@@ -130,8 +157,27 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
               >
                 {tx.description}
               </div>
-              <div style={{ fontSize: '0.65rem', color: '#475569', fontWeight: '500' }}>
-                {tx.category} •{' '}
+              <div
+                style={{
+                  fontSize: '0.65rem',
+                  color: '#475569',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  marginTop: '2px',
+                }}
+              >
+                <span
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  {tx.category}
+                </span>
+                <span>•</span>
                 {new Date(tx.date).toLocaleDateString('en-IN', {
                   day: 'numeric',
                   month: 'short',
@@ -142,13 +188,17 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             {/* Amount */}
             <div
               style={{
-                fontSize: '0.8rem',
+                fontSize: '0.82rem',
                 fontWeight: '800',
                 color: tx.type === 'Income' ? '#34d399' : '#f87171',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2px',
               }}
             >
-              {tx.type === 'Income' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+              {tx.type === 'Income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}₹
+              {tx.amount.toLocaleString()}
             </div>
           </div>
         ))}

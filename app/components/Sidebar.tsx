@@ -424,6 +424,54 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             }}
           />
 
+          {/* Command Palette shortcut hint */}
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: '4px',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(99, 102, 241, 0.05)',
+              border: '1px solid rgba(99, 102, 241, 0.1)',
+            }}
+          >
+            <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569' }}>
+              Quick search
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <kbd
+                style={{
+                  padding: '2px 5px',
+                  borderRadius: '4px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  fontSize: '0.6rem',
+                  fontWeight: '700',
+                  color: '#64748b',
+                  fontFamily: 'monospace',
+                }}
+              >
+                ⌘
+              </kbd>
+              <kbd
+                style={{
+                  padding: '2px 5px',
+                  borderRadius: '4px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  fontSize: '0.6rem',
+                  fontWeight: '700',
+                  color: '#64748b',
+                  fontFamily: 'monospace',
+                }}
+              >
+                K
+              </kbd>
+            </div>
+          </div>
+
           <Link href="/settings" style={{ textDecoration: 'none' }} onClick={onClose}>
             <div
               style={{

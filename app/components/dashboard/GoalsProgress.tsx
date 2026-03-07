@@ -1,6 +1,6 @@
 'use client';
 
-import { Target } from 'lucide-react';
+import { Target, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 
 interface GoalProgress {
   name: string;
@@ -52,6 +52,7 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
             alignItems: 'center',
             justifyContent: 'center',
             color: '#f59e0b',
+            boxShadow: '0 0 15px rgba(245, 158, 11, 0.15)',
           }}
         >
           <Target size={16} />
@@ -59,10 +60,24 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
         <h3 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: '#e2e8f0' }}>
           Goals Tracker
         </h3>
+        <span
+          style={{
+            marginLeft: 'auto',
+            fontSize: '0.65rem',
+            fontWeight: '800',
+            color: '#f59e0b',
+            background: 'rgba(245, 158, 11, 0.1)',
+            padding: '2px 8px',
+            borderRadius: '6px',
+            border: '1px solid rgba(245, 158, 11, 0.15)',
+          }}
+        >
+          {goals.length} active
+        </span>
       </div>
 
       {/* Goals List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {goals.map((goal, idx) => {
           let daysRemaining: number | null = null;
           if (goal.deadline) {
@@ -72,24 +87,58 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
               (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
             );
           }
+          const isAchieved = goal.percentage >= 100;
+          const isOverdue = daysRemaining !== null && daysRemaining <= 0 && !isAchieved;
+          const isNearDeadline =
+            daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 30 && !isAchieved;
+
           return (
             <div key={idx}>
-              {/* Name & percentage */}
+              {/* Name & status */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: '8px',
+                  gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#e2e8f0' }}>
-                  {goal.name}
-                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {isAchieved ? (
+                    <CheckCircle2 size={14} color="#10b981" />
+                  ) : isOverdue ? (
+                    <AlertCircle size={14} color="#ef4444" />
+                  ) : isNearDeadline ? (
+                    <Clock size={14} color="#f59e0b" />
+                  ) : null}
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      color: isAchieved ? '#10b981' : '#e2e8f0',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {goal.name}
+                  </span>
+                </div>
                 <span
                   style={{
                     fontSize: '0.75rem',
-                    fontWeight: '800',
-                    color: goal.percentage >= 100 ? '#10b981' : '#f59e0b',
+                    fontWeight: '900',
+                    color: isAchieved ? '#10b981' : isOverdue ? '#ef4444' : '#f59e0b',
+                    flexShrink: 0,
                   }}
                 >
                   {goal.percentage.toFixed(0)}%
@@ -110,13 +159,14 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
                   style={{
                     width: `${Math.min(goal.percentage, 100)}%`,
                     height: '100%',
-                    background:
-                      goal.percentage >= 100
-                        ? 'linear-gradient(to right, #10b981, #34d399)'
+                    background: isAchieved
+                      ? 'linear-gradient(to right, #10b981, #34d399)'
+                      : isOverdue
+                        ? 'linear-gradient(to right, #ef4444, #f87171)'
                         : 'linear-gradient(to right, #f59e0b, #fbbf24)',
                     borderRadius: '100px',
                     transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: `0 0 8px ${goal.percentage >= 100 ? '#10b98140' : '#f59e0b40'}`,
+                    boxShadow: `0 0 8px ${isAchieved ? '#10b98140' : isOverdue ? '#ef444440' : '#f59e0b40'}`,
                   }}
                 />
               </div>
@@ -127,7 +177,7 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginTop: '4px',
+                  marginTop: '5px',
                 }}
               >
                 <span style={{ fontSize: '0.65rem', color: '#475569' }}>
@@ -138,21 +188,31 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
                     style={{
                       fontSize: '0.6rem',
                       fontWeight: '700',
-                      color:
-                        goal.percentage >= 100
-                          ? '#10b981'
-                          : daysRemaining <= 0
-                            ? '#ef4444'
-                            : daysRemaining <= 30
-                              ? '#f59e0b'
-                              : '#64748b',
+                      color: isAchieved
+                        ? '#10b981'
+                        : isOverdue
+                          ? '#ef4444'
+                          : isNearDeadline
+                            ? '#f59e0b'
+                            : '#64748b',
+                      background: isAchieved
+                        ? 'rgba(16, 185, 129, 0.08)'
+                        : isOverdue
+                          ? 'rgba(239, 68, 68, 0.08)'
+                          : isNearDeadline
+                            ? 'rgba(245, 158, 11, 0.08)'
+                            : 'transparent',
+                      padding: isAchieved || isOverdue || isNearDeadline ? '2px 6px' : undefined,
+                      borderRadius: '4px',
                     }}
                   >
-                    {goal.percentage >= 100
+                    {isAchieved
                       ? '✓ Achieved'
-                      : daysRemaining <= 0
+                      : isOverdue
                         ? 'Overdue'
-                        : `${daysRemaining}d left`}
+                        : isNearDeadline
+                          ? `${daysRemaining}d left!`
+                          : `${daysRemaining}d left`}
                   </span>
                 )}
               </div>

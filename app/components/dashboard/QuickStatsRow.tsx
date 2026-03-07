@@ -1,6 +1,6 @@
 'use client';
 
-import { Wallet, Activity, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Wallet, BarChart3, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 
 interface QuickStatsRowProps {
   liquidityINR: number;
@@ -17,6 +17,22 @@ interface StatCard {
   icon: React.ReactNode;
   color: string;
   bgGrad: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+
+/** Named thresholds for Indian numbering system */
+const CRORE = 10_000_000;
+const LAKH = 100_000;
+const THOUSAND = 1_000;
+
+/** Format large numbers with K/L/Cr suffixes for readability */
+function formatAmount(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= CRORE) return `${sign}₹${(abs / CRORE).toFixed(2)}Cr`;
+  if (abs >= LAKH) return `${sign}₹${(abs / LAKH).toFixed(2)}L`;
+  if (abs >= THOUSAND) return `${sign}₹${(abs / THOUSAND).toFixed(1)}K`;
+  return `${sign}₹${abs.toLocaleString()}`;
 }
 
 export function QuickStatsRow({
@@ -29,40 +45,49 @@ export function QuickStatsRow({
   const stats: StatCard[] = [
     {
       label: 'Liquid Cash',
-      value: `₹${liquidityINR.toLocaleString()}`,
+      value: formatAmount(liquidityINR),
+      subValue: 'Available balance',
       icon: <Wallet size={18} />,
       color: '#818cf8',
       bgGrad: 'linear-gradient(135deg, rgba(129, 140, 248, 0.08), rgba(129, 140, 248, 0.02))',
+      trend: 'neutral',
     },
     {
       label: 'Investments',
-      value: `₹${totalInvestment.toLocaleString()}`,
+      value: formatAmount(totalInvestment),
+      subValue: 'Total deployed',
       icon: <BarChart3 size={18} />,
       color: '#10b981',
       bgGrad: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
+      trend: 'neutral',
     },
     {
       label: 'Unrealized P&L',
-      value: `${totalUnrealizedPnl >= 0 ? '+' : ''}₹${totalUnrealizedPnl.toLocaleString()}`,
-      subValue: `${investmentPnlPercent >= 0 ? '+' : ''}${investmentPnlPercent.toFixed(2)}%`,
+      value: `${totalUnrealizedPnl >= 0 ? '+' : ''}${formatAmount(totalUnrealizedPnl)}`,
+      subValue: `${investmentPnlPercent >= 0 ? '+' : ''}${investmentPnlPercent.toFixed(2)}% overall`,
       icon: totalUnrealizedPnl >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />,
       color: totalUnrealizedPnl >= 0 ? '#34d399' : '#f87171',
       bgGrad:
         totalUnrealizedPnl >= 0
           ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(52, 211, 153, 0.02))'
           : 'linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(248, 113, 113, 0.02))',
+      trend: totalUnrealizedPnl >= 0 ? 'up' : 'down',
     },
     {
       label: "Day's Change",
-      value: `${stockDayChange >= 0 ? '+' : ''}₹${stockDayChange.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-      icon: <Activity size={18} />,
+      value: `${stockDayChange >= 0 ? '+' : ''}${formatAmount(stockDayChange)}`,
+      subValue: "Today's movement",
+      icon: <TrendingUp size={18} />,
       color: stockDayChange >= 0 ? '#10b981' : '#ef4444',
       bgGrad:
         stockDayChange >= 0
           ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))'
           : 'linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.02))',
+      trend: stockDayChange >= 0 ? 'up' : 'down',
     },
   ];
+
+  const animationDelays = ['0s', '0.07s', '0.14s', '0.21s'];
 
   return (
     <section
@@ -78,6 +103,7 @@ export function QuickStatsRow({
           key={idx}
           className="fade-in"
           style={{
+            animationDelay: animationDelays[idx] ?? '0s',
             background: 'rgba(15, 23, 42, 0.4)',
             backdropFilter: 'blur(10px)',
             borderRadius: '20px',
@@ -146,20 +172,11 @@ export function QuickStatsRow({
             style={{
               fontSize: 'clamp(1.1rem, 3.5vw, 1.4rem)',
               fontWeight: '900',
-              color:
-                stat.label === 'Unrealized P&L' || stat.label === "Day's Change"
-                  ? stat.color
-                  : '#fff',
+              color: stat.trend !== 'neutral' ? stat.color : '#fff',
               letterSpacing: '-0.02em',
               position: 'relative',
-              background:
-                stat.label === 'Unrealized P&L' || stat.label === "Day's Change"
-                  ? 'none'
-                  : undefined,
-              WebkitTextFillColor:
-                stat.label === 'Unrealized P&L' || stat.label === "Day's Change"
-                  ? 'currentColor'
-                  : undefined,
+              background: stat.trend !== 'neutral' ? 'none' : undefined,
+              WebkitTextFillColor: stat.trend !== 'neutral' ? 'currentColor' : undefined,
             }}
           >
             {stat.value}
@@ -167,24 +184,17 @@ export function QuickStatsRow({
           {stat.subValue && (
             <div
               style={{
-                fontSize: '0.8rem',
-                fontWeight: '800',
-                color: stat.color,
+                fontSize: '0.72rem',
+                fontWeight: '700',
+                color: stat.trend !== 'neutral' ? stat.color : '#64748b',
                 marginTop: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
               }}
             >
-              <div
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: stat.color,
-                  boxShadow: `0 0 5px ${stat.color}`,
-                }}
-              />
+              {stat.trend === 'up' && <span style={{ fontSize: '0.65rem' }}>▲</span>}
+              {stat.trend === 'down' && <span style={{ fontSize: '0.65rem' }}>▼</span>}
               {stat.subValue}
             </div>
           )}
