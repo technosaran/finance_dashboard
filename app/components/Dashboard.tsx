@@ -345,10 +345,7 @@ export default function Dashboard() {
                   flexWrap: 'wrap',
                 }}
               >
-                {greeting.text},{' '}
-                <span className="gradient-text">
-                  {displayName}!
-                </span>
+                {greeting.text}, <span className="gradient-text">{displayName}!</span>
               </h1>
             </div>
             <p

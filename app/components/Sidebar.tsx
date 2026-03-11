@@ -474,9 +474,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 border: '1px solid rgba(99, 102, 241, 0.1)',
               }}
             >
-              <div className="user-avatar">
-                {getUserInitials(user)}
-              </div>
+              <div className="user-avatar">{getUserInitials(user)}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
