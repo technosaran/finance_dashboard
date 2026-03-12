@@ -445,8 +445,8 @@ export default function LedgerClient() {
             <div
               style={{
                 background: '#0f172a',
-                padding: '24px',
-                borderRadius: '24px',
+                padding: '12px',
+                borderRadius: '16px',
                 border: '1px solid #1e293b',
                 width: '100%',
               }}
@@ -455,16 +455,16 @@ export default function LedgerClient() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '20px',
+                  gap: '8px',
+                  marginBottom: '10px',
                   color: '#818cf8',
                 }}
               >
-                <CalendarIcon size={18} strokeWidth={2.5} />
+                <CalendarIcon size={14} strokeWidth={2.5} />
                 <span
                   style={{
                     fontWeight: '900',
-                    fontSize: '0.85rem',
+                    fontSize: '0.7rem',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
                   }}
@@ -479,12 +479,13 @@ export default function LedgerClient() {
                                     border: none !important;
                                     color: #cbd5e1 !important;
                                     font-family: inherit !important;
+                                    font-size: 0.7rem !important;
                                 }
                                 .custom-calendar .react-calendar__tile { 
-                                    padding: 12px 0 !important; 
-                                    font-size: 0.85rem !important;
+                                    padding: 6px 0 !important; 
+                                    font-size: 0.7rem !important;
                                     font-weight: 700 !important;
-                                    border-radius: 12px !important;
+                                    border-radius: 8px !important;
                                     color: #cbd5e1 !important;
                                     transition: all 0.2s;
                                 }
@@ -503,13 +504,18 @@ export default function LedgerClient() {
                                 .custom-calendar .react-calendar__tile--active { 
                                     background: #6366f1 !important; 
                                     color: white !important; 
-                                    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+                                    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+                                }
+                                .custom-calendar .react-calendar__navigation { 
+                                    margin-bottom: 4px !important;
                                 }
                                 .custom-calendar .react-calendar__navigation button { 
                                     color: #f8fafc !important; 
                                     font-weight: 800 !important;
-                                    border-radius: 10px;
-                                    font-size: 1rem;
+                                    border-radius: 8px;
+                                    font-size: 0.75rem;
+                                    min-width: 28px !important;
+                                    padding: 2px !important;
                                 }
                                 .custom-calendar .react-calendar__navigation button:hover {
                                     background: rgba(255, 255, 255, 0.05) !important;
@@ -518,7 +524,7 @@ export default function LedgerClient() {
                                     text-decoration: none !important;
                                     color: #475569 !important;
                                     font-weight: 950 !important;
-                                    font-size: 0.7rem;
+                                    font-size: 0.6rem;
                                     text-transform: uppercase;
                                 }
                             `}</style>

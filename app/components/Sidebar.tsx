@@ -488,52 +488,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 >
                   {getUserDisplayName(user)}
                 </div>
-                <div
-                  style={{
-                    fontSize: '0.62rem',
-                    color: '#475569',
-                    fontWeight: '500',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {user.email}
-                </div>
               </div>
             </div>
           )}
-
-          {/* Command Palette Button */}
-          <button
-            onClick={() => {
-              window.dispatchEvent(new Event('open-command-palette'));
-              onClose?.();
-            }}
-            style={{
-              padding: '8px 12px',
-              marginBottom: '4px',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'rgba(99, 102, 241, 0.05)',
-              border: '1px solid rgba(99, 102, 241, 0.1)',
-              cursor: 'pointer',
-              width: '100%',
-              textAlign: 'left',
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(99, 102, 241, 0.05)')}
-          >
-            <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#475569' }}>
-              Quick search
-            </span>
-            <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#818cf8' }}>
-              Click to Open
-            </span>
-          </button>
 
           <Link href="/settings" style={{ textDecoration: 'none' }} onClick={onClose}>
             <div
