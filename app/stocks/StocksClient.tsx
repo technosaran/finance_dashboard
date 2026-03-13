@@ -225,12 +225,23 @@ export default function StocksClient() {
 
         // 2. Add transaction which will update holdings AND log to ledger
         const investment = qty * avg;
+        let finalBrokerage = 0;
+        let finalTaxes = 0;
+
+        if (settings.autoCalculateCharges && qty > 0 && avg > 0) {
+          const calculatedCharges = calculateStockCharges('BUY', qty, avg, settings);
+          finalBrokerage = calculatedCharges.brokerage;
+          finalTaxes = calculatedCharges.taxes;
+        }
+
         await addStockTransaction({
           stockId: targetStockId,
           transactionType: 'BUY',
           quantity: qty,
           price: avg,
           totalAmount: investment,
+          brokerage: finalBrokerage,
+          taxes: finalTaxes,
           transactionDate: new Date().toISOString().split('T')[0],
           accountId: selectedAccountId !== '' ? Number(selectedAccountId) : undefined,
           notes: 'Initial portfolio entry',

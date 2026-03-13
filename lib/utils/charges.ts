@@ -11,8 +11,8 @@ const FNO_RATES = {
   BROKERAGE_PERCENT: 0.03,
 
   // STT
-  FUTURES_STT_RATE: 0.0125, // 0.0125% on sell side (updated 2024)
-  OPTIONS_STT_RATE: 0.0625, // 0.0625% on sell side (on premium, updated 2024)
+  FUTURES_STT_RATE: 0.02, // 0.02% on sell side (updated Oct 2024)
+  OPTIONS_STT_RATE: 0.1, // 0.1% on sell side (on premium, updated Oct 2024)
 
   // Exchange Transaction Charges (NSE)
   FUTURES_TRANS_CHARGE: 0.00173, // 0.00173% of turnover
@@ -140,13 +140,15 @@ export const calculateFnoCharges = (
   const brokerage = entryBrokerage + exitBrokerage;
 
   // 2. STT (only on sell side)
+  // If tradeType is BUY, exit is Sell. If SELL, entry is Sell.
+  const sellTurnover = tradeType === 'BUY' ? exitTurnover : entryTurnover;
   let stt: number;
   if (isOpt) {
     // Options: STT on sell side premium
-    stt = exitTurnover * (FNO_RATES.OPTIONS_STT_RATE / 100);
+    stt = sellTurnover * (FNO_RATES.OPTIONS_STT_RATE / 100);
   } else {
     // Futures: STT on sell side
-    stt = exitTurnover * (FNO_RATES.FUTURES_STT_RATE / 100);
+    stt = sellTurnover * (FNO_RATES.FUTURES_STT_RATE / 100);
   }
   stt = Math.round(stt);
 
@@ -158,8 +160,10 @@ export const calculateFnoCharges = (
   const sebiCharges = totalTurnover * (FNO_RATES.SEBI_CHARGE / 100);
 
   // 5. Stamp Duty (on buy side only)
+  // If tradeType is BUY, entry is Buy. If SELL, exit is Buy.
+  const buyTurnover = tradeType === 'BUY' ? entryTurnover : exitTurnover;
   const stampRate = isOpt ? FNO_RATES.OPTIONS_STAMP_DUTY : FNO_RATES.FUTURES_STAMP_DUTY;
-  const stampDuty = entryTurnover * (stampRate / 100);
+  const stampDuty = buyTurnover * (stampRate / 100);
 
   // 6. GST (18% on brokerage + transaction charges + SEBI charges)
   const gst = (brokerage + transCharges + sebiCharges) * (FNO_RATES.GST_RATE / 100);

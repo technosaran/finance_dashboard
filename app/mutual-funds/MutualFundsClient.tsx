@@ -37,6 +37,7 @@ import { EmptyPortfolioVisual } from '../components/Visuals';
 import { useFinance } from '../components/FinanceContext';
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
 import { logError } from '@/lib/utils/logger';
+import { calculateMfCharges } from '@/lib/utils/charges';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
@@ -129,7 +130,10 @@ export default function MutualFundsClient() {
     .filter(
       (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
     )
-    .reduce((sum: number, t: MutualFundTransaction) => sum + t.totalAmount * 0.00005, 0);
+    .reduce((sum: number, t: MutualFundTransaction) => {
+      const charges = calculateMfCharges(t.transactionType, t.totalAmount);
+      return sum + charges.stampDuty;
+    }, 0);
 
   // Lifetime Earned = (Total Sells + Current Value) - (Total Buys + Charges)
   const lifetimeEarned = totalSells + totalCurrentValue - (totalBuys + totalMfCharges);
