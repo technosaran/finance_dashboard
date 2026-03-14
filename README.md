@@ -153,7 +153,7 @@ The application uses the following Supabase tables:
 | **Bonds**        | `bonds`, `bond_transactions`                                            |
 | **Trading**      | `fno_trades`, `forex_transactions`                                      |
 
-For detailed schema documentation, see [DATABASE.md](./DATABASE.md).
+For detailed schema documentation, see [DATABASE.md](./docs/DATABASE.md).
 
 ## Deployment
 
@@ -168,14 +168,14 @@ For detailed schema documentation, see [DATABASE.md](./DATABASE.md).
 
 Comprehensive documentation is available:
 
-- **[API Documentation](./API.md)** — API endpoints, request/response formats, error handling
-- **[Architecture](./ARCHITECTURE.md)** — System design, data flow, and architectural decisions
-- **[Database](./DATABASE.md)** — Database schema, RLS policies, and query examples
-- **[Developer Guide](./DEVELOPER_GUIDE.md)** — Common development tasks and code examples
-- **[Testing](./TESTING.md)** — Testing strategy, examples, and best practices
-- **[Contributing](./CONTRIBUTING.md)** — Contribution guidelines and workflow
-- **[Security](./SECURITY.md)** — Security policy and vulnerability reporting
-- **[Changelog](./CHANGELOG.md)** — Version history and release notes
+- **[API Documentation](./docs/API.md)** — API endpoints, request/response formats, error handling
+- **[Architecture](./docs/ARCHITECTURE.md)** — System design, data flow, and architectural decisions
+- **[Database](./docs/DATABASE.md)** — Database schema, RLS policies, and query examples
+- **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** — Common development tasks and code examples
+- **[Testing](./docs/TESTING.md)** — Testing strategy, examples, and best practices
+- **[Contributing](./docs/CONTRIBUTING.md)** — Contribution guidelines and workflow
+- **[Security](./docs/SECURITY.md)** — Security policy and vulnerability reporting
+- **[Changelog](./docs/CHANGELOG.md)** — Version history and release notes
 
 ## 🔒 Security & Quality
 
