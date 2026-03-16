@@ -57,7 +57,7 @@ function AuthConsumer({
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#020617',
+          backgroundColor: '#000000',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -124,7 +124,7 @@ function AuthConsumer({
         style={{
           display: 'flex',
           height: '100dvh',
-          backgroundColor: '#020617',
+          backgroundColor: '#000000',
           flexDirection: 'column',
           overflow: 'hidden',
         }}
