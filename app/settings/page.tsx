@@ -132,7 +132,7 @@ export default function SettingsPage() {
                 border: 'none',
                 background: isActive
                   ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
-                  : 'rgba(30, 41, 59, 0.5)',
+                  : 'rgba(10, 10, 10, 0.5)',
                 color: isActive ? '#fff' : '#94a3b8',
                 fontWeight: '600',
                 fontSize: '0.9rem',
@@ -204,8 +204,8 @@ export default function SettingsPage() {
                   onChange={(e) => updateSettings({ displayName: e.target.value })}
                   placeholder="Enter your name"
                   style={{
-                    background: '#020617',
-                    border: '2px solid #1e293b',
+                    background: '#000000',
+                    border: '2px solid #111111',
                     padding: '14px 16px',
                     borderRadius: '14px',
                     color: '#fff',
@@ -501,9 +501,9 @@ export default function SettingsPage() {
                           flex: 1,
                           padding: '12px',
                           borderRadius: '12px',
-                          border: `1px solid ${settings.brokerageType === type ? '#3b82f6' : '#334155'}`,
+                          border: `1px solid ${settings.brokerageType === type ? '#3b82f6' : '#1a1a1a'}`,
                           background:
-                            settings.brokerageType === type ? 'rgba(59, 130, 246, 0.1)' : '#020617',
+                            settings.brokerageType === type ? 'rgba(59, 130, 246, 0.1)' : '#000000',
                           color: settings.brokerageType === type ? '#3b82f6' : '#94a3b8',
                           fontWeight: '700',
                           fontSize: '0.85rem',
@@ -708,8 +708,8 @@ function AccountSelect({
           onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
           style={{
             width: '100%',
-            background: '#020617',
-            border: '1px solid #334155',
+            background: '#000000',
+            border: '1px solid #1a1a1a',
             padding: '12px 16px',
             borderRadius: '12px',
             color: '#fff',
@@ -812,7 +812,7 @@ function ToggleItem({
         style={{
           width: '44px',
           height: '24px',
-          background: isActive ? color : '#334155',
+          background: isActive ? color : '#1a1a1a',
           borderRadius: '100px',
           position: 'relative',
           transition: 'background 0.3s',
@@ -869,8 +869,8 @@ function ChargeInput({
           step="0.001"
           style={{
             width: '100%',
-            background: '#020617',
-            border: '1px solid #334155',
+            background: '#000000',
+            border: '1px solid #1a1a1a',
             padding: '10px 14px',
             paddingRight: '40px',
             borderRadius: '12px',

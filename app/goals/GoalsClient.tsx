@@ -79,7 +79,7 @@ export default function GoalsClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#020617',
+          backgroundColor: '#000000',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -100,7 +100,7 @@ export default function GoalsClient() {
     <div
       className="main-content"
       style={{
-        backgroundColor: '#020617',
+        backgroundColor: '#000000',
         minHeight: '100vh',
         color: '#f8fafc',
         padding: 'clamp(16px, 4vw, 24px)',
@@ -150,9 +150,9 @@ export default function GoalsClient() {
                 padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
                 minHeight: '44px',
                 borderRadius: '14px',
-                background: '#0f172a',
+                background: '#050505',
                 color: '#fff',
-                border: '1px solid #1e293b',
+                border: '1px solid #111111',
                 cursor: 'pointer',
                 fontWeight: '700',
                 fontSize: '0.85rem',
@@ -162,10 +162,10 @@ export default function GoalsClient() {
                 transition: '0.2s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#1e293b';
+                e.currentTarget.style.background = '#111111';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#0f172a';
+                e.currentTarget.style.background = '#050505';
               }}
             >
               <Download size={16} color="#10b981" /> Export CSV
@@ -204,10 +204,10 @@ export default function GoalsClient() {
         {/* Achievement Statistics */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
             padding: '28px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #111111',
             marginBottom: '24px',
             position: 'relative',
             overflow: 'hidden',
@@ -384,9 +384,9 @@ export default function GoalsClient() {
                 <div
                   key={goal.id}
                   style={{
-                    background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+                    background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
                     borderRadius: '24px',
-                    border: '1px solid #1e293b',
+                    border: '1px solid #111111',
                     padding: '24px',
                     transition: 'all 0.3s',
                     display: 'flex',
@@ -397,12 +397,12 @@ export default function GoalsClient() {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-6px)';
-                    e.currentTarget.style.borderColor = '#334155';
+                    e.currentTarget.style.borderColor = '#1a1a1a';
                     e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(0, 0, 0, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = '#1e293b';
+                    e.currentTarget.style.borderColor = '#111111';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
@@ -532,7 +532,7 @@ export default function GoalsClient() {
                       style={{
                         width: '100%',
                         height: '10px',
-                        background: '#020617',
+                        background: '#000000',
                         borderRadius: '100px',
                         overflow: 'hidden',
                       }}
@@ -555,7 +555,7 @@ export default function GoalsClient() {
                       gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 120px), 1fr))',
                       gap: '20px',
                       padding: '24px',
-                      background: 'rgba(2, 6, 23, 0.3)',
+                      background: 'rgba(0, 0, 0, 0.3)',
                       borderRadius: '20px',
                     }}
                   >
@@ -640,7 +640,7 @@ export default function GoalsClient() {
                         top: '25px',
                         right: '-45px',
                         background: '#34d399',
-                        color: '#020617',
+                        color: '#000000',
                         padding: '8px 50px',
                         transform: 'rotate(45deg)',
                         fontSize: '0.75rem',
@@ -661,9 +661,9 @@ export default function GoalsClient() {
                 gridColumn: '1 / -1',
                 padding: '120px 20px',
                 textAlign: 'center',
-                background: 'rgba(15, 23, 42, 0.2)',
+                background: 'rgba(0, 0, 0, 0.2)',
                 borderRadius: '40px',
-                border: '2px dashed #1e293b',
+                border: '2px dashed #111111',
                 color: '#64748b',
               }}
             >
@@ -708,10 +708,10 @@ export default function GoalsClient() {
         >
           <div
             style={{
-              background: '#0f172a',
+              background: '#050505',
               padding: 'clamp(24px, 5vw, 40px)',
               borderRadius: '32px',
-              border: '1px solid #334155',
+              border: '1px solid #1a1a1a',
               width: '100%',
               maxWidth: '550px',
               maxHeight: '95vh',
@@ -775,8 +775,8 @@ export default function GoalsClient() {
                   required
                   aria-label="Goal name"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '18px',
                     borderRadius: '18px',
                     color: '#fff',
@@ -813,8 +813,8 @@ export default function GoalsClient() {
                     required
                     aria-label="Target amount"
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -842,8 +842,8 @@ export default function GoalsClient() {
                     placeholder="0.00"
                     aria-label="Current amount"
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -878,8 +878,8 @@ export default function GoalsClient() {
                     onChange={(e) => setDeadline(e.target.value)}
                     aria-label="Deadline"
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -905,8 +905,8 @@ export default function GoalsClient() {
                     onChange={(e) => setCategory(e.target.value)}
                     aria-label="Goal category"
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -941,8 +941,8 @@ export default function GoalsClient() {
                     onChange={(e) => setSelectedAccountId(Number(e.target.value))}
                     aria-label="Select bank account"
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',

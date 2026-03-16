@@ -242,9 +242,9 @@ export default function LedgerClient() {
                 padding: 'clamp(12px, 2.5vw, 14px) clamp(16px, 3vw, 20px)',
                 minHeight: '44px',
                 borderRadius: '16px',
-                background: 'rgba(15, 23, 42, 0.6)',
+                background: 'rgba(0, 0, 0, 0.6)',
                 color: '#94a3b8',
-                border: '1px solid #1e293b',
+                border: '1px solid #111111',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -377,7 +377,7 @@ export default function LedgerClient() {
             className="stat-card stat-card--indigo"
             style={{
               background:
-                'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(30, 41, 59, 0.4) 100%)',
+                'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(10, 10, 10, 0.4) 100%)',
             }}
           >
             <div
@@ -586,14 +586,14 @@ export default function LedgerClient() {
                           position: 'sticky',
                           top: '0',
                           zIndex: 10,
-                          background: 'rgba(2, 6, 23, 0.8)',
+                          background: 'rgba(0, 0, 0, 0.8)',
                           backdropFilter: 'blur(12px)',
                           padding: '10px 0',
                         }}
                       >
                         <div
                           style={{
-                            background: isToday ? '#6366f1' : '#1e293b',
+                            background: isToday ? '#6366f1' : '#111111',
                             color: '#fff',
                             padding: '6px 16px',
                             borderRadius: '12px',
@@ -614,7 +614,7 @@ export default function LedgerClient() {
                           style={{
                             height: '1px',
                             flex: 1,
-                            background: 'linear-gradient(to right, #1e293b, transparent)',
+                            background: 'linear-gradient(to right, #111111, transparent)',
                           }}
                         ></div>
                         <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569' }}>
@@ -818,9 +818,9 @@ export default function LedgerClient() {
                 style={{
                   padding: '120px 40px',
                   textAlign: 'center',
-                  background: 'rgba(15, 23, 42, 0.3)',
+                  background: 'rgba(0, 0, 0, 0.3)',
                   borderRadius: '32px',
-                  border: '1px dashed #1e293b',
+                  border: '1px dashed #111111',
                 }}
               >
                 <EmptyTransactionsVisual />
@@ -852,7 +852,7 @@ export default function LedgerClient() {
                     setSelectedDate(null);
                   }}
                   style={{
-                    background: '#1e293b',
+                    background: '#111111',
                     border: 'none',
                     color: '#fff',
                     padding: '12px 24px',
@@ -916,10 +916,10 @@ export default function LedgerClient() {
                     style={{
                       display: 'flex',
                       gap: '4px',
-                      background: '#020617',
+                      background: '#000000',
                       padding: '4px',
                       borderRadius: '12px',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #111111',
                     }}
                   >
                     <button

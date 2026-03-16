@@ -228,9 +228,9 @@ export default function AccountsClient() {
             style={{
               padding: '10px 18px',
               borderRadius: '12px',
-              background: '#0f172a',
+              background: '#050505',
               color: '#fff',
-              border: '1px solid #1e293b',
+              border: '1px solid #111111',
               fontWeight: '700',
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -240,8 +240,8 @@ export default function AccountsClient() {
               transition: '0.2s',
               flexShrink: 0,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#1e293b')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#0f172a')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#111111')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#050505')}
             aria-label="Export accounts to CSV"
           >
             <Download size={16} color="#10b981" aria-hidden="true" />{' '}
@@ -252,9 +252,9 @@ export default function AccountsClient() {
             style={{
               padding: '10px 18px',
               borderRadius: '12px',
-              background: '#0f172a',
+              background: '#050505',
               color: '#fff',
-              border: '1px solid #1e293b',
+              border: '1px solid #111111',
               fontWeight: '700',
               fontSize: '0.8rem',
               cursor: 'pointer',
@@ -264,8 +264,8 @@ export default function AccountsClient() {
               transition: '0.2s',
               flexShrink: 0,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#1e293b')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#0f172a')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#111111')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#050505')}
             aria-label="Transfer funds between accounts"
           >
             <ArrowRightLeft size={16} color="#818cf8" aria-hidden="true" /> Transfer
@@ -306,10 +306,10 @@ export default function AccountsClient() {
         <div
           className="premium-card"
           style={{
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            background: 'linear-gradient(135deg, #111111 0%, #050505 100%)',
             padding: 'clamp(20px, 5vw, 32px)',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #111111',
             position: 'relative',
             overflow: 'hidden',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
@@ -475,8 +475,8 @@ export default function AccountsClient() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: '#020617',
-                      border: '1px solid #334155',
+                      background: '#000000',
+                      border: '1px solid #1a1a1a',
                       borderRadius: '12px',
                       padding: '12px',
                       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
@@ -549,9 +549,9 @@ export default function AccountsClient() {
             <div
               key={account.id}
               style={{
-                background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+                background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
                 borderRadius: '16px',
-                border: '1px solid #1e293b',
+                border: '1px solid #111111',
                 padding: '24px',
                 position: 'relative',
                 overflow: 'hidden',
@@ -569,7 +569,7 @@ export default function AccountsClient() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = '#1e293b';
+                e.currentTarget.style.borderColor = '#111111';
                 e.currentTarget.style.boxShadow = 'none';
               }}
               onClick={() => handleEditClick(account)}
@@ -813,8 +813,8 @@ export default function AccountsClient() {
                   disabled={accountName.toLowerCase() === 'physical cash'}
                   placeholder="e.g. Primary Savings"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: accountName.toLowerCase() === 'physical cash' ? '#64748b' : '#fff',
@@ -845,8 +845,8 @@ export default function AccountsClient() {
                   disabled={accountName.toLowerCase() === 'physical cash'}
                   placeholder="e.g. HDFC Bank"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: accountName.toLowerCase() === 'physical cash' ? '#64748b' : '#fff',
@@ -881,8 +881,8 @@ export default function AccountsClient() {
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as 'INR' | 'USD')}
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '16px',
                       borderRadius: '16px',
                       color: '#fff',
@@ -914,8 +914,8 @@ export default function AccountsClient() {
                     onChange={(e) => setAccountType(e.target.value as AccountType)}
                     disabled={accountName.toLowerCase() === 'physical cash'}
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #111111',
                       padding: '16px',
                       borderRadius: '16px',
                       color: accountName.toLowerCase() === 'physical cash' ? '#64748b' : '#fff',
@@ -952,8 +952,8 @@ export default function AccountsClient() {
                   onChange={(e) => setBalance(e.target.value)}
                   placeholder="0.00"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1061,8 +1061,8 @@ export default function AccountsClient() {
                   value={sourceAccountId}
                   onChange={(e) => setSourceAccountId(Number(e.target.value))}
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1100,8 +1100,8 @@ export default function AccountsClient() {
                   value={targetAccountId}
                   onChange={(e) => setTargetAccountId(Number(e.target.value))}
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1141,8 +1141,8 @@ export default function AccountsClient() {
                   onChange={(e) => setTransferAmount(e.target.value)}
                   placeholder="0.00"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1158,7 +1158,7 @@ export default function AccountsClient() {
                 style={{
                   marginTop: '12px',
                   background: '#fff',
-                  color: '#020617',
+                  color: '#000000',
                   padding: '18px',
                   borderRadius: '18px',
                   border: 'none',
@@ -1251,8 +1251,8 @@ export default function AccountsClient() {
                   onChange={(e) => setAddFundsAmount(e.target.value)}
                   placeholder="0.00"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1282,8 +1282,8 @@ export default function AccountsClient() {
                   onChange={(e) => setAddFundsDescription(e.target.value)}
                   placeholder="e.g. Dividend Payment"
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1309,8 +1309,8 @@ export default function AccountsClient() {
                   value={addFundsCategory}
                   onChange={(e) => setAddFundsCategory(e.target.value)}
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #111111',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1332,7 +1332,7 @@ export default function AccountsClient() {
                 style={{
                   marginTop: '12px',
                   background: '#34d399',
-                  color: '#020617',
+                  color: '#000000',
                   padding: '18px',
                   borderRadius: '18px',
                   border: 'none',
