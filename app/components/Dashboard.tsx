@@ -406,9 +406,9 @@ export default function Dashboard() {
           <div
             className="fade-in"
             style={{
-              background: 'linear-gradient(145deg, #0f172a 0%, #0a0f1e 100%)',
-              borderRadius: '32px',
-              border: '1px dashed rgba(255,255,255,0.08)',
+              background: '#000000',
+              borderRadius: '8px',
+              border: '2px dashed #ffffff',
               padding: '64px 32px',
               textAlign: 'center',
               gridColumn: '1 / -1',

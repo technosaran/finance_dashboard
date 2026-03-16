@@ -27,19 +27,7 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Decorative radial glow */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-30px',
-          right: '-30px',
-          width: '120px',
-          height: '120px',
-          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.08), transparent)',
-          filter: 'blur(30px)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* No decorative radial glow for ultra-dark look */}
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
@@ -47,13 +35,13 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
           style={{
             width: '32px',
             height: '32px',
-            borderRadius: '10px',
-            background: 'rgba(245, 158, 11, 0.1)',
+            borderRadius: '4px',
+            background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#f59e0b',
-            boxShadow: '0 0 15px rgba(245, 158, 11, 0.15)',
+            color: '#000000',
+            boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
           }}
         >
           <Target size={16} />
@@ -79,10 +67,11 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
           className="view-all-link"
           style={{
             marginLeft: 'auto',
-            color: '#f59e0b',
+            color: '#ffffff',
             textDecoration: 'none',
-            border: '1px solid rgba(245, 158, 11, 0.15)',
-            background: 'rgba(245, 158, 11, 0.06)',
+            border: '1.5px solid #ffffff',
+            background: 'transparent',
+            borderRadius: '4px',
           }}
         >
           View All

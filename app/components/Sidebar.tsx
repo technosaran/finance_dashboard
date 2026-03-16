@@ -157,8 +157,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         aside {
           width: 230px;
           min-width: 230px;
-          background: #ffffff;
-          border-right: 1px solid var(--sidebar-border);
+          background: var(--sidebar-bg);
+          border-right: 2px solid #ffffff;
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -177,12 +177,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           right: 0;
           width: 1px;
           height: 100%;
-          background: linear-gradient(
-            180deg,
-            transparent 0%,
-            rgba(14, 165, 233, 0.1) 50%,
-            transparent 100%
-          );
+          background: transparent;
         }
         @media (min-width: 768px) {
           aside {
@@ -213,10 +208,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               position: 'absolute',
               width: '120px',
               height: '120px',
-              background: 'radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%)',
+              background: 'transparent',
               top: '-20px',
               left: '-20px',
-              filter: 'blur(30px)',
+              filter: 'none',
               pointerEvents: 'none',
             }}
           />
@@ -224,15 +219,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{
               minWidth: '40px',
               height: '40px',
-              background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)',
-              borderRadius: '14px',
+              background: '#ffffff',
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
-              fontWeight: '900',
+              color: '#000000',
+              fontWeight: '950',
               fontSize: '1.2rem',
-              boxShadow: 'none',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
               flexShrink: 0,
               position: 'relative',
             }}
@@ -253,9 +248,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               FIN
               <span
                 style={{
-                  background: 'linear-gradient(135deg, #0ea5e9, #38bdf8)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  color: '#ffffff',
                 }}
               >
                 CORE
@@ -324,17 +317,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       position: 'relative',
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isActive
-                        ? `linear-gradient(135deg, ${item.color}15, ${item.color}05)`
+                        ? 'rgba(255, 255, 255, 0.1)'
                         : isHovered
-                          ? 'rgba(14, 165, 233, 0.05)'
+                          ? 'rgba(255, 255, 255, 0.05)'
                           : 'transparent',
-                      color: isActive ? item.color : isHovered ? 'var(--text-primary)' : '#64748b',
+                      color: isActive ? '#ffffff' : isHovered ? 'var(--text-primary)' : '#64748b',
                       border: isActive
-                        ? `1px solid ${item.color}20`
+                        ? '1px solid rgba(255, 255, 255, 0.3)'
                         : isHovered
-                          ? '1px solid rgba(14, 165, 233, 0.1)'
+                          ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid transparent',
-                      boxShadow: isActive ? `0 4px 12px ${item.color}05` : 'none',
+                      boxShadow: 'none',
                     }}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={onClose}
@@ -349,15 +342,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           top: '20%',
                           bottom: '20%',
                           width: '3px',
-                          background: item.color,
+                          background: '#ffffff',
                           borderRadius: '0 4px 4px 0',
-                          boxShadow: `0 0 10px ${item.color}`,
+                          boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
                         }}
                       />
                     )}
                     <div
                       style={{
-                        color: isActive ? item.color : 'inherit',
+                        color: isActive ? '#ffffff' : 'inherit',
                         transition: 'all 0.3s ease',
                         transform: isActive || isHovered ? 'scale(1.1)' : 'scale(1)',
                         display: 'flex',
@@ -408,19 +401,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
-            borderTop: '1px solid rgba(14, 165, 233, 0.08)',
+            borderTop: '2px solid #ffffff',
             position: 'relative',
           }}
         >
           <div
             style={{
-              position: 'absolute',
-              top: 0,
-              left: '10%',
-              right: '10%',
-              height: '1px',
-              background:
-                'linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent)',
+              display: 'none',
             }}
           />
 
@@ -435,7 +422,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 color: hoveredItem === 'settings' ? 'var(--text-primary)' : '#64748b',
                 transition: 'all 0.2s',
                 cursor: 'pointer',
-                background: hoveredItem === 'settings' ? 'rgba(14, 165, 233, 0.05)' : 'transparent',
+                background:
+                  hoveredItem === 'settings' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
                 minHeight: '44px',
               }}
               onMouseEnter={() => setHoveredItem('settings')}

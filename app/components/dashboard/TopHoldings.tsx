@@ -20,19 +20,7 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Decorative radial glow */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-30px',
-          right: '-30px',
-          width: '120px',
-          height: '120px',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent)',
-          filter: 'blur(30px)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* No decorative radial glow for ultra-dark look */}
 
       {/* Header */}
       <div
@@ -48,13 +36,13 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
             style={{
               width: '32px',
               height: '32px',
-              borderRadius: '10px',
-              background: 'rgba(16, 185, 129, 0.15)',
+              borderRadius: '4px',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#10b981',
-              boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)',
+              color: '#000000',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
             }}
           >
             <TrendingUp size={16} />
@@ -76,12 +64,12 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
           style={{
             fontSize: '0.72rem',
             fontWeight: '700',
-            color: '#10b981',
+            color: '#ffffff',
             textDecoration: 'none',
             padding: '4px 10px',
-            borderRadius: '8px',
-            border: '1px solid rgba(16, 185, 129, 0.15)',
-            background: 'rgba(16, 185, 129, 0.06)',
+            borderRadius: '4px',
+            border: '1.5px solid #ffffff',
+            background: 'transparent',
           }}
         >
           View All
@@ -106,9 +94,9 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '12px',
-                  borderRadius: '14px',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.04)',
+                  borderRadius: '4px',
+                  background: 'transparent',
+                  border: '1.5px solid rgba(255,255,255,0.2)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}

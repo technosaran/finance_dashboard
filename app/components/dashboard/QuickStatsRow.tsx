@@ -104,10 +104,9 @@ export function QuickStatsRow({
           className="fade-in"
           style={{
             animationDelay: animationDelays[idx] ?? '0s',
-            background: 'rgba(15, 23, 42, 0.4)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '20px',
-            border: `1px solid ${stat.color}20`,
+            background: '#000000',
+            borderRadius: '4px',
+            border: '1.5px solid #ffffff',
             padding: '24px',
             position: 'relative',
             overflow: 'hidden',
@@ -115,34 +114,20 @@ export function QuickStatsRow({
             boxShadow: `0 4px 20px -5px ${stat.color}05`,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.borderColor = `${stat.color}40`;
-            e.currentTarget.style.background = 'rgba(15, 23, 42, 0.6)';
-            e.currentTarget.style.boxShadow = `0 12px 24px -10px ${stat.color}20`;
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.background = '#0a0a0a';
+            e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.1)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.borderColor = `${stat.color}20`;
-            e.currentTarget.style.background = 'rgba(15, 23, 42, 0.4)';
-            e.currentTarget.style.boxShadow = `0 4px 20px -5px ${stat.color}05`;
+            e.currentTarget.style.background = '#000000';
+            e.currentTarget.style.boxShadow = 'none';
           }}
         >
           {/* Top accent bar */}
           <div
-            className="stat-accent-bar"
-            style={{ background: `linear-gradient(90deg, ${stat.color}, transparent)` }}
-          />
-          {/* Decorative radial glow */}
-          <div
             style={{
-              position: 'absolute',
-              top: '-20px',
-              right: '-20px',
-              width: '80px',
-              height: '80px',
-              background: `radial-gradient(circle, ${stat.color}15 0%, transparent 70%)`,
-              filter: 'blur(20px)',
-              pointerEvents: 'none',
+              display: 'none',
             }}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>

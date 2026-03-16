@@ -41,19 +41,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
         overflow: 'hidden',
       }}
     >
-      {/* Decorative radial glow */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-30px',
-          left: '-30px',
-          width: '120px',
-          height: '120px',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08), transparent)',
-          filter: 'blur(30px)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* No decorative radial glow for ultra-dark look */}
 
       {/* Header */}
       <div
@@ -69,13 +57,13 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             style={{
               width: '32px',
               height: '32px',
-              borderRadius: '10px',
-              background: 'rgba(99, 102, 241, 0.1)',
+              borderRadius: '4px',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#6366f1',
-              boxShadow: '0 0 15px rgba(99, 102, 241, 0.15)',
+              color: '#000000',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
             }}
           >
             <Sparkles size={16} />
@@ -92,12 +80,12 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             gap: '4px',
             fontSize: '0.75rem',
             fontWeight: '700',
-            color: '#6366f1',
+            color: '#ffffff',
             textDecoration: 'none',
             padding: '5px 10px',
-            borderRadius: '8px',
-            border: '1px solid rgba(99, 102, 241, 0.15)',
-            background: 'rgba(99, 102, 241, 0.05)',
+            borderRadius: '4px',
+            border: '1.5px solid #ffffff',
+            background: 'transparent',
             transition: 'all 0.2s',
           }}
         >
@@ -116,12 +104,8 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
               gap: '12px',
               padding: '10px 12px',
               borderRadius: '12px',
-              background:
-                tx.type === 'Income' ? 'rgba(52, 211, 153, 0.03)' : 'rgba(255,255,255,0.02)',
-              border:
-                tx.type === 'Income'
-                  ? '1px solid rgba(52, 211, 153, 0.08)'
-                  : '1px solid rgba(255,255,255,0.03)',
+              background: 'transparent',
+              border: '1.5px solid rgba(255,255,255,0.15)',
               transition: 'background 0.2s',
             }}
           >

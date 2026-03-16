@@ -147,9 +147,9 @@ export default function LedgerClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#020617',
+          backgroundColor: '#000000',
           minHeight: '100vh',
-          color: '#f8fafc',
+          color: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

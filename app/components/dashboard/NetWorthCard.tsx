@@ -28,9 +28,8 @@ export function NetWorthCard({
 
   return (
     <section className="wealth-card fade-in" style={{ marginBottom: '24px' }}>
-      <div className="premium-card wealth-card-content">
-        {/* Decorative glow */}
-        <div className="wealth-card-glow" />
+      <div className="premium-card" style={{ padding: '0' }}>
+        {/* No decorative glow for ultra-dark look */}
 
         <div className="wealth-card-inner">
           {/* Left: Net Worth Summary */}
@@ -39,9 +38,9 @@ export function NetWorthCard({
               <div
                 className="icon-badge"
                 style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                  color: '#fff',
-                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)',
+                  background: '#ffffff',
+                  color: '#000000',
+                  boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
                 }}
               >
                 <Zap size={20} />
@@ -89,12 +88,9 @@ export function NetWorthCard({
                 <div
                   style={{
                     padding: '6px 12px',
-                    borderRadius: '10px',
-                    background:
-                      globalLifetimeWealth >= 0
-                        ? 'rgba(16, 185, 129, 0.1)'
-                        : 'rgba(239, 68, 68, 0.1)',
-                    color: globalLifetimeWealth >= 0 ? '#10b981' : '#ef4444',
+                    borderRadius: '4px',
+                    border: '1.5px solid #ffffff',
+                    color: '#ffffff',
                     fontSize: '0.85rem',
                     fontWeight: '800',
                     display: 'flex',
@@ -118,7 +114,7 @@ export function NetWorthCard({
                 display: 'grid',
                 gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
                 gap: '24px',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
+                borderTop: '2px solid #ffffff',
                 paddingTop: '24px',
               }}
             >
