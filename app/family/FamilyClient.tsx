@@ -184,7 +184,7 @@ export default function FamilyClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#020617',
+          backgroundColor: '#000000',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -205,7 +205,7 @@ export default function FamilyClient() {
     <div
       className="main-content"
       style={{
-        backgroundColor: '#020617',
+        backgroundColor: '#000000',
         minHeight: '100vh',
         color: '#f8fafc',
         padding: 'clamp(12px, 4vw, 24px)',
@@ -389,7 +389,7 @@ export default function FamilyClient() {
                     <div
                       key={member.name}
                       style={{
-                        background: '#0f172a',
+                        background: '#050505',
                         borderRadius: 'clamp(20px, 4vw, 28px)',
                         border: `1px solid ${colorScheme.border}`,
                         padding: 'clamp(16px, 4vw, 24px)',
@@ -621,7 +621,7 @@ export default function FamilyClient() {
                   style={{
                     background: 'rgba(255,255,255,0.02)',
                     borderRadius: 'clamp(20px, 4vw, 28px)',
-                    border: '2px dashed #1e293b',
+                    border: '2px dashed #2a2a2a',
                     padding: 'clamp(24px, 5vw, 40px)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -640,7 +640,7 @@ export default function FamilyClient() {
                       'rgba(236, 72, 153, 0.03)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#1e293b';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#2a2a2a';
                     (e.currentTarget as HTMLButtonElement).style.color = '#475569';
                     (e.currentTarget as HTMLButtonElement).style.background =
                       'rgba(255,255,255,0.02)';
@@ -672,7 +672,7 @@ export default function FamilyClient() {
                   textAlign: 'center',
                   background: 'rgba(15, 23, 42, 0.3)',
                   borderRadius: 'clamp(24px, 5vw, 32px)',
-                  border: '2px dashed #1e293b',
+                  border: '2px dashed #2a2a2a',
                 }}
               >
                 <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
@@ -734,9 +734,9 @@ export default function FamilyClient() {
           <div className="section-fade-in">
             <div
               style={{
-                background: '#0f172a',
+                background: '#050505',
                 borderRadius: 'clamp(20px, 4vw, 28px)',
-                border: '1px solid #1e293b',
+                border: '1px solid #2a2a2a',
                 padding: 'clamp(16px, 4vw, 28px)',
               }}
             >

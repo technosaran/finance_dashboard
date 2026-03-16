@@ -294,7 +294,7 @@ export function CommandPalette() {
           width: '100%',
           maxWidth: '560px',
           margin: '0 16px',
-          background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+          background: 'linear-gradient(145deg, #050505 0%, #2a2a2a 100%)',
           borderRadius: '20px',
           border: '1px solid rgba(99, 102, 241, 0.15)',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.08)',

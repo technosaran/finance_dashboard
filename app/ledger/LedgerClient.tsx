@@ -244,7 +244,7 @@ export default function LedgerClient() {
                 borderRadius: '16px',
                 background: 'rgba(15, 23, 42, 0.6)',
                 color: '#94a3b8',
-                border: '1px solid #1e293b',
+                border: '1px solid #2a2a2a',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -593,7 +593,7 @@ export default function LedgerClient() {
                       >
                         <div
                           style={{
-                            background: isToday ? '#6366f1' : '#1e293b',
+                            background: isToday ? '#6366f1' : '#2a2a2a',
                             color: '#fff',
                             padding: '6px 16px',
                             borderRadius: '12px',
@@ -614,7 +614,7 @@ export default function LedgerClient() {
                           style={{
                             height: '1px',
                             flex: 1,
-                            background: 'linear-gradient(to right, #1e293b, transparent)',
+                            background: 'linear-gradient(to right, #2a2a2a, transparent)',
                           }}
                         ></div>
                         <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569' }}>
@@ -820,7 +820,7 @@ export default function LedgerClient() {
                   textAlign: 'center',
                   background: 'rgba(15, 23, 42, 0.3)',
                   borderRadius: '32px',
-                  border: '1px dashed #1e293b',
+                  border: '1px dashed #2a2a2a',
                 }}
               >
                 <EmptyTransactionsVisual />
@@ -852,7 +852,7 @@ export default function LedgerClient() {
                     setSelectedDate(null);
                   }}
                   style={{
-                    background: '#1e293b',
+                    background: '#2a2a2a',
                     border: 'none',
                     color: '#fff',
                     padding: '12px 24px',
@@ -916,10 +916,10 @@ export default function LedgerClient() {
                     style={{
                       display: 'flex',
                       gap: '4px',
-                      background: '#020617',
+                      background: '#000000',
                       padding: '4px',
                       borderRadius: '12px',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                     }}
                   >
                     <button
