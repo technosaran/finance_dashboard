@@ -291,7 +291,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   padding: '8px 12px 4px',
                   fontSize: '0.6rem',
                   fontWeight: '800',
-                  color: '#334155',
+                  color: '#1a1a1a',
                   letterSpacing: '1.5px',
                   textTransform: 'uppercase' as const,
                   userSelect: 'none' as const,
