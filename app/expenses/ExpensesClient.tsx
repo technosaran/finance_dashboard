@@ -147,7 +147,7 @@ export default function ExpensesClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#020617',
+          backgroundColor: '#000000',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -167,7 +167,7 @@ export default function ExpensesClient() {
   return (
     <div
       className="main-content"
-      style={{ backgroundColor: '#020617', minHeight: '100vh', color: '#f8fafc' }}
+      style={{ backgroundColor: '#000000', minHeight: '100vh', color: '#f8fafc' }}
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Section */}
@@ -189,10 +189,10 @@ export default function ExpensesClient() {
             <div
               style={{
                 display: 'flex',
-                background: '#0f172a',
+                background: '#050505',
                 padding: '6px',
                 borderRadius: '14px',
-                border: '1px solid #1e293b',
+                border: '1px solid #2a2a2a',
               }}
             >
               {['This Year', 'All Time'].map((tab) => (
@@ -206,7 +206,7 @@ export default function ExpensesClient() {
                     border: 'none',
                     background:
                       activeTab === tab
-                        ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)'
+                        ? 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)'
                         : 'transparent',
                     color: activeTab === tab ? '#fff' : '#64748b',
                     fontWeight: '700',
@@ -442,9 +442,9 @@ export default function ExpensesClient() {
                   style={{
                     padding: '80px 24px',
                     textAlign: 'center',
-                    background: '#0f172a',
+                    background: '#050505',
                     borderRadius: '24px',
-                    border: '1px dashed #1e293b',
+                    border: '1px dashed #2a2a2a',
                     color: '#94a3b8',
                   }}
                 >
@@ -482,9 +482,9 @@ export default function ExpensesClient() {
             </h3>
             <div
               style={{
-                background: '#0f172a',
+                background: '#050505',
                 borderRadius: '28px',
-                border: '1px solid #1e293b',
+                border: '1px solid #2a2a2a',
                 padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
