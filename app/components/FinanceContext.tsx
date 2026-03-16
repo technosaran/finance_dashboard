@@ -65,6 +65,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [mutualFundTransactions, setMutualFundTransactions] = useState<MutualFundTransaction[]>([]);
   const [fnoTrades, setFnoTrades] = useState<FnoTrade[]>([]);
   const [settings, setSettings] = useState<AppSettings>({
+    displayName: '',
     brokerageType: 'flat',
     brokerageValue: 0,
     sttRate: 0.1,
@@ -325,9 +326,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setSettings(updatedSettings);
 
       if (user) {
-        const { error } = await supabase
-          .from('app_settings')
-          .update({
+        const { error } = await supabase.from('app_settings').upsert(
+          {
+            user_id: user.id,
             display_name: updatedSettings.displayName || null,
             brokerage_type: updatedSettings.brokerageType,
             brokerage_value: updatedSettings.brokerageValue,
@@ -349,8 +350,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             expenses_visible: updatedSettings.expensesVisible,
             goals_visible: updatedSettings.goalsVisible,
             family_visible: updatedSettings.familyVisible,
-          })
-          .eq('user_id', user.id);
+            bonds_enabled: updatedSettings.bondsVisible,
+            forex_enabled: updatedSettings.forexVisible,
+          },
+          { onConflict: 'user_id' }
+        );
 
         if (error) logError('Error updating settings:', error);
       }

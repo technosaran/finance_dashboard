@@ -3,38 +3,38 @@
   --font-inter: 'Inter', system-ui, sans-serif;
   --font-outfit: 'Outfit', 'Inter', sans-serif;
 
-  /* Base Colors - Adjusted for more depth */
-  --background: #020617;
-  --foreground: #f8fafc;
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #475569;
+  /* Base Colors - Updated for Light Sky Blue Theme */
+  --background: #f0f9ff;
+  --foreground: #0c4a6e;
+  --text-primary: #082f49;
+  --text-secondary: #0ea5e9;
+  --text-tertiary: #38bdf8;
 
-  /* Sidebar - Sleeker width */
-  --sidebar-bg: #020617;
-  --sidebar-border: rgba(99, 102, 241, 0.06);
+  /* Sidebar - Light blue variants */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: rgba(14, 165, 233, 0.1);
   --sidebar-width: 230px;
 
-  /* Accent Colors - More vibrant gradients */
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-glow: rgba(99, 102, 241, 0.25);
-  --accent-light: rgba(99, 102, 241, 0.08);
+  /* Accent Colors - Sky Blue */
+  --accent: #0ea5e9;
+  --accent-hover: #0284c7;
+  --accent-glow: rgba(14, 165, 233, 0.1);
+  --accent-light: rgba(14, 165, 233, 0.03);
 
-  /* Surface Colors - True Glassmorphism */
-  --surface: rgba(15, 23, 42, 0.35);
-  --surface-border: rgba(255, 255, 255, 0.06);
-  --surface-hover: rgba(255, 255, 255, 0.02);
-  --glass: rgba(255, 255, 255, 0.02);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  /* Surface Colors - Light Mode Glassmorphism */
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-border: rgba(14, 165, 233, 0.15);
+  --surface-hover: rgba(255, 255, 255, 0.9);
+  --glass: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(14, 165, 233, 0.2);
 
-  /* Status Colors with Soft Variants */
-  --success: #10b981;
-  --success-light: rgba(16, 185, 129, 0.08);
-  --warning: #f59e0b;
-  --warning-light: rgba(245, 158, 11, 0.08);
-  --error: #ef4444;
-  --error-light: rgba(239, 68, 68, 0.08);
+  /* Status Colors (slightly adjusted for light mode contrast) */
+  --success: #059669;
+  --success-light: rgba(5, 150, 105, 0.08);
+  --warning: #d97706;
+  --warning-light: rgba(217, 119, 6, 0.08);
+  --error: #dc2626;
+  --error-light: rgba(220, 38, 38, 0.08);
 
   /* Spacing - Responsive */
   --spacing-xs: 8px;
@@ -51,10 +51,10 @@
   --radius-xl: 32px;
   --radius-full: 9999px;
 
-  /* Scrollbar */
-  --scrollbar-track: #020617;
-  --scrollbar-thumb: #1e293b;
-  --scrollbar-thumb-hover: #334155;
+  /* Scrollbar - Adjusted for light theme */
+  --scrollbar-track: #f0f9ff;
+  --scrollbar-thumb: #bae6fd;
+  --scrollbar-thumb-hover: #7dd3fc;
 }
 
 /* Custom scrollbar for a premium feel */
@@ -137,11 +137,11 @@ p {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: #020617;
+  background-color: var(--background);
   background-image:
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 40%),
-    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.08) 0px, transparent 40%),
-    radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.5) 0px, transparent 100%);
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.04) 0px, transparent 40%),
+    radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.03) 0px, transparent 40%),
+    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.1) 0px, transparent 100%);
   animation: meshFloat 20s ease-in-out infinite alternate;
 }
 
@@ -244,11 +244,11 @@ p {
 @media (hover: hover) and (pointer: fine) {
   .premium-card:hover {
     transform: translateY(-4px);
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(99, 102, 241, 0.3);
+    background: var(--surface-hover);
+    border-color: rgba(14, 165, 233, 0.3);
     box-shadow:
-      0 20px 40px rgba(0, 0, 0, 0.4),
-      0 0 20px rgba(99, 102, 241, 0.1);
+      0 12px 24px rgba(14, 165, 233, 0.06),
+      0 0 10px rgba(14, 165, 233, 0.02);
   }
 }
 
@@ -268,11 +268,10 @@ p {
   font-family: 'Inter', sans-serif;
   letter-spacing: -2px;
   font-weight: 900;
-  background: linear-gradient(to bottom, #fff 40%, #94a3b8 100%);
+  background: linear-gradient(to bottom, var(--text-primary) 40%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .stat-label {

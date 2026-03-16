@@ -43,45 +43,9 @@ interface NavItem {
   settingsKey?: string;
 }
 
-/** Extract user initials for avatar display */
-function getUserInitials(
-  user: { email?: string; user_metadata?: Record<string, string | undefined> } | null | undefined
-): string {
-  if (!user) return '?';
-  if (user.user_metadata?.full_name) {
-    const parts = user.user_metadata.full_name.trim().split(' ');
-    return parts.length >= 2
-      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase();
-  }
-  if (user.user_metadata?.name) {
-    const parts = user.user_metadata.name.trim().split(' ');
-    return parts.length >= 2
-      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase();
-  }
-  if (user.email) {
-    return user.email.slice(0, 2).toUpperCase();
-  }
-  return '?';
-}
-
-/** Extract display name from user */
-function getUserDisplayName(
-  user: { email?: string; user_metadata?: Record<string, string | undefined> } | null | undefined
-): string {
-  if (!user) return 'User';
-  if (user.user_metadata?.full_name) return user.user_metadata.full_name.split(' ')[0];
-  if (user.user_metadata?.name) return user.user_metadata.name.split(' ')[0];
-  if (!user.email) return 'User';
-  const localPart = user.email.split('@')[0];
-  const name = localPart.split(/[._-]/)[0];
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
   const { confirm: customConfirm } = useNotifications();
   const { settings } = useFinance();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -193,8 +157,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         aside {
           width: 230px;
           min-width: 230px;
-          background: linear-gradient(180deg, #020617 0%, #0a0f1e 50%, #020617 100%);
-          border-right: 1px solid rgba(99, 102, 241, 0.08);
+          background: #ffffff;
+          border-right: 1px solid var(--sidebar-border);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -216,7 +180,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           background: linear-gradient(
             180deg,
             transparent 0%,
-            rgba(99, 102, 241, 0.2) 50%,
+            rgba(14, 165, 233, 0.1) 50%,
             transparent 100%
           );
         }
@@ -249,10 +213,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               position: 'absolute',
               width: '120px',
               height: '120px',
-              background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%)',
               top: '-20px',
               left: '-20px',
-              filter: 'blur(20px)',
+              filter: 'blur(30px)',
               pointerEvents: 'none',
             }}
           />
@@ -260,7 +224,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{
               minWidth: '40px',
               height: '40px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)',
               borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
@@ -268,7 +232,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               color: 'white',
               fontWeight: '900',
               fontSize: '1.2rem',
-              boxShadow: '0 8px 24px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+              boxShadow: 'none',
               flexShrink: 0,
               position: 'relative',
             }}
@@ -280,7 +244,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               style={{
                 fontSize: '1.15rem',
                 fontWeight: '900',
-                color: '#fff',
+                color: 'var(--text-primary)',
                 letterSpacing: '-0.5px',
                 whiteSpace: 'nowrap',
                 lineHeight: 1.2,
@@ -289,7 +253,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               FIN
               <span
                 style={{
-                  background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
+                  background: 'linear-gradient(135deg, #0ea5e9, #38bdf8)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -300,7 +264,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span
               style={{
                 fontSize: '0.6rem',
-                color: '#475569',
+                color: 'var(--text-tertiary)',
                 fontWeight: '600',
                 letterSpacing: '0.5px',
               }}
@@ -360,17 +324,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       position: 'relative',
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isActive
-                        ? `linear-gradient(135deg, ${item.color}20, ${item.color}05)`
+                        ? `linear-gradient(135deg, ${item.color}15, ${item.color}05)`
                         : isHovered
-                          ? 'rgba(255,255,255,0.04)'
+                          ? 'rgba(14, 165, 233, 0.05)'
                           : 'transparent',
-                      color: isActive ? '#fff' : isHovered ? '#f8fafc' : '#64748b',
+                      color: isActive ? item.color : isHovered ? 'var(--text-primary)' : '#64748b',
                       border: isActive
-                        ? `1px solid ${item.color}30`
+                        ? `1px solid ${item.color}20`
                         : isHovered
-                          ? '1px solid rgba(255,255,255,0.05)'
+                          ? '1px solid rgba(14, 165, 233, 0.1)'
                           : '1px solid transparent',
-                      boxShadow: isActive ? `0 4px 12px ${item.color}10` : 'none',
+                      boxShadow: isActive ? `0 4px 12px ${item.color}05` : 'none',
                     }}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={onClose}
@@ -444,7 +408,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
-            borderTop: '1px solid rgba(255,255,255,0.04)',
+            borderTop: '1px solid rgba(14, 165, 233, 0.08)',
             position: 'relative',
           }}
         >
@@ -456,41 +420,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               right: '10%',
               height: '1px',
               background:
-                'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.15), transparent)',
+                'linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent)',
             }}
           />
-
-          {/* User profile row */}
-          {user && (
-            <div
-              style={{
-                padding: '10px 12px',
-                marginBottom: '4px',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: 'rgba(99, 102, 241, 0.05)',
-                border: '1px solid rgba(99, 102, 241, 0.1)',
-              }}
-            >
-              <div className="user-avatar">{getUserInitials(user)}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: '700',
-                    color: '#e2e8f0',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {getUserDisplayName(user)}
-                </div>
-              </div>
-            </div>
-          )}
 
           <Link href="/settings" style={{ textDecoration: 'none' }} onClick={onClose}>
             <div
@@ -500,10 +432,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                color: hoveredItem === 'settings' ? '#cbd5e1' : '#475569',
+                color: hoveredItem === 'settings' ? 'var(--text-primary)' : '#64748b',
                 transition: 'all 0.2s',
                 cursor: 'pointer',
-                background: hoveredItem === 'settings' ? 'rgba(255,255,255,0.03)' : 'transparent',
+                background: hoveredItem === 'settings' ? 'rgba(14, 165, 233, 0.05)' : 'transparent',
                 minHeight: '44px',
               }}
               onMouseEnter={() => setHoveredItem('settings')}

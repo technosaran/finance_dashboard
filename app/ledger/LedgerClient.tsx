@@ -211,12 +211,13 @@ export default function LedgerClient() {
               <h1
                 className="page-title"
                 style={{
-                  background: 'linear-gradient(to bottom, #fff, #94a3b8)',
+                  background:
+                    'linear-gradient(to bottom, var(--text-primary), var(--text-secondary))',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                Vault Ledger
+                Transaction Ledger
               </h1>
             </div>
             <p
@@ -444,10 +445,10 @@ export default function LedgerClient() {
             {/* Calendar Component */}
             <div
               style={{
-                background: '#0f172a',
+                background: 'var(--surface)',
                 padding: '12px',
-                borderRadius: '16px',
-                border: '1px solid #1e293b',
+                borderRadius: '4px',
+                border: '1px solid var(--surface-border)',
                 width: '100%',
               }}
             >
@@ -469,7 +470,7 @@ export default function LedgerClient() {
                     letterSpacing: '1px',
                   }}
                 >
-                  Temporal Matrix
+                  Transaction Calendar
                 </span>
               </div>
               <style>{`
@@ -477,7 +478,7 @@ export default function LedgerClient() {
                                     width: 100% !important;
                                     background: transparent !important;
                                     border: none !important;
-                                    color: #cbd5e1 !important;
+                                    color: var(--text-primary) !important;
                                     font-family: inherit !important;
                                     font-size: 0.7rem !important;
                                 }
@@ -485,34 +486,34 @@ export default function LedgerClient() {
                                     padding: 6px 0 !important; 
                                     font-size: 0.7rem !important;
                                     font-weight: 700 !important;
-                                    border-radius: 8px !important;
-                                    color: #cbd5e1 !important;
+                                    border-radius: 2px !important;
+                                    color: var(--text-secondary) !important;
                                     transition: all 0.2s;
                                 }
                                 .custom-calendar .react-calendar__tile:hover {
-                                    background: rgba(255, 255, 255, 0.05) !important;
+                                    background: rgba(14, 165, 233, 0.1) !important;
                                 }
                                 /* Remove red color for weekends */
                                 .custom-calendar .react-calendar__month-view__days__day--weekend {
-                                    color: #cbd5e1 !important;
+                                    color: var(--text-secondary) !important;
                                 }
                                 .custom-calendar .react-calendar__tile--now { 
-                                    background: rgba(99, 102, 241, 0.1) !important; 
-                                    color: #818cf8 !important; 
+                                    background: rgba(14, 165, 233, 0.1) !important; 
+                                    color: var(--accent) !important; 
                                     font-weight: 900 !important;
                                 }
                                 .custom-calendar .react-calendar__tile--active { 
-                                    background: #6366f1 !important; 
+                                    background: var(--accent) !important; 
                                     color: white !important; 
-                                    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+                                    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4);
                                 }
                                 .custom-calendar .react-calendar__navigation { 
                                     margin-bottom: 4px !important;
                                 }
                                 .custom-calendar .react-calendar__navigation button { 
-                                    color: #f8fafc !important; 
+                                    color: var(--text-primary) !important; 
                                     font-weight: 800 !important;
-                                    border-radius: 8px;
+                                    border-radius: 2px;
                                     font-size: 0.75rem;
                                     min-width: 28px !important;
                                     padding: 2px !important;

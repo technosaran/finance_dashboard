@@ -337,7 +337,7 @@ export default function Dashboard() {
               <span style={{ fontSize: '2rem' }}>{greeting.emoji}</span>
               <h1
                 style={{
-                  color: '#f8fafc',
+                  color: 'var(--foreground)',
                   fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
                   fontWeight: '800',
                   letterSpacing: '-0.02em',
@@ -353,7 +353,7 @@ export default function Dashboard() {
             </div>
             <p
               style={{
-                color: '#94a3b8',
+                color: 'var(--text-secondary)',
                 fontSize: '1.1rem',
                 fontWeight: '500',
                 marginTop: '8px',
@@ -363,64 +363,6 @@ export default function Dashboard() {
             >
               {greeting.subtext}
             </p>
-          </div>
-
-          {/* Date & Live indicator */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-end',
-              gap: '8px',
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                borderRadius: '10px',
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.15)',
-              }}
-            >
-              <RefreshCw size={12} color="#10b981" />
-              <span
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#10b981',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                LIVE
-              </span>
-              <span
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  boxShadow: '0 0 6px #10b981',
-                  animation: 'pulse 2s ease-in-out infinite',
-                }}
-              />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: '#475569',
-                fontSize: '0.8rem',
-                fontWeight: '600',
-              }}
-            >
-              <Calendar size={14} />
-              {todayFormatted}
-            </div>
           </div>
         </div>
       </header>
