@@ -522,7 +522,7 @@ p {
 
 /* Skeleton Loading State */
 .skeleton {
-  background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  background: linear-gradient(90deg, #050505 0%, #2a2a2a 50%, #050505 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 12px;
@@ -1397,7 +1397,7 @@ select:focus {
 .login-container {
   min-height: 100vh;
   width: 100%;
-  background-color: #020617;
+  background-color: #000000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1693,7 +1693,7 @@ select:focus {
 
 /* Stat card with animated border glow on hover */
 .stat-card {
-  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(145deg, #050505 0%, #2a2a2a 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 24px;
   padding: 28px;
@@ -1802,8 +1802,8 @@ select:focus {
 
 /* Content panel for sections like employers breakdown, recent payments */
 .content-panel {
-  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
-  border: 1px solid #1e293b;
+  background: linear-gradient(145deg, #050505 0%, #2a2a2a 100%);
+  border: 1px solid #2a2a2a;
   border-radius: 24px;
   padding: 32px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -1812,7 +1812,7 @@ select:focus {
 
 @media (hover: hover) and (pointer: fine) {
   .content-panel:hover {
-    border-color: #334155;
+    border-color: #1a1a1a;
   }
 }
 
@@ -1938,10 +1938,10 @@ select:focus {
 }
 
 .modal-card {
-  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(145deg, #050505 0%, #2a2a2a 100%);
   padding: clamp(24px, 5vw, 40px);
   border-radius: 32px;
-  border: 1px solid #334155;
+  border: 1px solid #1a1a1a;
   width: 100%;
   max-height: 95vh;
   overflow-y: auto;
@@ -2023,8 +2023,8 @@ select:focus {
 
 .form-input {
   width: 100%;
-  background: #020617;
-  border: 2px solid #1e293b;
+  background: #000000;
+  border: 2px solid #2a2a2a;
   padding: 16px;
   border-radius: 16px;
   color: #fff;
@@ -2195,8 +2195,8 @@ select:focus {
 .period-btn {
   padding: clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px);
   border-radius: 12px;
-  border: 2px solid #1e293b;
-  background: #0f172a;
+  border: 2px solid #2a2a2a;
+  background: #050505;
   color: #64748b;
   font-weight: 700;
   cursor: pointer;
@@ -2210,7 +2210,7 @@ select:focus {
 
 @media (hover: hover) and (pointer: fine) {
   .period-btn:hover {
-    border-color: #334155;
+    border-color: #1a1a1a;
     color: #94a3b8;
   }
 }
@@ -2223,10 +2223,10 @@ select:focus {
 
 /* Ledger transaction card */
 .ledger-tx-card {
-  background: #0f172a;
+  background: #050505;
   padding: 20px 24px;
   border-radius: 20px;
-  border: 1px solid #1e293b;
+  border: 1px solid #2a2a2a;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2238,7 +2238,7 @@ select:focus {
 
 @media (hover: hover) and (pointer: fine) {
   .ledger-tx-card:hover {
-    border-color: #334155;
+    border-color: #1a1a1a;
     transform: translateX(4px);
     background: #131c31;
   }
@@ -2246,10 +2246,10 @@ select:focus {
 
 /* Expense category card */
 .expense-category-card {
-  background: #0f172a;
+  background: #050505;
   padding: 24px;
   border-radius: 24px;
-  border: 1px solid #1e293b;
+  border: 1px solid #2a2a2a;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2262,7 +2262,7 @@ select:focus {
 
 @media (hover: hover) and (pointer: fine) {
   .expense-category-card:hover {
-    border-color: #334155;
+    border-color: #1a1a1a;
     transform: scale(1.01);
   }
 }
@@ -2374,7 +2374,7 @@ select:focus {
   }
 
   .mobile-modal-sheet__content {
-    background: #0f172a;
+    background: #050505;
     border-radius: 24px 24px 0 0;
     width: 100%;
     max-height: 92vh;

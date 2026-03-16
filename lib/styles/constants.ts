@@ -4,10 +4,10 @@
  */
 
 export const colors = {
-  bgPage: '#020617',
-  bgCard: '#0f172a',
-  bgInput: '#020617',
-  border: '#1e293b',
+  bgPage: '#000000',
+  bgCard: '#050505',
+  bgInput: '#000000',
+  border: '#2a2a2a',
   textPrimary: '#e2e8f0',
   textMuted: '#94a3b8',
   textHeading: '#f8fafc',
