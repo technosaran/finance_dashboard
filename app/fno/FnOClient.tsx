@@ -177,7 +177,7 @@ export default function FnOClient() {
       <div
         className="main-content"
         style={{
-          background: '#020617',
+          background: '#000000',
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -254,10 +254,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -285,10 +285,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -312,10 +312,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -337,10 +337,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -367,7 +367,7 @@ export default function FnOClient() {
           display: 'flex',
           gap: '12px',
           marginBottom: '32px',
-          borderBottom: '1px solid #1e293b',
+          borderBottom: '1px solid #2a2a2a',
           paddingBottom: '16px',
         }}
       >
@@ -445,7 +445,7 @@ export default function FnOClient() {
                   className="premium-card"
                   style={{
                     padding: '16px',
-                    background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+                    background: 'linear-gradient(145deg, #050505 0%, #2a2a2a 100%)',
                     borderLeft: `4px solid ${trade.tradeType === 'BUY' ? '#10b981' : '#f43f5e'}`,
                   }}
                   onClick={() => handleEdit(trade)}
@@ -632,7 +632,7 @@ export default function FnOClient() {
                 <tr
                   style={{
                     background: 'rgba(255,255,255,0.02)',
-                    borderBottom: '1px solid #1e293b',
+                    borderBottom: '1px solid #2a2a2a',
                   }}
                 >
                   <th
@@ -898,7 +898,7 @@ export default function FnOClient() {
                 )}
               </tbody>
               <tfoot
-                style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid #1e293b' }}
+                style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid #2a2a2a' }}
               >
                 <tr>
                   <td style={{ padding: '20px 24px', fontWeight: '800', color: '#64748b' }}>
@@ -926,9 +926,9 @@ export default function FnOClient() {
       {activeTab === 'history' && (
         <div
           style={{
-            background: '#0f172a',
+            background: '#050505',
             borderRadius: '32px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
             overflow: 'hidden',
           }}
         >
@@ -1054,9 +1054,9 @@ export default function FnOClient() {
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '32px' }}>
           <div
             style={{
-              background: '#0f172a',
+              background: '#050505',
               borderRadius: '32px',
-              border: '1px solid #1e293b',
+              border: '1px solid #2a2a2a',
               padding: '32px',
             }}
           >
@@ -1096,8 +1096,8 @@ export default function FnOClient() {
                   />
                   <RechartsTooltip
                     contentStyle={{
-                      background: '#020617',
-                      border: '1px solid #334155',
+                      background: '#000000',
+                      border: '1px solid #1a1a1a',
                       borderRadius: '16px',
                     }}
                     itemStyle={{ color: '#e7edf4' }}
@@ -1117,9 +1117,9 @@ export default function FnOClient() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div
               style={{
-                background: '#0f172a',
+                background: '#050505',
                 borderRadius: '32px',
-                border: '1px solid #1e293b',
+                border: '1px solid #2a2a2a',
                 padding: '32px',
               }}
             >
@@ -1205,11 +1205,11 @@ export default function FnOClient() {
         >
           <div
             style={{
-              background: '#0f172a',
+              background: '#050505',
               width: '100%',
               maxWidth: '560px',
               borderRadius: '40px',
-              border: '1px solid #334155',
+              border: '1px solid #1a1a1a',
               padding: 'clamp(24px, 5vw, 48px)',
               position: 'relative',
               maxHeight: '95vh',
@@ -1273,8 +1273,8 @@ export default function FnOClient() {
                   placeholder="e.g. NIFTY 22FEB 21500 CE"
                   required
                   style={{
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #2a2a2a',
                     padding: '16px 20px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1308,9 +1308,9 @@ export default function FnOClient() {
                       display: 'flex',
                       gap: '8px',
                       padding: '4px',
-                      background: '#020617',
+                      background: '#000000',
                       borderRadius: '12px',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                     }}
                   >
                     <button
@@ -1366,9 +1366,9 @@ export default function FnOClient() {
                       display: 'flex',
                       gap: '8px',
                       padding: '4px',
-                      background: '#020617',
+                      background: '#000000',
                       borderRadius: '12px',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                     }}
                   >
                     <button
@@ -1435,8 +1435,8 @@ export default function FnOClient() {
                     placeholder="0"
                     required
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #2a2a2a',
                       padding: '16px 20px',
                       borderRadius: '16px',
                       color: '#fff',
@@ -1464,8 +1464,8 @@ export default function FnOClient() {
                     placeholder="0.00"
                     required
                     style={{
-                      background: '#020617',
-                      border: '1px solid #1e293b',
+                      background: '#000000',
+                      border: '1px solid #2a2a2a',
                       padding: '16px 20px',
                       borderRadius: '16px',
                       color: '#fff',
@@ -1493,9 +1493,9 @@ export default function FnOClient() {
                     display: 'flex',
                     gap: '8px',
                     padding: '4px',
-                    background: '#020617',
+                    background: '#000000',
                     borderRadius: '12px',
-                    border: '1px solid #1e293b',
+                    border: '1px solid #2a2a2a',
                   }}
                 >
                   <button
@@ -1562,8 +1562,8 @@ export default function FnOClient() {
                       onChange={(e) => setExitPrice(e.target.value)}
                       placeholder="0.00"
                       style={{
-                        background: '#020617',
-                        border: '1px solid #1e293b',
+                        background: '#000000',
+                        border: '1px solid #2a2a2a',
                         padding: '16px 20px',
                         borderRadius: '16px',
                         color: '#fff',
@@ -1589,8 +1589,8 @@ export default function FnOClient() {
                       value={exitDate}
                       onChange={(e) => setExitDate(e.target.value)}
                       style={{
-                        background: '#020617',
-                        border: '1px solid #1e293b',
+                        background: '#000000',
+                        border: '1px solid #2a2a2a',
                         padding: '16px 20px',
                         borderRadius: '16px',
                         color: '#fff',
@@ -1720,8 +1720,8 @@ export default function FnOClient() {
                   onChange={(e) => setAccountId(e.target.value)}
                   style={{
                     width: '100%',
-                    background: '#020617',
-                    border: '1px solid #1e293b',
+                    background: '#000000',
+                    border: '1px solid #2a2a2a',
                     padding: '16px 20px',
                     borderRadius: '16px',
                     color: '#fff',

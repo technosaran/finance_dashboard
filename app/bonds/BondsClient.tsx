@@ -296,10 +296,10 @@ export default function BondsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -321,10 +321,10 @@ export default function BondsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -352,10 +352,10 @@ export default function BondsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -379,10 +379,10 @@ export default function BondsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -416,7 +416,7 @@ export default function BondsClient() {
           >
             <thead>
               <tr
-                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #1e293b' }}
+                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #2a2a2a' }}
               >
                 <th
                   style={{
@@ -568,7 +568,7 @@ export default function BondsClient() {
             style={{
               width: '100%',
               maxWidth: '500px',
-              background: '#0f172a',
+              background: '#050505',
               padding: '32px',
               borderRadius: '24px',
             }}
@@ -617,7 +617,7 @@ export default function BondsClient() {
                       width: '100%',
                       padding: '12px 12px 12px 36px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -640,8 +640,8 @@ export default function BondsClient() {
                       left: 0,
                       right: 0,
                       marginTop: '4px',
-                      background: '#1e293b',
-                      border: '1px solid #334155',
+                      background: '#2a2a2a',
+                      border: '1px solid #1a1a1a',
                       borderRadius: '12px',
                       overflow: 'hidden',
                       zIndex: 10,
@@ -655,7 +655,7 @@ export default function BondsClient() {
                         style={{
                           padding: '12px 16px',
                           cursor: 'pointer',
-                          borderBottom: i < searchResults.length - 1 ? '1px solid #334155' : 'none',
+                          borderBottom: i < searchResults.length - 1 ? '1px solid #1a1a1a' : 'none',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '4px',
@@ -698,7 +698,7 @@ export default function BondsClient() {
                     width: '100%',
                     padding: '12px',
                     background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid #1e293b',
+                    border: '1px solid #2a2a2a',
                     borderRadius: '12px',
                     color: '#fff',
                   }}
@@ -727,7 +727,7 @@ export default function BondsClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -755,7 +755,7 @@ export default function BondsClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -784,7 +784,7 @@ export default function BondsClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -810,7 +810,7 @@ export default function BondsClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -825,7 +825,7 @@ export default function BondsClient() {
                     flex: 1,
                     padding: '14px',
                     background: 'transparent',
-                    border: '1px solid #1e293b',
+                    border: '1px solid #2a2a2a',
                     color: '#94a3b8',
                     borderRadius: '12px',
                     fontWeight: '700',

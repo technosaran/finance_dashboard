@@ -197,10 +197,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -222,10 +222,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -249,10 +249,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -276,10 +276,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#0f172a',
+            background: '#050505',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #1e293b',
+            border: '1px solid #2a2a2a',
           }}
         >
           <div
@@ -315,7 +315,7 @@ export default function ForexClient() {
           >
             <thead>
               <tr
-                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #1e293b' }}
+                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #2a2a2a' }}
               >
                 <th
                   style={{
@@ -465,7 +465,7 @@ export default function ForexClient() {
             style={{
               width: '100%',
               maxWidth: '500px',
-              background: '#0f172a',
+              background: '#050505',
               padding: '32px',
               borderRadius: '24px',
             }}
@@ -498,7 +498,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -529,7 +529,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -557,7 +557,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -584,7 +584,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #1e293b',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -599,7 +599,7 @@ export default function ForexClient() {
                     flex: 1,
                     padding: '14px',
                     background: 'transparent',
-                    border: '1px solid #1e293b',
+                    border: '1px solid #2a2a2a',
                     color: '#94a3b8',
                     borderRadius: '12px',
                     fontWeight: '700',

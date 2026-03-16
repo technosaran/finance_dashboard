@@ -202,7 +202,7 @@ export default function IncomeClient() {
   return (
     <div
       className="main-content"
-      style={{ backgroundColor: '#020617', minHeight: '100vh', paddingBottom: '100px' }}
+      style={{ backgroundColor: '#000000', minHeight: '100vh', paddingBottom: '100px' }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
         {/* Header Section */}
