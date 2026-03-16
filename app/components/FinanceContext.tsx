@@ -320,12 +320,27 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     settingsRef.current = settings;
   }, [settings]);
 
+  // Debounced settings update to Supabase
+  const pendingSettingsUpdate = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const updateSettings = useCallback(
     async (newSettings: Partial<AppSettings>) => {
-      const updatedSettings = { ...settingsRef.current, ...newSettings };
-      setSettings(updatedSettings);
+      // 1. Update local state immediately for UI responsiveness
+      setSettings((prev) => {
+        const updated = { ...prev, ...newSettings };
+        settingsRef.current = updated; // Keep ref in sync too
+        return updated;
+      });
 
-      if (user) {
+      // 2. Debounce the persistence call
+      if (pendingSettingsUpdate.current) clearTimeout(pendingSettingsUpdate.current);
+
+      pendingSettingsUpdate.current = setTimeout(async () => {
+        if (!user) return;
+
+        // Use the latest settings from the ref (which we just updated above)
+        const updatedSettings = settingsRef.current;
+
         const { error } = await supabase.from('app_settings').upsert(
           {
             user_id: user.id,
@@ -357,7 +372,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         );
 
         if (error) logError('Error updating settings:', error);
-      }
+        else logInfo('Settings persisted to cloud');
+      }, 1000); // 1 second debounce
     },
     [user]
   );

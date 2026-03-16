@@ -169,7 +169,7 @@ export default function LedgerClient() {
             }}
           ></div>
           <div style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: '500' }}>
-            Decrypting ledger entries...
+            Loading transactions...
           </div>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -217,7 +217,7 @@ export default function LedgerClient() {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                Transaction Ledger
+                Ledger
               </h1>
             </div>
             <p
@@ -228,7 +228,7 @@ export default function LedgerClient() {
                 gap: '8px',
               }}
             >
-              <History size={16} /> Imperishable trail of all financial movements
+              <History size={16} /> History of all your transactions
             </p>
           </div>
 
@@ -447,7 +447,7 @@ export default function LedgerClient() {
               style={{
                 background: 'var(--surface)',
                 padding: '12px',
-                borderRadius: '4px',
+                borderRadius: '0px',
                 border: '1px solid var(--surface-border)',
                 width: '100%',
               }}
@@ -470,7 +470,7 @@ export default function LedgerClient() {
                     letterSpacing: '1px',
                   }}
                 >
-                  Transaction Calendar
+                  Calendar
                 </span>
               </div>
               <style>{`

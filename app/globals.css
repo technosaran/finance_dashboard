@@ -3,38 +3,38 @@
   --font-inter: 'Inter', system-ui, sans-serif;
   --font-outfit: 'Outfit', 'Inter', sans-serif;
 
-  /* Base Colors - Updated for Light Sky Blue Theme */
-  --background: #f0f9ff;
-  --foreground: #0c4a6e;
-  --text-primary: #082f49;
-  --text-secondary: #0ea5e9;
-  --text-tertiary: #38bdf8;
+  /* Base Colors - Professional Dark Theme */
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
 
-  /* Sidebar - Light blue variants */
-  --sidebar-bg: #ffffff;
-  --sidebar-border: rgba(14, 165, 233, 0.1);
+  /* Sidebar - Dark variants */
+  --sidebar-bg: #0f172a;
+  --sidebar-border: rgba(59, 130, 246, 0.1);
   --sidebar-width: 230px;
 
-  /* Accent Colors - Sky Blue */
-  --accent: #0ea5e9;
-  --accent-hover: #0284c7;
-  --accent-glow: rgba(14, 165, 233, 0.1);
-  --accent-light: rgba(14, 165, 233, 0.03);
+  /* Accent Colors - Electric Blue */
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-glow: rgba(59, 130, 246, 0.3);
+  --accent-light: rgba(59, 130, 246, 0.1);
 
-  /* Surface Colors - Light Mode Glassmorphism */
-  --surface: rgba(255, 255, 255, 0.7);
-  --surface-border: rgba(14, 165, 233, 0.15);
-  --surface-hover: rgba(255, 255, 255, 0.9);
-  --glass: rgba(255, 255, 255, 0.4);
-  --glass-border: rgba(14, 165, 233, 0.2);
+  /* Surface Colors - Professional Glassmorphism */
+  --surface: #1e293b;
+  --surface-border: rgba(148, 163, 184, 0.1);
+  --surface-hover: #243147;
+  --glass: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(148, 163, 184, 0.15);
 
-  /* Status Colors (slightly adjusted for light mode contrast) */
-  --success: #059669;
-  --success-light: rgba(5, 150, 105, 0.08);
-  --warning: #d97706;
-  --warning-light: rgba(217, 119, 6, 0.08);
-  --error: #dc2626;
-  --error-light: rgba(220, 38, 38, 0.08);
+  /* Status Colors */
+  --success: #22c55e;
+  --success-light: rgba(34, 197, 94, 0.1);
+  --warning: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.1);
+  --error: #ef4444;
+  --error-light: rgba(239, 68, 68, 0.1);
 
   /* Spacing - Responsive */
   --spacing-xs: 8px;
@@ -51,10 +51,10 @@
   --radius-xl: 32px;
   --radius-full: 9999px;
 
-  /* Scrollbar - Adjusted for light theme */
-  --scrollbar-track: #f0f9ff;
-  --scrollbar-thumb: #bae6fd;
-  --scrollbar-thumb-hover: #7dd3fc;
+  /* Scrollbar - Dark theme */
+  --scrollbar-track: #0f172a;
+  --scrollbar-thumb: #1e293b;
+  --scrollbar-thumb-hover: #334155;
 }
 
 /* Custom scrollbar for a premium feel */
@@ -139,9 +139,9 @@ p {
   pointer-events: none;
   background-color: var(--background);
   background-image:
-    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.04) 0px, transparent 40%),
-    radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.03) 0px, transparent 40%),
-    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.1) 0px, transparent 100%);
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.07) 0px, transparent 45%),
+    radial-gradient(at 100% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 45%),
+    radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.1) 0px, transparent 100%);
   animation: meshFloat 20s ease-in-out infinite alternate;
 }
 
@@ -245,10 +245,10 @@ p {
   .premium-card:hover {
     transform: translateY(-4px);
     background: var(--surface-hover);
-    border-color: rgba(14, 165, 233, 0.3);
+    border-color: rgba(59, 130, 246, 0.3);
     box-shadow:
-      0 12px 24px rgba(14, 165, 233, 0.06),
-      0 0 10px rgba(14, 165, 233, 0.02);
+      0 12px 24px rgba(0, 0, 0, 0.4),
+      0 0 10px rgba(59, 130, 246, 0.1);
   }
 }
 
