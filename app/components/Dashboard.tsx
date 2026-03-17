@@ -408,7 +408,7 @@ export default function Dashboard() {
             style={{
               background: '#000000',
               borderRadius: '8px',
-              border: '2px dashed #ffffff',
+              border: '1px dashed rgba(255, 255, 255, 0.1)',
               padding: '64px 32px',
               textAlign: 'center',
               gridColumn: '1 / -1',

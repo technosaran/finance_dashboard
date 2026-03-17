@@ -58,12 +58,12 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
               width: '32px',
               height: '32px',
               borderRadius: '4px',
-              background: '#ffffff',
+              background: 'rgba(255, 255, 255, 0.05)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#000000',
-              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+              color: '#ffffff',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
             }}
           >
             <Sparkles size={16} />
@@ -84,7 +84,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             textDecoration: 'none',
             padding: '5px 10px',
             borderRadius: '4px',
-            border: '1.5px solid #ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             background: 'transparent',
             transition: 'all 0.2s',
           }}
@@ -105,7 +105,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
               padding: '10px 12px',
               borderRadius: '12px',
               background: 'transparent',
-              border: '1.5px solid rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
               transition: 'background 0.2s',
             }}
           >

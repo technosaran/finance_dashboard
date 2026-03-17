@@ -36,12 +36,12 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
             width: '32px',
             height: '32px',
             borderRadius: '4px',
-            background: '#ffffff',
+            background: 'rgba(255, 255, 255, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#000000',
-            boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+            color: '#ffffff',
+            boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
           }}
         >
           <Target size={16} />
@@ -69,9 +69,12 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
             marginLeft: 'auto',
             color: '#ffffff',
             textDecoration: 'none',
-            border: '1.5px solid #ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             background: 'transparent',
             borderRadius: '4px',
+            padding: '4px 10px',
+            fontSize: '0.72rem',
+            fontWeight: '700',
           }}
         >
           View All

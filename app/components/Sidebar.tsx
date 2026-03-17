@@ -158,7 +158,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           width: 230px;
           min-width: 230px;
           background: var(--sidebar-bg);
-          border-right: 2px solid #ffffff;
+          border-right: 1px solid rgba(255, 255, 255, 0.05);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -219,15 +219,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{
               minWidth: '40px',
               height: '40px',
-              background: '#ffffff',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#000000',
+              color: '#ffffff',
               fontWeight: '950',
               fontSize: '1.2rem',
-              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 0 20px rgba(0, 0, 0, 1)',
               flexShrink: 0,
               position: 'relative',
             }}
@@ -310,14 +311,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
-                      padding: '10px 14px',
-                      margin: '2px 0',
-                      borderRadius: '12px',
+                      padding: isActive ? '18px' : '10px 14px',
+                      marginTop: isActive ? '12px' : '2px',
+                      marginBottom: '2px',
+                      borderRadius: isActive ? '18px' : '12px',
                       textDecoration: 'none',
                       position: 'relative',
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isActive
-                        ? 'rgba(255, 255, 255, 0.1)'
+                        ? 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)'
                         : isHovered
                           ? 'rgba(255, 255, 255, 0.05)'
                           : 'transparent',
@@ -342,9 +344,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           top: '20%',
                           bottom: '20%',
                           width: '3px',
-                          background: '#ffffff',
+                          background: '#6366f1',
                           borderRadius: '0 4px 4px 0',
-                          boxShadow: '0 0 10px rgba(255, 255, 255, 0.4)',
+                          boxShadow: '0 0 10px rgba(99, 102, 241, 0.4)',
                         }}
                       />
                     )}
@@ -401,7 +403,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
-            borderTop: '2px solid #ffffff',
+            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
             position: 'relative',
           }}
         >

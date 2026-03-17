@@ -1157,8 +1157,8 @@ export default function AccountsClient() {
                 type="submit"
                 style={{
                   marginTop: '12px',
-                  background: '#fff',
-                  color: '#000000',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                  color: '#ffffff',
                   padding: '18px',
                   borderRadius: '18px',
                   border: 'none',

@@ -106,7 +106,7 @@ export function QuickStatsRow({
             animationDelay: animationDelays[idx] ?? '0s',
             background: '#000000',
             borderRadius: '4px',
-            border: '1.5px solid #ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
             padding: '24px',
             position: 'relative',
             overflow: 'hidden',
@@ -116,12 +116,14 @@ export function QuickStatsRow({
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
             e.currentTarget.style.background = '#0a0a0a';
-            e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.9)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.background = '#000000';
             e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
           }}
         >
           {/* Top accent bar */}

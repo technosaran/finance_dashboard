@@ -38,9 +38,10 @@ export function NetWorthCard({
               <div
                 className="icon-badge"
                 style={{
-                  background: '#ffffff',
-                  color: '#000000',
-                  boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
                 }}
               >
                 <Zap size={20} />
@@ -89,7 +90,7 @@ export function NetWorthCard({
                   style={{
                     padding: '6px 12px',
                     borderRadius: '4px',
-                    border: '1.5px solid #ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
                     fontSize: '0.85rem',
                     fontWeight: '800',
@@ -114,7 +115,7 @@ export function NetWorthCard({
                 display: 'grid',
                 gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
                 gap: '24px',
-                borderTop: '2px solid #ffffff',
+                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
                 paddingTop: '24px',
               }}
             >

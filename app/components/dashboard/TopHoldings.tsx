@@ -37,12 +37,12 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
               width: '32px',
               height: '32px',
               borderRadius: '4px',
-              background: '#ffffff',
+              background: 'rgba(255, 255, 255, 0.05)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#000000',
-              boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)',
+              color: '#ffffff',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
             }}
           >
             <TrendingUp size={16} />
@@ -68,7 +68,7 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
             textDecoration: 'none',
             padding: '4px 10px',
             borderRadius: '4px',
-            border: '1.5px solid #ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             background: 'transparent',
           }}
         >
@@ -96,7 +96,7 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                   padding: '12px',
                   borderRadius: '4px',
                   background: 'transparent',
-                  border: '1.5px solid rgba(255,255,255,0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
