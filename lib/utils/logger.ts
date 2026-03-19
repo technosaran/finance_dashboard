@@ -10,17 +10,25 @@ interface LogContext {
 }
 
 /**
- * Sanitize sensitive data from log context
+ * Sanitize sensitive data from log context (recursive)
  */
 function sanitizeContext(context?: LogContext): LogContext | undefined {
   if (!context) return undefined;
 
-  const sanitized = { ...context };
-  const sensitiveKeys = ['password', 'token', 'secret', 'key', 'authorization', 'cookie'];
+  const sensitiveKeys = ['password', 'token', 'secret', 'key', 'authorization', 'cookie', 'email'];
+  const sanitized: LogContext = {};
 
-  Object.keys(sanitized).forEach((key) => {
+  Object.entries(context).forEach(([key, value]) => {
     if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
       sanitized[key] = '[REDACTED]';
+    } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      sanitized[key] = sanitizeContext(value as LogContext);
+    } else if (Array.isArray(value)) {
+      sanitized[key] = value.map((item) =>
+        item !== null && typeof item === 'object' ? sanitizeContext(item as LogContext) : item
+      );
+    } else {
+      sanitized[key] = value;
     }
   });
 

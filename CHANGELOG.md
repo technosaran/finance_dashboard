@@ -26,18 +26,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Critical**: Build error caused by Google Fonts network fetch failure during production builds
-  - Removed `next/font/google` dependency for offline-capable builds
-  - System fonts now used via fallback chain in globals.css
-- TypeScript linting errors: replaced `any` types with proper type definitions (`Error | null`, `unknown`)
-- React JSX unescaped entities in Dashboard component
-- Unused imports in login page component
-- Code formatting consistency across all TypeScript files
+- **Critical**: Build error caused by Google Fonts network fetch failure during production builds (removed `next/font/google`).
+- **Performance**: Optimized batch stock fetching in `stock-fetcher.ts` and added API chunking for both stocks and mutual funds.
+- **Memory**: Added hard limit and FIFO eviction to in-memory rate limiter to prevent leaks.
+- **Compatibility**: Enhanced Bond quote API to support both `isin` and `symbol` parameters.
+- **Linting**: Fixed all ESLint warnings including unused `RefreshCw` import in `Dashboard.tsx`.
+- **Quality**: Implemented recursive log sanitization for sensitive data in nested objects.
+- **Type Safety**: Replaced legacy `any` types with proper definitions across the codebase.
 
 ### Security
 
-- CodeQL security scan: 0 vulnerabilities found
-- All dependencies verified for known vulnerabilities
+- **Vulnerability**: Patched CSRF bypass in Next.js Server Actions by upgrading to `@latest` (16.2.0+).
+- **Vulnerability**: Fixed ReDoS vulnerabilities in `ajv` and `minimatch` via `npm audit fix`.
+- **Quality**: Verified 100% clean check with `npx eslint . --max-warnings 0`.
 
 ---
 

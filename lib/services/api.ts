@@ -101,7 +101,8 @@ export function withErrorHandling(handler: (request: Request) => Promise<NextRes
  * Rate limiting storage (in-memory - for production use Redis)
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_CLEANUP_THRESHOLD = 1000;
+const RATE_LIMIT_CLEANUP_THRESHOLD = 500;
+const RATE_LIMIT_MAX_SIZE = 1000;
 
 /**
  * Simple in-memory rate limiter
@@ -125,6 +126,15 @@ export function rateLimit(
     }
     for (const key of keysToDelete) {
       rateLimitStore.delete(key);
+    }
+
+    // Hard limit: if still too large, remove oldest entries (FIFO)
+    if (rateLimitStore.size >= RATE_LIMIT_MAX_SIZE) {
+      // Remove oldest 100 entries
+      const keysToRemove = Array.from(rateLimitStore.keys()).slice(0, 100);
+      for (const key of keysToRemove) {
+        rateLimitStore.delete(key);
+      }
     }
   }
 

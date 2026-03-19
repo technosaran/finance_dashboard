@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { AlertTriangle, Calendar, RefreshCw } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useFinance } from './FinanceContext';
 import { useAuth } from './AuthContext';
 import { MutualFundTransaction } from '@/lib/types';
@@ -127,6 +127,9 @@ export default function Dashboard() {
     );
     const stockLifetime = stockSells + stocksValue - (stockBuys + stockCharges);
 
+    // Standard MF charges (Stamp Duty in India is 0.005%)
+    const MF_STAMP_DUTY_RATE = 0.00005;
+
     const mfBuys = mutualFundTransactions
       .filter(
         (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
@@ -139,7 +142,7 @@ export default function Dashboard() {
       .filter(
         (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
       )
-      .reduce((sum, t) => sum + t.totalAmount * 0.00005, 0);
+      .reduce((sum, t) => sum + t.totalAmount * MF_STAMP_DUTY_RATE, 0);
     const mfLifetime = mfSells + mfValue - (mfBuys + mfCharges);
 
     const fnoLifetime = fnoTrades
@@ -220,18 +223,6 @@ export default function Dashboard() {
         .slice(0, 5),
     [stocks]
   );
-
-  // Re-derive the formatted date whenever the greeting changes (i.e. on time-of-day transitions)
-  // This also covers midnight rollovers since the greeting recalculates
-  const todayFormatted = useMemo(() => {
-    return new Date().toLocaleDateString('en-IN', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [greeting]);
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {

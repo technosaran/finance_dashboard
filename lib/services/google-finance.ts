@@ -105,27 +105,33 @@ export async function fetchGoogleFinancePrice(
 }
 
 /**
- * Batch fetch using parallel scraping - use sparingly
+ * Batch fetch using parallel scraping - use sparingly and with chunking
  */
 export async function batchFetchGoogleFinance(
   symbols: string[]
 ): Promise<Record<string, { price: number; previousClose: number }>> {
   const results: Record<string, { price: number; previousClose: number }> = {};
+  if (symbols.length === 0) return results;
 
-  await Promise.all(
-    symbols.map(async (symbol) => {
-      try {
-        let data = await fetchGoogleFinancePrice(symbol, 'NSE');
-        if (!data) data = await fetchGoogleFinancePrice(symbol, 'BSE');
+  // Process in chunks to avoid overwhelming the provider
+  const CHUNK_SIZE = 5;
+  for (let i = 0; i < symbols.length; i += CHUNK_SIZE) {
+    const chunk = symbols.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map(async (symbol) => {
+        try {
+          let data = await fetchGoogleFinancePrice(symbol, 'NSE');
+          if (!data) data = await fetchGoogleFinancePrice(symbol, 'BSE');
 
-        if (data && data.price > 0) {
-          results[symbol] = data;
+          if (data && data.price > 0) {
+            results[symbol] = data;
+          }
+        } catch (err) {
+          logError(`Batch item failed for ${symbol}:`, err);
         }
-      } catch (err) {
-        logError(`Batch item failed for ${symbol}:`, err);
-      }
-    })
-  );
+      })
+    );
+  }
 
   return results;
 }

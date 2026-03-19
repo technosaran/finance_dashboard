@@ -55,10 +55,10 @@ async function handleBondQuote(request: Request): Promise<NextResponse> {
   if (rateLimitResponse) return rateLimitResponse;
 
   const { searchParams } = new URL(request.url);
-  const isin = searchParams.get('symbol')?.trim().toUpperCase();
+  const isin = (searchParams.get('isin') || searchParams.get('symbol'))?.trim().toUpperCase();
 
   if (!isin) {
-    return createErrorResponse('Query parameter "symbol" (ISIN) is required', 400);
+    return createErrorResponse('Query parameter "isin" or "symbol" is required', 400);
   }
 
   // Find inside our mock database
