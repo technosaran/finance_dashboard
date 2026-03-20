@@ -694,9 +694,13 @@ select:focus {
     min-width: 44px;
   }
 
+  .main-content {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+
   /* NO bottom nav is rendered — remove phantom 80px dead space */
   .page-container {
-    padding-bottom: 16px;
+    padding-bottom: 0;
   }
 }
 

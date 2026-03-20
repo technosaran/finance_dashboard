@@ -9,17 +9,45 @@ interface LogContext {
   [key: string]: unknown;
 }
 
+function normalizeKey(key: string): string {
+  return key.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+}
+
+function isSensitiveKey(key: string): boolean {
+  const normalizedKey = normalizeKey(key);
+  const exactSensitiveKeys = [
+    'password',
+    'passcode',
+    'token',
+    'secret',
+    'authorization',
+    'cookie',
+    'api_key',
+    'private_key',
+    'secret_key',
+    'access_token',
+    'refresh_token',
+    'session_token',
+  ];
+
+  return exactSensitiveKeys.some(
+    (sensitiveKey) =>
+      normalizedKey === sensitiveKey ||
+      normalizedKey.startsWith(`${sensitiveKey}_`) ||
+      normalizedKey.endsWith(`_${sensitiveKey}`)
+  );
+}
+
 /**
  * Sanitize sensitive data from log context (recursive)
  */
 function sanitizeContext(context?: LogContext): LogContext | undefined {
   if (!context) return undefined;
 
-  const sensitiveKeys = ['password', 'token', 'secret', 'key', 'authorization', 'cookie', 'email'];
   const sanitized: LogContext = {};
 
   Object.entries(context).forEach(([key, value]) => {
-    if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
+    if (isSensitiveKey(key)) {
       sanitized[key] = '[REDACTED]';
     } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
       sanitized[key] = sanitizeContext(value as LogContext);

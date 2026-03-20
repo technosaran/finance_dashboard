@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { useFinance } from '../components/FinanceContext';
 import { AppSettings, Account } from '@/lib/types';
@@ -14,14 +14,125 @@ import {
   Shield,
   ChevronRight,
   Monitor,
+  TrendingUp,
+  Wallet,
+  Banknote,
+  Zap,
+  BookOpen,
+  ShoppingBag,
+  Target,
+  Users,
+  Landmark,
+  Globe,
 } from 'lucide-react';
+
+type SettingsTab = 'general' | 'modules' | 'sidebar' | 'system';
+
+const DEFAULT_SETTINGS: AppSettings = {
+  brokerageType: 'flat',
+  brokerageValue: 0,
+  sttRate: 0.1,
+  transactionChargeRate: 0.00307,
+  sebiChargeRate: 0.0001,
+  stampDutyRate: 0.015,
+  gstRate: 18,
+  dpCharges: 15.34,
+  autoCalculateCharges: true,
+  stocksVisible: true,
+  mutualFundsVisible: true,
+  fnoVisible: true,
+  ledgerVisible: true,
+  incomeVisible: true,
+  expensesVisible: true,
+  goalsVisible: true,
+  familyVisible: true,
+  bondsVisible: true,
+  forexVisible: true,
+};
+
+const SIDEBAR_ITEMS: Array<{
+  key: keyof AppSettings;
+  label: string;
+  description: string;
+  icon: ReactNode;
+  color: string;
+}> = [
+  {
+    key: 'stocksVisible',
+    label: 'Stocks',
+    description: 'Equity portfolio',
+    icon: <TrendingUp size={18} />,
+    color: '#10b981',
+  },
+  {
+    key: 'mutualFundsVisible',
+    label: 'Mutual Funds',
+    description: 'SIP and lumpsum holdings',
+    icon: <Wallet size={18} />,
+    color: '#f59e0b',
+  },
+  {
+    key: 'fnoVisible',
+    label: 'F&O',
+    description: 'Futures and options',
+    icon: <Zap size={18} />,
+    color: '#a78bfa',
+  },
+  {
+    key: 'ledgerVisible',
+    label: 'Ledger',
+    description: 'All cash movements',
+    icon: <BookOpen size={18} />,
+    color: '#60a5fa',
+  },
+  {
+    key: 'incomeVisible',
+    label: 'Income',
+    description: 'Salary and earnings',
+    icon: <Banknote size={18} />,
+    color: '#34d399',
+  },
+  {
+    key: 'expensesVisible',
+    label: 'Expenses',
+    description: 'Spending tracker',
+    icon: <ShoppingBag size={18} />,
+    color: '#fb923c',
+  },
+  {
+    key: 'goalsVisible',
+    label: 'Goals',
+    description: 'Financial targets',
+    icon: <Target size={18} />,
+    color: '#f472b6',
+  },
+  {
+    key: 'familyVisible',
+    label: 'Family',
+    description: 'Transfers and gifts',
+    icon: <Users size={18} />,
+    color: '#c084fc',
+  },
+  {
+    key: 'bondsVisible',
+    label: 'Bonds',
+    description: 'Fixed-income securities',
+    icon: <Landmark size={18} />,
+    color: '#2dd4bf',
+  },
+  {
+    key: 'forexVisible',
+    label: 'Forex',
+    description: 'Currency tracker',
+    icon: <Globe size={18} />,
+    color: '#f43f5e',
+  },
+];
 
 export default function SettingsPage() {
   const { settings, updateSettings, accounts, loading } = useFinance();
   const { showNotification, confirm: customConfirm } = useNotifications();
-  const [activeTab, setActiveTab] = useState<
-    'general' | 'modules' | 'sidebar' | 'charges' | 'system'
-  >('general');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
   const resetToDefaults = async () => {
     const isConfirmed = await customConfirm({
@@ -32,46 +143,23 @@ export default function SettingsPage() {
       confirmLabel: 'Reset',
     });
 
-    if (isConfirmed) {
-      const defaults: AppSettings = {
-        brokerageType: 'percentage',
-        brokerageValue: 0,
-        sttRate: 0.1,
-        transactionChargeRate: 0.00345,
-        sebiChargeRate: 0.0001,
-        stampDutyRate: 0.015,
-        gstRate: 18,
-        dpCharges: 15.93,
-        autoCalculateCharges: true,
-        stocksVisible: true,
-        mutualFundsVisible: true,
-        fnoVisible: true,
-        ledgerVisible: true,
-        incomeVisible: true,
-        expensesVisible: true,
-        goalsVisible: true,
-        familyVisible: true,
-        bondsVisible: true,
-        forexVisible: true,
-      };
-      await updateSettings(defaults);
-      showNotification('info', 'Settings reset to factory defaults');
-    }
+    if (!isConfirmed) return;
+
+    await updateSettings(DEFAULT_SETTINGS);
+    showNotification('info', 'Settings reset to factory defaults');
   };
 
   if (loading) return null;
 
-  const tabs = [
+  const tabs: Array<{ id: SettingsTab; label: string; icon: ReactNode }> = [
     { id: 'general', label: 'General', icon: <Settings size={18} /> },
     { id: 'modules', label: 'Modules', icon: <Eye size={18} /> },
     { id: 'sidebar', label: 'Sidebar', icon: <LayoutPanelLeft size={18} /> },
-    { id: 'charges', label: 'Charges', icon: <Info size={18} /> },
     { id: 'system', label: 'System', icon: <Monitor size={18} /> },
   ];
 
   return (
     <div className="page-container">
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -96,13 +184,18 @@ export default function SettingsPage() {
           >
             Settings
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: 'clamp(0.875rem, 2vw, 1rem)', marginTop: '8px' }}>
+          <p
+            style={{
+              color: '#94a3b8',
+              fontSize: 'clamp(0.875rem, 2vw, 1rem)',
+              marginTop: '8px',
+            }}
+          >
             Manage your preferences and application defaults
           </p>
         </div>
       </div>
 
-      {/* Mobile Tab Navigation (Scrollable) */}
       <div
         style={{
           display: 'flex',
@@ -120,9 +213,8 @@ export default function SettingsPage() {
           return (
             <button
               key={tab.id}
-              onClick={() =>
-                setActiveTab(tab.id as 'general' | 'modules' | 'sidebar' | 'charges' | 'system')
-              }
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -151,41 +243,16 @@ export default function SettingsPage() {
       </div>
 
       <div className="fade-in">
-        {/* General Settings */}
         {activeTab === 'general' && (
-          <div className="grid-responsive-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            {/* Profile Section */}
-            <div className="premium-card" style={{ marginBottom: '24px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  paddingBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    borderRadius: '10px',
-                    background: 'rgba(99, 102, 241, 0.1)',
-                    color: '#6366f1',
-                  }}
-                >
-                  <Shield size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                    Your Profile
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    Personalize your dashboard experience
-                  </p>
-                </div>
-              </div>
-
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <SectionCard
+              title="Your Profile"
+              description="Personalize your dashboard experience"
+              icon={<Shield size={22} />}
+              iconColor="#6366f1"
+              iconBackground="rgba(99, 102, 241, 0.1)"
+              style={{ marginBottom: '24px' }}
+            >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label
                   style={{
@@ -203,162 +270,102 @@ export default function SettingsPage() {
                   value={settings.displayName || ''}
                   onChange={(e) => updateSettings({ displayName: e.target.value })}
                   placeholder="Enter your name"
-                  style={{
-                    background: '#000000',
-                    border: '2px solid #111111',
-                    padding: '14px 16px',
-                    borderRadius: '14px',
-                    color: '#fff',
-                    fontSize: '1rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    width: '100%',
-                  }}
+                  style={textInputStyle}
                 />
                 <p style={{ fontSize: '0.75rem', color: '#475569', marginTop: '4px' }}>
-                  This name will appear in your dashboard greeting
+                  This name appears in your dashboard greeting.
                 </p>
               </div>
-            </div>
+            </SectionCard>
 
-            <div className="premium-card">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  paddingBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    borderRadius: '10px',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    color: '#10b981',
-                  }}
-                >
-                  <Layers size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                    Default Accounts
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    Auto-select accounts for specific actions
-                  </p>
-                </div>
-              </div>
-
+            <SectionCard
+              title="Default Accounts"
+              description="Auto-select accounts for specific actions"
+              icon={<Layers size={22} />}
+              iconColor="#10b981"
+              iconBackground="rgba(16, 185, 129, 0.1)"
+            >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <AccountSelect
                   label="Stock Trading Account"
                   value={settings.defaultStockAccountId}
                   onChange={(val) => updateSettings({ defaultStockAccountId: val })}
                   accounts={accounts}
-                  icon="📈"
+                  icon={<TrendingUp size={16} />}
                 />
                 <AccountSelect
                   label="Mutual Fund Account"
                   value={settings.defaultMfAccountId}
                   onChange={(val) => updateSettings({ defaultMfAccountId: val })}
                   accounts={accounts}
-                  icon="💼"
+                  icon={<Wallet size={16} />}
                 />
                 <AccountSelect
                   label="Salary Credit Account"
                   value={settings.defaultSalaryAccountId}
                   onChange={(val) => updateSettings({ defaultSalaryAccountId: val })}
                   accounts={accounts}
-                  icon="💰"
+                  icon={<Banknote size={16} />}
                 />
               </div>
-            </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Broker Integration"
+              description="Calculations are now handled automatically inside the order forms"
+              icon={<Info size={22} />}
+              iconColor="#3b82f6"
+              iconBackground="rgba(59, 130, 246, 0.1)"
+              style={{ marginTop: '24px' }}
+            >
+              <div
+                style={{
+                  padding: '18px',
+                  borderRadius: '16px',
+                  background: 'rgba(59, 130, 246, 0.05)',
+                  border: '1px solid rgba(59, 130, 246, 0.12)',
+                  color: '#cbd5e1',
+                  lineHeight: 1.6,
+                }}
+              >
+                Zerodha-style delivery, Coin, and F&amp;O charge estimates are applied internally.
+                You will now see the breakdown while entering trades instead of managing rates from
+                settings.
+              </div>
+            </SectionCard>
           </div>
         )}
 
-        {/* Modules Settings */}
         {activeTab === 'modules' && (
-          <div className="grid-responsive-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div className="premium-card">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  paddingBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    borderRadius: '10px',
-                    background: 'rgba(168, 85, 247, 0.1)',
-                    color: '#a855f7',
-                  }}
-                >
-                  <Eye size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                    Active Modules
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    Toggle features based on your needs
-                  </p>
-                </div>
-              </div>
-
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <SectionCard
+              title="Module Overview"
+              description="Feature availability is controlled from the Sidebar tab"
+              icon={<Eye size={22} />}
+              iconColor="#a855f7"
+              iconBackground="rgba(168, 85, 247, 0.1)"
+            >
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
                 <p style={{ fontSize: '0.95rem', fontWeight: '600' }}>
-                  All modules are currently active.
+                  All modules remain available to your account.
                 </p>
                 <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>
-                  Use the Sidebar tab to toggle navigation visibility.
+                  Use the Sidebar tab to hide or show navigation sections.
                 </p>
               </div>
-            </div>
+            </SectionCard>
           </div>
         )}
 
-        {/* Sidebar Settings */}
         {activeTab === 'sidebar' && (
-          <div className="grid-responsive-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div className="premium-card">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  paddingBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    borderRadius: '10px',
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    color: '#f59e0b',
-                  }}
-                >
-                  <LayoutPanelLeft size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                    Sidebar Visibility
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    Customize your navigation menu
-                  </p>
-                </div>
-              </div>
-
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <SectionCard
+              title="Sidebar Visibility"
+              description="Customize which sections appear in navigation"
+              icon={<LayoutPanelLeft size={22} />}
+              iconColor="#f59e0b"
+              iconBackground="rgba(245, 158, 11, 0.1)"
+            >
               <div
                 style={{
                   display: 'grid',
@@ -366,248 +373,32 @@ export default function SettingsPage() {
                   gap: '16px',
                 }}
               >
-                {[
-                  { k: 'stocksVisible', l: 'Stocks', d: 'Equity portfolio', i: '📈', c: '#10b981' },
-                  {
-                    k: 'mutualFundsVisible',
-                    l: 'Mutual Funds',
-                    d: 'SIP & Lumpsum',
-                    i: '💼',
-                    c: '#f59e0b',
-                  },
-                  { k: 'fnoVisible', l: 'F&O', d: 'Futures & Options', i: '⚡', c: '#a78bfa' },
-                  { k: 'ledgerVisible', l: 'Ledger', d: 'All Transactions', i: '📖', c: '#60a5fa' },
-                  {
-                    k: 'incomeVisible',
-                    l: 'Income',
-                    d: 'Salary & Earnings',
-                    i: '💰',
-                    c: '#34d399',
-                  },
-                  {
-                    k: 'expensesVisible',
-                    l: 'Expenses',
-                    d: 'Spending Tracker',
-                    i: '🛍️',
-                    c: '#fb923c',
-                  },
-                  { k: 'goalsVisible', l: 'Goals', d: 'Financial Targets', i: '🎯', c: '#f472b6' },
-                  {
-                    k: 'familyVisible',
-                    l: 'Family',
-                    d: 'Transfers & Gifts',
-                    i: '👨‍👩‍👧',
-                    c: '#c084fc',
-                  },
-                  {
-                    k: 'bondsVisible',
-                    l: 'Bonds',
-                    d: 'Fixed-Income Securities',
-                    i: '🏦',
-                    c: '#2dd4bf',
-                  },
-                  {
-                    k: 'forexVisible',
-                    l: 'Forex',
-                    d: 'Currency Tracker',
-                    i: '🌐',
-                    c: '#f43f5e',
-                  },
-                ].map((item) => (
-                  <ToggleItem
-                    key={item.k}
-                    label={item.l}
-                    description={item.d}
-                    isActive={settings[item.k as keyof AppSettings] !== false}
-                    onToggle={() =>
-                      updateSettings({ [item.k]: !settings[item.k as keyof AppSettings] })
-                    }
-                    color={item.c}
-                    icon={item.i}
+                {SIDEBAR_ITEMS.map((item) => (
+                  <ToggleCard
+                    key={item.key}
+                    label={item.label}
+                    description={item.description}
+                    icon={item.icon}
+                    color={item.color}
+                    isActive={settings[item.key] !== false}
+                    onToggle={() => updateSettings({ [item.key]: !settings[item.key] })}
                     compact
                   />
                 ))}
               </div>
-            </div>
+            </SectionCard>
           </div>
         )}
 
-        {/* Charges Settings */}
-        {activeTab === 'charges' && (
-          <div className="grid-responsive-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div className="premium-card">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  paddingBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    borderRadius: '10px',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    color: '#3b82f6',
-                  }}
-                >
-                  <Info size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                    Trading Charges
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    Configure brokerage and regulatory charges
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {/* Auto Calculate Toggle */}
-                <ToggleItem
-                  label="Auto Calculate Charges"
-                  description="Automatically compute charges on every trade"
-                  isActive={settings.autoCalculateCharges}
-                  onToggle={() =>
-                    updateSettings({ autoCalculateCharges: !settings.autoCalculateCharges })
-                  }
-                  color="#3b82f6"
-                  icon="⚡"
-                />
-
-                {/* Brokerage Type */}
-                <div>
-                  <label
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      color: '#94a3b8',
-                      marginBottom: '8px',
-                      display: 'block',
-                    }}
-                  >
-                    💹 Brokerage Type
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {(['flat', 'percentage'] as const).map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => updateSettings({ brokerageType: type })}
-                        style={{
-                          flex: 1,
-                          padding: '12px',
-                          borderRadius: '12px',
-                          border: `1px solid ${settings.brokerageType === type ? '#3b82f6' : '#1a1a1a'}`,
-                          background:
-                            settings.brokerageType === type ? 'rgba(59, 130, 246, 0.1)' : '#000000',
-                          color: settings.brokerageType === type ? '#3b82f6' : '#94a3b8',
-                          fontWeight: '700',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          textTransform: 'capitalize',
-                        }}
-                      >
-                        {type === 'flat' ? '₹ Flat' : '% Percentage'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Charge Value Inputs */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: '16px',
-                  }}
-                >
-                  <ChargeInput
-                    label="Brokerage"
-                    value={settings.brokerageValue}
-                    onChange={(v) => updateSettings({ brokerageValue: v })}
-                    suffix={settings.brokerageType === 'percentage' ? '%' : '₹'}
-                  />
-                  <ChargeInput
-                    label="STT Rate"
-                    value={settings.sttRate}
-                    onChange={(v) => updateSettings({ sttRate: v })}
-                    suffix="%"
-                  />
-                  <ChargeInput
-                    label="Transaction Charges"
-                    value={settings.transactionChargeRate}
-                    onChange={(v) => updateSettings({ transactionChargeRate: v })}
-                    suffix="%"
-                  />
-                  <ChargeInput
-                    label="SEBI Charges"
-                    value={settings.sebiChargeRate}
-                    onChange={(v) => updateSettings({ sebiChargeRate: v })}
-                    suffix="%"
-                  />
-                  <ChargeInput
-                    label="Stamp Duty"
-                    value={settings.stampDutyRate}
-                    onChange={(v) => updateSettings({ stampDutyRate: v })}
-                    suffix="%"
-                  />
-                  <ChargeInput
-                    label="GST"
-                    value={settings.gstRate}
-                    onChange={(v) => updateSettings({ gstRate: v })}
-                    suffix="%"
-                  />
-                  <ChargeInput
-                    label="DP Charges"
-                    value={settings.dpCharges}
-                    onChange={(v) => updateSettings({ dpCharges: v })}
-                    suffix="₹"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* System Settings */}
         {activeTab === 'system' && (
-          <div className="grid-responsive-1" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div className="premium-card">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '24px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  paddingBottom: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    borderRadius: '10px',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    color: '#ef4444',
-                  }}
-                >
-                  <Shield size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                    Danger Zone
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    Irreversible actions for your account
-                  </p>
-                </div>
-              </div>
-
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <SectionCard
+              title="Danger Zone"
+              description="Irreversible actions for your account"
+              icon={<Shield size={22} />}
+              iconColor="#ef4444"
+              iconBackground="rgba(239, 68, 68, 0.1)"
+            >
               <div
                 style={{
                   padding: '20px',
@@ -630,6 +421,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={resetToDefaults}
                   style={{
                     padding: '10px 20px',
@@ -661,11 +453,11 @@ export default function SettingsPage() {
               >
                 <Info size={20} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  Preferences are synced to your browser&apos;s local storage. Cloud sync is
-                  automatically enabled when you sign in.
+                  Preferences are saved to your FINCORE profile and applied across your signed-in
+                  session.
                 </div>
               </div>
-            </div>
+            </SectionCard>
           </div>
         )}
       </div>
@@ -673,7 +465,55 @@ export default function SettingsPage() {
   );
 }
 
-// Sub-components for cleaner code
+function SectionCard({
+  title,
+  description,
+  icon,
+  iconColor,
+  iconBackground,
+  children,
+  style,
+}: {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  iconColor: string;
+  iconBackground: string;
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div className="premium-card" style={style}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '24px',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          paddingBottom: '16px',
+        }}
+      >
+        <div
+          style={{
+            padding: '10px',
+            borderRadius: '10px',
+            background: iconBackground,
+            color: iconColor,
+          }}
+        >
+          {icon}
+        </div>
+        <div>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>{title}</h3>
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{description}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function AccountSelect({
   label,
   value,
@@ -685,7 +525,7 @@ function AccountSelect({
   value: number | undefined;
   onChange: (val: number | undefined) => void;
   accounts: Account[];
-  icon: string;
+  icon: ReactNode;
 }) {
   return (
     <div>
@@ -722,7 +562,7 @@ function AccountSelect({
           <option value="">Select manually each time</option>
           {accounts.map((acc) => (
             <option key={acc.id} value={acc.id}>
-              {acc.name} ({acc.currency === 'INR' ? '₹' : '$'}
+              {acc.name} ({acc.currency === 'INR' ? 'INR ' : 'USD '}
               {acc.balance.toLocaleString()})
             </option>
           ))}
@@ -743,7 +583,7 @@ function AccountSelect({
   );
 }
 
-function ToggleItem({
+function ToggleCard({
   label,
   description,
   isActive,
@@ -757,11 +597,12 @@ function ToggleItem({
   isActive: boolean;
   onToggle: () => void;
   color: string;
-  icon: string;
+  icon: ReactNode;
   compact?: boolean;
 }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onToggle}
       style={{
         display: 'flex',
@@ -773,6 +614,8 @@ function ToggleItem({
         border: `1px solid ${isActive ? `${color}20` : 'rgba(255,255,255,0.05)'}`,
         cursor: 'pointer',
         transition: 'all 0.2s',
+        width: '100%',
+        textAlign: 'left',
       }}
       className="toggle-card"
     >
@@ -787,6 +630,7 @@ function ToggleItem({
             justifyContent: 'center',
             background: isActive ? `${color}15` : 'rgba(255,255,255,0.05)',
             borderRadius: '10px',
+            color,
           }}
         >
           {icon}
@@ -833,68 +677,18 @@ function ToggleItem({
           }}
         />
       </div>
-    </div>
+    </button>
   );
 }
 
-function ChargeInput({
-  label,
-  value,
-  onChange,
-  suffix,
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  suffix: string;
-}) {
-  return (
-    <div>
-      <label
-        style={{
-          fontSize: '0.75rem',
-          fontWeight: '700',
-          color: '#94a3b8',
-          marginBottom: '6px',
-          display: 'block',
-        }}
-      >
-        {label}
-      </label>
-      <div style={{ position: 'relative' }}>
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          step="0.001"
-          style={{
-            width: '100%',
-            background: '#000000',
-            border: '1px solid #1a1a1a',
-            padding: '10px 14px',
-            paddingRight: '40px',
-            borderRadius: '12px',
-            color: '#fff',
-            fontSize: '0.9rem',
-            outline: 'none',
-            transition: 'all 0.2s',
-          }}
-        />
-        <span
-          style={{
-            position: 'absolute',
-            right: '14px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: '0.75rem',
-            fontWeight: '700',
-            color: '#475569',
-            pointerEvents: 'none',
-          }}
-        >
-          {suffix}
-        </span>
-      </div>
-    </div>
-  );
-}
+const textInputStyle: CSSProperties = {
+  background: '#000000',
+  border: '2px solid #111111',
+  padding: '14px 16px',
+  borderRadius: '14px',
+  color: '#fff',
+  fontSize: '1rem',
+  outline: 'none',
+  transition: 'border-color 0.2s',
+  width: '100%',
+};

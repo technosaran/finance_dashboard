@@ -20,7 +20,7 @@ import {
 } from 'recharts';
 
 export default function FnOClient() {
-  const { fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, loading, accounts, settings } =
+  const { fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, loading, accounts } =
     useFinance();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
@@ -80,15 +80,10 @@ export default function FnOClient() {
 
     // Simple P&L: (Exit - Entry) * Qty for BUY, (Entry - Exit) * Qty for SELL
     let pnl = 0;
-    let totalCharges = 0;
     if (status === 'CLOSED') {
       pnl = tradeType === 'BUY' ? (exitP - entryP) * qty : (entryP - exitP) * qty;
-
-      // Deduct Zerodha F&O charges from PnL if auto-calculate is on
-      if (settings.autoCalculateCharges && exitP > 0) {
-        const charges = calculateFnoCharges(tradeType, qty, entryP, exitP, instrument, settings);
-        totalCharges = charges.total;
-        pnl = pnl - totalCharges;
+      if (exitP > 0) {
+        pnl -= calculateFnoCharges(tradeType, qty, entryP, exitP, instrument).total;
       }
     }
 
@@ -1604,7 +1599,6 @@ export default function FnOClient() {
 
               {/* Charge Preview for closed trades */}
               {status === 'CLOSED' &&
-                settings.autoCalculateCharges &&
                 exitPrice &&
                 avgPrice &&
                 quantity &&
@@ -1615,14 +1609,7 @@ export default function FnOClient() {
                   if (!qty || !entryP || !exitP) return null;
                   const grossPnl =
                     tradeType === 'BUY' ? (exitP - entryP) * qty : (entryP - exitP) * qty;
-                  const charges = calculateFnoCharges(
-                    tradeType,
-                    qty,
-                    entryP,
-                    exitP,
-                    instrument,
-                    settings
-                  );
+                  const charges = calculateFnoCharges(tradeType, qty, entryP, exitP, instrument);
                   const netPnl = grossPnl - charges.total;
                   return (
                     <div

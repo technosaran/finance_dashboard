@@ -8,7 +8,6 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { FinanceProvider, useFinance } from './FinanceContext';
 import { NotificationProvider } from './NotificationContext';
 import { ErrorBoundary } from './error-boundaries/ErrorBoundary';
-import { CommandPalette } from './CommandPalette';
 
 const AddTransactionModal = dynamic(() => import('./AddTransactionModal'), {
   ssr: false,
@@ -17,13 +16,13 @@ const AddTransactionModal = dynamic(() => import('./AddTransactionModal'), {
 import {
   Menu,
   X,
-  Command,
   Plus,
   LayoutDashboard,
   TrendingUp,
   Activity,
   History,
   User,
+  Landmark,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -93,7 +92,6 @@ function AuthConsumer({
 
   return (
     <FinanceProvider>
-      <CommandPalette />
       <TransactionModalWrapper />
       {/* Skip to main content link for accessibility */}
       <a
@@ -171,7 +169,7 @@ function AuthConsumer({
                   }}
                   aria-hidden="true"
                 >
-                  <Command size={18} />
+                  <Landmark size={18} />
                 </div>
                 <span
                   style={{

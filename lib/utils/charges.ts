@@ -1,218 +1,208 @@
-import { AppSettings } from '../types';
+export type SupportedExchange = 'NSE' | 'BSE';
 
-// ============================================================================
-// Zerodha Charge Rates (as of 2025-2026)
-// ============================================================================
+type StockTradeType = 'BUY' | 'SELL';
+type MutualFundTradeType = 'BUY' | 'SELL' | 'SIP';
+type FnoTradeType = 'BUY' | 'SELL';
 
-// F&O specific rates (hardcoded to Zerodha's published rates)
+const GST_RATE = 18;
+const SEBI_TURNOVER_RATE = 0.0001;
+
+const STOCK_DELIVERY_RATES = {
+  brokerage: 0,
+  stt: 0.1,
+  transactionCharges: {
+    NSE: 0.00307,
+    BSE: 0.00375,
+  } satisfies Record<SupportedExchange, number>,
+  stampDuty: 0.015,
+  dpCharges: 15.34,
+};
+
+const MUTUAL_FUND_RATES = {
+  stampDuty: 0.005,
+};
+
 const FNO_RATES = {
-  // Brokerage: ₹20 per executed order or 0.03% whichever is lower
-  BROKERAGE_FLAT: 20,
-  BROKERAGE_PERCENT: 0.03,
-
-  // STT
-  FUTURES_STT_RATE: 0.02, // 0.02% on sell side (updated Oct 2024)
-  OPTIONS_STT_RATE: 0.1, // 0.1% on sell side (on premium, updated Oct 2024)
-
-  // Exchange Transaction Charges (NSE)
-  FUTURES_TRANS_CHARGE: 0.00173, // 0.00173% of turnover
-  OPTIONS_TRANS_CHARGE: 0.03503, // 0.03503% of premium turnover
-
-  // SEBI Turnover Fee: ₹10 per crore = 0.0001%
-  SEBI_CHARGE: 0.0001,
-
-  // Stamp Duty on buy side
-  FUTURES_STAMP_DUTY: 0.002, // 0.002%
-  OPTIONS_STAMP_DUTY: 0.003, // 0.003%
-
-  // GST: 18% on (brokerage + transaction charges + SEBI charges)
-  GST_RATE: 18,
+  futuresBrokeragePercent: 0.03,
+  futuresBrokerageCap: 20,
+  optionsBrokeragePerOrder: 20,
+  futuresStt: 0.05,
+  optionsStt: 0.15,
+  futuresTransactionCharges: 0.00183,
+  optionsTransactionCharges: 0.03553,
+  futuresStampDuty: 0.002,
+  optionsStampDuty: 0.003,
 };
 
-// ============================================================================
-// Stock Delivery Charges (Zerodha - CNC)
-// ============================================================================
+const round2 = (value: number) => Number(value.toFixed(2));
 
-export const calculateStockCharges = (
-  type: 'BUY' | 'SELL',
-  quantity: number,
-  price: number,
-  settings: AppSettings
-) => {
-  const turnover = quantity * price;
+const normalizeExchange = (exchange?: string): SupportedExchange =>
+  exchange?.toUpperCase() === 'BSE' ? 'BSE' : 'NSE';
 
-  // 1. Brokerage (Zerodha: ₹0 for delivery / CNC)
-  const brokerage =
-    settings.brokerageType === 'flat'
-      ? settings.brokerageValue
-      : (turnover * settings.brokerageValue) / 100;
-
-  // 2. STT (0.1% on both buy & sell for delivery)
-  const stt = Math.round(turnover * (settings.sttRate / 100));
-
-  // 3. Transaction Charges (NSE: 0.00297%)
-  const transCharges = turnover * (settings.transactionChargeRate / 100);
-
-  // 4. SEBI Charges (₹10 per crore = 0.0001%)
-  const sebiCharges = turnover * (settings.sebiChargeRate / 100);
-
-  // 5. Stamp Duty (0.015% on Buy only)
-  const stampDuty = type === 'BUY' ? turnover * (settings.stampDutyRate / 100) : 0;
-
-  // 6. GST (18% on Brokerage + Trans Charges + SEBI)
-  const gst = (brokerage + transCharges + sebiCharges) * (settings.gstRate / 100);
-
-  // 7. DP Charges (₹13.5 + GST = ₹15.93 per scrip on Sell only)
-  const dpCharges = type === 'SELL' ? settings.dpCharges : 0;
-
-  const totalCharges = brokerage + stt + transCharges + sebiCharges + stampDuty + gst + dpCharges;
-
-  return {
-    brokerage: Number(brokerage.toFixed(2)),
-    stt: Number(stt.toFixed(2)),
-    transactionCharges: Number(transCharges.toFixed(2)),
-    sebiCharges: Number(sebiCharges.toFixed(2)),
-    stampDuty: Number(stampDuty.toFixed(2)),
-    gst: Number(gst.toFixed(2)),
-    dpCharges: Number(dpCharges.toFixed(2)),
-    taxes: Number((totalCharges - brokerage).toFixed(2)),
-    total: Number(totalCharges.toFixed(2)),
-  };
-};
-
-// ============================================================================
-// Mutual Fund Charges (Zerodha Coin - Direct MF)
-// ============================================================================
-
-export const calculateMfCharges = (type: 'BUY' | 'SELL' | 'SIP', amount: number) => {
-  // Zerodha Coin: ₹0 brokerage for direct MFs
-  // Stamp duty: 0.005% on Purchase/SIP only
-  const stampDuty = type === 'BUY' || type === 'SIP' ? amount * 0.00005 : 0;
-
-  return {
-    stampDuty: Number(stampDuty.toFixed(2)),
-    total: Number(stampDuty.toFixed(2)),
-  };
-};
-
-// ============================================================================
-// F&O Charges (Zerodha - Futures & Options)
-// ============================================================================
-
-/**
- * Determines if an instrument is an Option or Future based on instrument name.
- * Zerodha format: "NIFTY 22FEB 21500 CE" or "BANKNIFTY 22FEB FUT"
- */
-const isOption = (instrument: string): boolean => {
+const isOptionInstrument = (instrument: string): boolean => {
   const upper = instrument.toUpperCase();
   return (
     upper.includes(' CE') ||
     upper.includes(' PE') ||
     upper.endsWith('CE') ||
     upper.endsWith('PE') ||
-    upper.includes('CALL') ||
-    upper.includes('PUT')
+    upper.includes(' CALL') ||
+    upper.includes(' PUT')
   );
 };
 
+export const getStockChargeMeta = (exchange?: string) => {
+  const normalizedExchange = normalizeExchange(exchange);
+
+  return {
+    exchange: normalizedExchange,
+    brokerageLabel: 'INR 0 delivery brokerage',
+    sttRate: STOCK_DELIVERY_RATES.stt,
+    transactionChargeRate: STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange],
+    stampDutyRate: STOCK_DELIVERY_RATES.stampDuty,
+    sebiChargeRate: SEBI_TURNOVER_RATE,
+    dpCharges: STOCK_DELIVERY_RATES.dpCharges,
+    gstRate: GST_RATE,
+  };
+};
+
+export const calculateStockCharges = (
+  type: StockTradeType,
+  quantity: number,
+  price: number,
+  exchange?: string
+) => {
+  const normalizedExchange = normalizeExchange(exchange);
+  const turnover = quantity * price;
+  const brokerage = STOCK_DELIVERY_RATES.brokerage;
+  const stt = Math.round(turnover * (STOCK_DELIVERY_RATES.stt / 100));
+  const transactionCharges =
+    turnover * (STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange] / 100);
+  const sebiCharges = turnover * (SEBI_TURNOVER_RATE / 100);
+  const stampDuty = type === 'BUY' ? turnover * (STOCK_DELIVERY_RATES.stampDuty / 100) : 0;
+  const gst = (brokerage + transactionCharges + sebiCharges) * (GST_RATE / 100);
+  const dpCharges = type === 'SELL' ? STOCK_DELIVERY_RATES.dpCharges : 0;
+  const total = brokerage + stt + transactionCharges + sebiCharges + stampDuty + gst + dpCharges;
+
+  return {
+    exchange: normalizedExchange,
+    turnover: round2(turnover),
+    brokerage: round2(brokerage),
+    stt: round2(stt),
+    transactionCharges: round2(transactionCharges),
+    sebiCharges: round2(sebiCharges),
+    stampDuty: round2(stampDuty),
+    gst: round2(gst),
+    dpCharges: round2(dpCharges),
+    taxes: round2(total - brokerage),
+    total: round2(total),
+    settlementAmount: round2(type === 'BUY' ? turnover + total : turnover - total),
+  };
+};
+
+export const getMfChargeMeta = () => ({
+  stampDutyRate: MUTUAL_FUND_RATES.stampDuty,
+  platformLabel: 'Zerodha Coin direct mutual funds',
+});
+
+export const calculateMfCharges = (type: MutualFundTradeType, amount: number) => {
+  const stampDuty =
+    type === 'BUY' || type === 'SIP' ? amount * (MUTUAL_FUND_RATES.stampDuty / 100) : 0;
+
+  return {
+    stampDuty: round2(stampDuty),
+    total: round2(stampDuty),
+    effectiveInvestment: round2(amount - stampDuty),
+  };
+};
+
+export const getFnoChargeMeta = (instrument: string) => {
+  const isOption = isOptionInstrument(instrument);
+
+  return {
+    isOption,
+    brokerageLabel: isOption
+      ? 'INR 20 per executed order'
+      : '0.03% or INR 20 per executed order, whichever is lower',
+    sttRate: isOption ? FNO_RATES.optionsStt : FNO_RATES.futuresStt,
+    transactionChargeRate: isOption
+      ? FNO_RATES.optionsTransactionCharges
+      : FNO_RATES.futuresTransactionCharges,
+    stampDutyRate: isOption ? FNO_RATES.optionsStampDuty : FNO_RATES.futuresStampDuty,
+    sebiChargeRate: SEBI_TURNOVER_RATE,
+    gstRate: GST_RATE,
+  };
+};
+
 export const calculateFnoCharges = (
-  tradeType: 'BUY' | 'SELL',
+  tradeType: FnoTradeType,
   quantity: number,
   entryPrice: number,
   exitPrice: number,
-  instrument: string,
-  _settings: AppSettings
+  instrument: string
 ) => {
-  const isOpt = isOption(instrument);
+  const isOption = isOptionInstrument(instrument);
   const entryTurnover = quantity * entryPrice;
   const exitTurnover = quantity * exitPrice;
   const totalTurnover = entryTurnover + exitTurnover;
 
-  // 1. Brokerage: ₹20 per order or 0.03% whichever is lower, applied on BOTH legs
-  const entryBrokerage = Math.min(
-    FNO_RATES.BROKERAGE_FLAT,
-    entryTurnover * (FNO_RATES.BROKERAGE_PERCENT / 100)
-  );
-  const exitBrokerage = Math.min(
-    FNO_RATES.BROKERAGE_FLAT,
-    exitTurnover * (FNO_RATES.BROKERAGE_PERCENT / 100)
-  );
+  const entryBrokerage = isOption
+    ? FNO_RATES.optionsBrokeragePerOrder
+    : Math.min(
+        FNO_RATES.futuresBrokerageCap,
+        entryTurnover * (FNO_RATES.futuresBrokeragePercent / 100)
+      );
+  const exitBrokerage = isOption
+    ? FNO_RATES.optionsBrokeragePerOrder
+    : Math.min(
+        FNO_RATES.futuresBrokerageCap,
+        exitTurnover * (FNO_RATES.futuresBrokeragePercent / 100)
+      );
   const brokerage = entryBrokerage + exitBrokerage;
 
-  // 2. STT (only on sell side)
-  // If tradeType is BUY, exit is Sell. If SELL, entry is Sell.
   const sellTurnover = tradeType === 'BUY' ? exitTurnover : entryTurnover;
-  let stt: number;
-  if (isOpt) {
-    // Options: STT on sell side premium
-    stt = sellTurnover * (FNO_RATES.OPTIONS_STT_RATE / 100);
-  } else {
-    // Futures: STT on sell side
-    stt = sellTurnover * (FNO_RATES.FUTURES_STT_RATE / 100);
-  }
-  stt = Math.round(stt);
+  const sttRate = isOption ? FNO_RATES.optionsStt : FNO_RATES.futuresStt;
+  const stt = Math.round(sellTurnover * (sttRate / 100));
 
-  // 3. Exchange Transaction Charges (on total turnover)
-  const transRate = isOpt ? FNO_RATES.OPTIONS_TRANS_CHARGE : FNO_RATES.FUTURES_TRANS_CHARGE;
-  const transCharges = totalTurnover * (transRate / 100);
+  const transactionRate = isOption
+    ? FNO_RATES.optionsTransactionCharges
+    : FNO_RATES.futuresTransactionCharges;
+  const transactionCharges = totalTurnover * (transactionRate / 100);
+  const sebiCharges = totalTurnover * (SEBI_TURNOVER_RATE / 100);
 
-  // 4. SEBI Charges (₹10 per crore on total turnover)
-  const sebiCharges = totalTurnover * (FNO_RATES.SEBI_CHARGE / 100);
-
-  // 5. Stamp Duty (on buy side only)
-  // If tradeType is BUY, entry is Buy. If SELL, exit is Buy.
   const buyTurnover = tradeType === 'BUY' ? entryTurnover : exitTurnover;
-  const stampRate = isOpt ? FNO_RATES.OPTIONS_STAMP_DUTY : FNO_RATES.FUTURES_STAMP_DUTY;
-  const stampDuty = buyTurnover * (stampRate / 100);
+  const stampDutyRate = isOption ? FNO_RATES.optionsStampDuty : FNO_RATES.futuresStampDuty;
+  const stampDuty = buyTurnover * (stampDutyRate / 100);
 
-  // 6. GST (18% on brokerage + transaction charges + SEBI charges)
-  const gst = (brokerage + transCharges + sebiCharges) * (FNO_RATES.GST_RATE / 100);
-
-  const totalCharges = brokerage + stt + transCharges + sebiCharges + stampDuty + gst;
+  const gst = (brokerage + transactionCharges + sebiCharges) * (GST_RATE / 100);
+  const total = brokerage + stt + transactionCharges + sebiCharges + stampDuty + gst;
 
   return {
-    brokerage: Number(brokerage.toFixed(2)),
-    stt: Number(stt.toFixed(2)),
-    transactionCharges: Number(transCharges.toFixed(2)),
-    sebiCharges: Number(sebiCharges.toFixed(2)),
-    stampDuty: Number(stampDuty.toFixed(2)),
-    gst: Number(gst.toFixed(2)),
-    taxes: Number((totalCharges - brokerage).toFixed(2)),
-    total: Number(totalCharges.toFixed(2)),
-    isOption: isOpt,
+    isOption,
+    turnover: round2(totalTurnover),
+    brokerage: round2(brokerage),
+    stt: round2(stt),
+    transactionCharges: round2(transactionCharges),
+    sebiCharges: round2(sebiCharges),
+    stampDuty: round2(stampDuty),
+    gst: round2(gst),
+    taxes: round2(total - brokerage),
+    total: round2(total),
   };
 };
 
-// ============================================================================
-// Bond Charges
-// ============================================================================
-
-export const calculateBondCharges = (
-  type: 'BUY' | 'SELL',
-  quantity: number,
-  price: number,
-  settings: AppSettings
-) => {
+export const calculateBondCharges = (type: 'BUY' | 'SELL', quantity: number, price: number) => {
   const turnover = quantity * price;
-
-  // Brokerage
-  const brokerage =
-    settings.brokerageType === 'flat'
-      ? settings.brokerageValue
-      : (turnover * settings.brokerageValue) / 100;
-
-  // Stamp Duty for bonds: 0.0001%
+  const brokerage = 0;
   const stampDuty = type === 'BUY' ? turnover * 0.000001 : 0;
-
-  // GST on brokerage (18%)
-  const gst = brokerage * (settings.gstRate / 100);
-
+  const gst = 0;
   const total = brokerage + stampDuty + gst;
 
   return {
-    brokerage: Number(brokerage.toFixed(2)),
-    stampDuty: Number(stampDuty.toFixed(2)),
-    gst: Number(gst.toFixed(2)),
-    total: Number(total.toFixed(2)),
+    turnover: round2(turnover),
+    brokerage: round2(brokerage),
+    stampDuty: round2(stampDuty),
+    gst: round2(gst),
+    total: round2(total),
   };
 };

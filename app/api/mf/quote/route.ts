@@ -3,27 +3,13 @@ import { validateMFCode } from '@/lib/validators/input';
 import {
   createErrorResponse,
   createSuccessResponse,
-  fetchWithTimeout,
   withErrorHandling,
   applyRateLimit,
   getCache,
   setCache,
 } from '@/lib/services/api';
+import { getMutualFundQuote } from '@/lib/services/mutual-funds';
 import { logError } from '@/lib/utils/logger';
-
-interface MFNavPoint {
-  nav: string;
-  date: string;
-}
-
-interface MFAPIResponse {
-  meta?: {
-    scheme_code?: string;
-    scheme_name?: string;
-    scheme_category?: string;
-  };
-  data?: MFNavPoint[];
-}
 
 /**
  * Mutual Fund quote API endpoint with security enhancements
@@ -58,46 +44,11 @@ async function handleMFQuote(request: Request): Promise<NextResponse> {
   if (cached) return createSuccessResponse(cached);
 
   try {
-    const sanitizedCode = code.trim();
+    const quoteData = await getMutualFundQuote(code.trim());
+    if (!quoteData) return createErrorResponse('Mutual fund not found', 404);
 
-    const response = await fetchWithTimeout(
-      `https://api.mfapi.in/mf/${sanitizedCode}`,
-      {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: '*/*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          Connection: 'keep-alive',
-        },
-      },
-      8000
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch mutual fund details');
-    }
-
-    const data = (await response.json()) as MFAPIResponse;
-
-    if (data && data.meta && data.data && data.data.length > 0) {
-      const latestNav = data.data[0];
-      const previousNav = data.data.length > 1 ? data.data[1] : latestNav;
-      const quoteData = {
-        schemeCode: data.meta.scheme_code || sanitizedCode,
-        schemeName: data.meta.scheme_name || sanitizedCode,
-        category: data.meta.scheme_category || 'N/A',
-        currentNav: parseFloat(latestNav.nav) || 0,
-        previousNav: parseFloat(previousNav.nav) || 0,
-        date: latestNav.date,
-      };
-
-      // Cache MF for 1 hour as MF prices usually update only once a day
-      setCache(cacheKey, quoteData, 300000); // Cache for 5 mins
-      return createSuccessResponse(quoteData);
-    }
-
-    return createErrorResponse('Mutual fund not found', 404);
+    setCache(cacheKey, quoteData, 300000);
+    return createSuccessResponse(quoteData);
   } catch (error) {
     logError('MF quote fetch failed', error, { code });
 

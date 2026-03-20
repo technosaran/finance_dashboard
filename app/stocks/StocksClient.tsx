@@ -5,7 +5,7 @@ import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFinance } from '../components/FinanceContext';
 import { Stock } from '@/lib/types';
-import { calculateStockCharges } from '@/lib/utils/charges';
+import { calculateStockCharges, getStockChargeMeta } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
 import {
   TrendingUp,
@@ -63,7 +63,7 @@ export default function StocksClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'stock' | 'transaction'>('stock');
   const [editId, setEditId] = useState<number | null>(null);
-  type ChargeViewData = Pick<Stock, 'symbol' | 'quantity' | 'currentPrice'>;
+  type ChargeViewData = Pick<Stock, 'symbol' | 'quantity' | 'currentPrice' | 'exchange'>;
   const [viewingCharges, setViewingCharges] = useState<{
     type: 'stock' | 'mf';
     data: ChargeViewData;
@@ -94,11 +94,39 @@ export default function StocksClient() {
   const [isTypeLocked, setIsTypeLocked] = useState(false);
   const [transactionQuantity, setTransactionQuantity] = useState('');
   const [transactionPrice, setTransactionPrice] = useState('');
-  const [brokerage, setBrokerage] = useState('');
-  const [taxes, setTaxes] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState<number | ''>('');
+
+  const selectedTransactionStock = useMemo(
+    () => stocks.find((stock) => stock.id === Number(selectedStockId)) || null,
+    [stocks, selectedStockId]
+  );
+
+  const initialBuyChargePreview = useMemo(() => {
+    const qty = Number(quantity);
+    const avg = Number(avgPrice);
+    if (!qty || !avg || Number.isNaN(qty) || Number.isNaN(avg)) {
+      return null;
+    }
+
+    return calculateStockCharges('BUY', qty, avg, exchange);
+  }, [quantity, avgPrice, exchange]);
+
+  const transactionChargePreview = useMemo(() => {
+    const qty = Number(transactionQuantity);
+    const price = Number(transactionPrice);
+    if (!qty || !price || Number.isNaN(qty) || Number.isNaN(price)) {
+      return null;
+    }
+
+    return calculateStockCharges(
+      transactionType,
+      qty,
+      price,
+      selectedTransactionStock?.exchange === 'BSE' ? 'BSE' : 'NSE'
+    );
+  }, [transactionQuantity, transactionPrice, transactionType, selectedTransactionStock]);
 
   // Debounced search
   useEffect(() => {
@@ -225,14 +253,7 @@ export default function StocksClient() {
 
         // 2. Add transaction which will update holdings AND log to ledger
         const investment = qty * avg;
-        let finalBrokerage = 0;
-        let finalTaxes = 0;
-
-        if (settings.autoCalculateCharges && qty > 0 && avg > 0) {
-          const calculatedCharges = calculateStockCharges('BUY', qty, avg, settings);
-          finalBrokerage = calculatedCharges.brokerage;
-          finalTaxes = calculatedCharges.taxes;
-        }
+        const calculatedCharges = calculateStockCharges('BUY', qty, avg, exchange);
 
         await addStockTransaction({
           stockId: targetStockId,
@@ -240,8 +261,8 @@ export default function StocksClient() {
           quantity: qty,
           price: avg,
           totalAmount: investment,
-          brokerage: finalBrokerage,
-          taxes: finalTaxes,
+          brokerage: calculatedCharges.brokerage,
+          taxes: calculatedCharges.taxes,
           transactionDate: new Date().toISOString().split('T')[0],
           accountId: selectedAccountId !== '' ? Number(selectedAccountId) : undefined,
           notes: 'Initial portfolio entry',
@@ -285,15 +306,12 @@ export default function StocksClient() {
     const qty = Number(transactionQuantity);
     const price = Number(transactionPrice);
     const total = qty * price;
-
-    let finalBrokerage = brokerage && !isNaN(parseFloat(brokerage)) ? parseFloat(brokerage) : 0;
-    let finalTaxes = taxes && !isNaN(parseFloat(taxes)) ? parseFloat(taxes) : 0;
-
-    if (settings.autoCalculateCharges && qty > 0 && price > 0) {
-      const calculatedCharges = calculateStockCharges(transactionType, qty, price, settings);
-      finalBrokerage = calculatedCharges.brokerage;
-      finalTaxes = calculatedCharges.taxes;
-    }
+    const calculatedCharges = calculateStockCharges(
+      transactionType,
+      qty,
+      price,
+      selectedTransactionStock?.exchange === 'BSE' ? 'BSE' : 'NSE'
+    );
 
     try {
       await addStockTransaction({
@@ -302,8 +320,8 @@ export default function StocksClient() {
         quantity: qty,
         price,
         totalAmount: total,
-        brokerage: finalBrokerage,
-        taxes: finalTaxes,
+        brokerage: calculatedCharges.brokerage,
+        taxes: calculatedCharges.taxes,
         transactionDate,
         notes: notes || undefined,
         accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
@@ -364,8 +382,6 @@ export default function StocksClient() {
     setTransactionType('BUY');
     setTransactionQuantity('');
     setTransactionPrice('');
-    setBrokerage('');
-    setTaxes('');
     setTransactionDate(new Date().toISOString().split('T')[0]);
     setSelectedAccountId(settings.defaultStockAccountId || '');
     setNotes('');
@@ -1725,6 +1741,9 @@ export default function StocksClient() {
                                     'STOCK',
                                   quantity: transaction.quantity,
                                   currentPrice: transaction.price,
+                                  exchange:
+                                    stocks.find((s) => s.id === transaction.stockId)?.exchange ||
+                                    'NSE',
                                 },
                               });
                             }}
@@ -2252,6 +2271,67 @@ export default function StocksClient() {
                   </div>
                 </div>
 
+                {initialBuyChargePreview && !editId && (
+                  <div
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.06)',
+                      border: '1px solid rgba(16, 185, 129, 0.14)',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      display: 'grid',
+                      gap: '8px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '900',
+                        color: '#34d399',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}
+                    >
+                      Zerodha Delivery Estimate
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Trade value</span>
+                      <span style={{ color: '#fff', fontWeight: '800' }}>
+                        INR {initialBuyChargePreview.turnover.toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
+                      <span style={{ color: '#fff', fontWeight: '800' }}>
+                        INR {initialBuyChargePreview.taxes.toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Estimated bank debit</span>
+                      <span style={{ color: '#34d399', fontWeight: '900' }}>
+                        INR {initialBuyChargePreview.settlementAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {!editId && (
                   <div>
                     <label
@@ -2283,7 +2363,7 @@ export default function StocksClient() {
                       <option value="">Select Account</option>
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.name} - ₹{acc.balance.toLocaleString()}
+                          {acc.name} - INR {acc.balance.toLocaleString()}
                         </option>
                       ))}
                     </select>
@@ -2494,14 +2574,18 @@ export default function StocksClient() {
                         marginBottom: '8px',
                       }}
                     >
-                      Brokerage (₹)
+                      Brokerage (auto)
                     </label>
                     <input
                       type="number"
                       step="0.01"
-                      value={brokerage}
-                      onChange={(e) => setBrokerage(e.target.value)}
-                      placeholder={settings.autoCalculateCharges ? 'Auto-calculating...' : '0.00'}
+                      value={
+                        transactionChargePreview
+                          ? transactionChargePreview.brokerage.toFixed(2)
+                          : ''
+                      }
+                      readOnly
+                      placeholder="Calculated automatically"
                       style={{
                         width: '100%',
                         background: '#000000',
@@ -2523,14 +2607,16 @@ export default function StocksClient() {
                         marginBottom: '8px',
                       }}
                     >
-                      Taxes & Charges (₹)
+                      Taxes and charges (auto)
                     </label>
                     <input
                       type="number"
                       step="0.01"
-                      value={taxes}
-                      onChange={(e) => setTaxes(e.target.value)}
-                      placeholder={settings.autoCalculateCharges ? 'Auto-calculating...' : '0.00'}
+                      value={
+                        transactionChargePreview ? transactionChargePreview.taxes.toFixed(2) : ''
+                      }
+                      readOnly
+                      placeholder="Calculated automatically"
                       style={{
                         width: '100%',
                         background: '#000000',
@@ -2543,47 +2629,78 @@ export default function StocksClient() {
                   </div>
                 </div>
 
-                {settings.autoCalculateCharges && transactionQuantity && transactionPrice && (
+                {transactionChargePreview && (
                   <div
                     style={{
-                      background: 'rgba(99, 102, 241, 0.05)',
+                      background: 'rgba(16, 185, 129, 0.06)',
                       padding: '16px',
-                      borderRadius: '12px',
-                      border: '1px dashed rgba(99, 102, 241, 0.2)',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(16, 185, 129, 0.14)',
                     }}
                   >
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '900',
+                        color: '#34d399',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      Zerodha Delivery Estimate
+                    </div>
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         marginBottom: '8px',
+                        fontSize: '0.85rem',
                       }}
                     >
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                        Preview Brokerage:
-                      </span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fff' }}>
-                        ₹
-                        {calculateStockCharges(
-                          transactionType,
-                          Number(transactionQuantity),
-                          Number(transactionPrice),
-                          settings
-                        ).brokerage.toFixed(2)}
+                      <span style={{ color: '#94a3b8' }}>Trade value</span>
+                      <span style={{ fontWeight: '800', color: '#fff' }}>
+                        INR {transactionChargePreview.turnover.toFixed(2)}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                        Preview Gov. Charges:
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Brokerage</span>
+                      <span style={{ fontWeight: '800', color: '#fff' }}>
+                        INR {transactionChargePreview.brokerage.toFixed(2)}
                       </span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#fff' }}>
-                        ₹
-                        {calculateStockCharges(
-                          transactionType,
-                          Number(transactionQuantity),
-                          Number(transactionPrice),
-                          settings
-                        ).taxes.toFixed(2)}
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
+                      <span style={{ fontWeight: '800', color: '#fff' }}>
+                        INR {transactionChargePreview.taxes.toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>
+                        {transactionType === 'BUY' ? 'Estimated debit' : 'Estimated credit'}
+                      </span>
+                      <span style={{ fontWeight: '900', color: '#34d399' }}>
+                        INR {transactionChargePreview.settlementAmount.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -2620,7 +2737,7 @@ export default function StocksClient() {
                     <option value="">Select Account</option>
                     {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
-                        {acc.name} - ₹{acc.balance.toLocaleString()}
+                        {acc.name} - INR {acc.balance.toLocaleString()}
                       </option>
                     ))}
                   </select>
@@ -2715,11 +2832,12 @@ export default function StocksClient() {
               {viewingCharges.type === 'stock' &&
                 (() => {
                   const stock = viewingCharges.data;
+                  const chargeMeta = getStockChargeMeta(stock.exchange);
                   const charges = calculateStockCharges(
                     'SELL',
                     stock.quantity,
                     stock.currentPrice,
-                    settings
+                    stock.exchange
                   );
                   return (
                     <>
@@ -2743,7 +2861,7 @@ export default function StocksClient() {
                           Estimating for Selling
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                          {stock.symbol} • {stock.quantity} shares @ ₹
+                          {stock.symbol} - {stock.quantity} shares @ INR
                           {stock.currentPrice.toFixed(2)}
                         </div>
                       </div>
@@ -2753,29 +2871,34 @@ export default function StocksClient() {
                           {
                             label: 'Brokerage',
                             value: charges.brokerage,
-                            sub:
-                              settings.brokerageType === 'flat'
-                                ? `₹${settings.brokerageValue} flat`
-                                : `${settings.brokerageValue}%`,
+                            sub: chargeMeta.brokerageLabel,
                           },
                           {
                             label: 'STT/CTT',
                             value: charges.stt,
-                            sub: `${settings.sttRate}% (Delivery)`,
+                            sub: `${chargeMeta.sttRate}% delivery STT`,
                           },
                           {
                             label: 'Transaction Charges',
                             value: charges.transactionCharges,
-                            sub: `${settings.transactionChargeRate}% (NSE)`,
+                            sub: `${chargeMeta.transactionChargeRate}% (${chargeMeta.exchange})`,
                           },
-                          { label: 'SEBI Charges', value: charges.sebiCharges, sub: '₹10/crore' },
+                          {
+                            label: 'SEBI Charges',
+                            value: charges.sebiCharges,
+                            sub: 'INR 10 per crore turnover',
+                          },
                           {
                             label: 'Stamp Duty',
                             value: charges.stampDuty,
                             sub: '0.015% (Buy only)',
                           },
                           { label: 'GST', value: charges.gst, sub: '18% on fees' },
-                          { label: 'DP Charges', value: charges.dpCharges, sub: '₹13.5 + GST' },
+                          {
+                            label: 'DP Charges',
+                            value: charges.dpCharges,
+                            sub: 'INR 13 plus GST on sell delivery',
+                          },
                         ].map((item, idx) => (
                           <div
                             key={idx}
@@ -2801,7 +2924,7 @@ export default function StocksClient() {
                                 color: item.value > 0 ? '#fff' : '#475569',
                               }}
                             >
-                              ₹{item.value.toFixed(2)}
+                              INR {item.value.toFixed(2)}
                             </div>
                           </div>
                         ))}
@@ -2819,7 +2942,7 @@ export default function StocksClient() {
                       >
                         <div style={{ fontWeight: '900', color: '#fff' }}>Total Charges</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: '950', color: '#6366f1' }}>
-                          ₹{charges.total.toFixed(2)}
+                          INR {charges.total.toFixed(2)}
                         </div>
                       </div>
                       <p
@@ -2830,7 +2953,7 @@ export default function StocksClient() {
                           fontStyle: 'italic',
                         }}
                       >
-                        * Estimates based on current market price and your configured tax rates.
+                        * Estimates use Zerodha delivery charges for the selected exchange.
                       </p>
                     </>
                   );

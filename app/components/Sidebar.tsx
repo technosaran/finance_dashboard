@@ -190,7 +190,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           }
         }
       `}</style>
-      <aside>
+      <aside id="sidebar-navigation">
         {/* Logo / Brand */}
         <div
           style={{
@@ -292,7 +292,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   padding: '8px 12px 4px',
                   fontSize: '0.6rem',
                   fontWeight: '800',
-                  color: '#1a1a1a',
+                  color: '#475569',
                   letterSpacing: '1.5px',
                   textTransform: 'uppercase' as const,
                   userSelect: 'none' as const,
@@ -438,7 +438,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
           </Link>
 
-          <div
+          <button
+            type="button"
             onClick={async () => {
               const isConfirmed = await customConfirm({
                 title: 'Leaving FINCORE?',
@@ -461,9 +462,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               color: hoveredItem === 'logout' ? '#fca5a5' : '#ef4444',
               transition: 'all 0.2s',
               cursor: 'pointer',
+              border: 'none',
               background: hoveredItem === 'logout' ? 'rgba(239, 68, 68, 0.06)' : 'transparent',
               opacity: 0.8,
               minHeight: '44px',
+              width: '100%',
+              textAlign: 'left' as const,
             }}
             onMouseEnter={() => setHoveredItem('logout')}
             onMouseLeave={() => setHoveredItem(null)}
@@ -472,7 +476,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <LogOut size={18} />
             <span style={{ fontWeight: '700', fontSize: '0.85rem' }}>Logout</span>
-          </div>
+          </button>
         </div>
       </aside>
     </>

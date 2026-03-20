@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import {
   PieChart,
@@ -71,7 +71,13 @@ export default function MutualFundsClient() {
   // Search & Data Fetching States
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<
-    Array<{ schemeName: string; schemeCode: string }>
+    Array<{
+      schemeName: string;
+      schemeCode: string;
+      category?: string;
+      shortName?: string;
+      isDirectPlan?: boolean;
+    }>
   >([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -96,6 +102,26 @@ export default function MutualFundsClient() {
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedAccountId, setSelectedAccountId] = useState<number | ''>('');
   const [isTypeLocked, setIsTypeLocked] = useState(false);
+
+  const initialFundChargePreview = useMemo(() => {
+    const unitsValue = Number(units);
+    const avgNavValue = Number(avgNav);
+    if (!unitsValue || !avgNavValue || Number.isNaN(unitsValue) || Number.isNaN(avgNavValue)) {
+      return null;
+    }
+
+    return calculateMfCharges('BUY', unitsValue * avgNavValue);
+  }, [units, avgNav]);
+
+  const transactionChargePreview = useMemo(() => {
+    const unitsValue = Number(txUnits);
+    const navValue = Number(txNav);
+    if (!unitsValue || !navValue || Number.isNaN(unitsValue) || Number.isNaN(navValue)) {
+      return null;
+    }
+
+    return calculateMfCharges(transactionType, unitsValue * navValue);
+  }, [transactionType, txUnits, txNav]);
 
   // Portfolio Metrics
   const totalInvestment = activeMutualFunds.reduce((sum, mf) => sum + mf.investmentAmount, 0);
@@ -173,7 +199,7 @@ export default function MutualFundsClient() {
     try {
       const res = await fetch(`/api/mf/search?q=${query}`);
       const data = await res.json();
-      setSearchResults(data);
+      setSearchResults(Array.isArray(data) ? data : []);
       setShowResults(true);
     } catch (error) {
       logError('MF Search failed:', error);
@@ -182,9 +208,15 @@ export default function MutualFundsClient() {
     }
   };
 
-  const selectFund = async (fund: { schemeName: string; schemeCode: string }) => {
+  const selectFund = async (fund: {
+    schemeName: string;
+    schemeCode: string;
+    category?: string;
+    shortName?: string;
+  }) => {
     setFundName(fund.schemeName);
     setSchemeCode(fund.schemeCode);
+    setCategory(fund.category || '');
     setShowResults(false);
     setSearchQuery(fund.schemeName);
 
@@ -2125,6 +2157,67 @@ export default function MutualFundsClient() {
                   />
                 </div>
 
+                {initialFundChargePreview && !editId && (
+                  <div
+                    style={{
+                      padding: '16px',
+                      borderRadius: '16px',
+                      background: 'rgba(245, 158, 11, 0.06)',
+                      border: '1px solid rgba(245, 158, 11, 0.16)',
+                      display: 'grid',
+                      gap: '8px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '900',
+                        color: '#f59e0b',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}
+                    >
+                      Zerodha Coin Estimate
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Investment amount</span>
+                      <span style={{ color: '#fff', fontWeight: '800' }}>
+                        INR {(Number(units) * Number(avgNav)).toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Stamp duty</span>
+                      <span style={{ color: '#fff', fontWeight: '800' }}>
+                        INR {initialFundChargePreview.stampDuty.toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Effective invested amount</span>
+                      <span style={{ color: '#fbbf24', fontWeight: '900' }}>
+                        INR {initialFundChargePreview.effectiveInvestment.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {!editId && (
                   <div>
                     <label
@@ -2157,7 +2250,7 @@ export default function MutualFundsClient() {
                       <option value="">Select Account</option>
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.name} - ₹{acc.balance.toLocaleString()}
+                          {acc.name} - INR {acc.balance.toLocaleString()}
                         </option>
                       ))}
                     </select>
@@ -2353,6 +2446,70 @@ export default function MutualFundsClient() {
                     />
                   </div>
                 </div>
+
+                {transactionChargePreview && (
+                  <div
+                    style={{
+                      padding: '16px',
+                      borderRadius: '16px',
+                      background: 'rgba(245, 158, 11, 0.06)',
+                      border: '1px solid rgba(245, 158, 11, 0.16)',
+                      display: 'grid',
+                      gap: '8px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '900',
+                        color: '#f59e0b',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}
+                    >
+                      Zerodha Coin Estimate
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Order amount</span>
+                      <span style={{ color: '#fff', fontWeight: '800' }}>
+                        INR {(Number(txUnits) * Number(txNav)).toFixed(2)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>Stamp duty</span>
+                      <span style={{ color: '#fff', fontWeight: '800' }}>
+                        INR {transactionChargePreview.stampDuty.toFixed(2)}
+                      </span>
+                    </div>
+                    {(transactionType === 'BUY' || transactionType === 'SIP') && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        <span style={{ color: '#94a3b8' }}>Effective invested amount</span>
+                        <span style={{ color: '#fbbf24', fontWeight: '900' }}>
+                          INR {transactionChargePreview.effectiveInvestment.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label
                     style={{
@@ -2384,7 +2541,7 @@ export default function MutualFundsClient() {
                     <option value="">Select Account</option>
                     {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
-                        {acc.name} - ₹{acc.balance.toLocaleString()}
+                        {acc.name} - INR {acc.balance.toLocaleString()}
                       </option>
                     ))}
                   </select>
@@ -2452,7 +2609,7 @@ export default function MutualFundsClient() {
                       <Eye size={20} />
                     </div>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0 }}>
-                      MF Charge Estimator
+                      Coin Charge Guide
                     </h2>
                   </div>
                   <button
@@ -2503,19 +2660,19 @@ export default function MutualFundsClient() {
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Entry/Exit Load</span>
                       <span style={{ color: '#475569', fontSize: '0.7rem' }}>
-                        Varies (Fixed ₹0 for Direct)
+                        Direct plans are commission-free on Coin
                       </span>
                     </div>
-                    <span style={{ color: '#fff', fontWeight: '700' }}>₹0.00</span>
+                    <span style={{ color: '#fff', fontWeight: '700' }}>INR 0.00</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Stamp Duty</span>
                       <span style={{ color: '#475569', fontSize: '0.7rem' }}>
-                        0.005% (Applicable on Buy Only)
+                        0.005% on BUY and SIP orders
                       </span>
                     </div>
-                    <span style={{ color: '#475569', fontWeight: '700' }}>N/A (Selling)</span>
+                    <span style={{ color: '#fbbf24', fontWeight: '700' }}>Shown during entry</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -2535,10 +2692,10 @@ export default function MutualFundsClient() {
                     }}
                   >
                     <span style={{ color: '#fff', fontWeight: '800' }}>
-                      Estimated Total Charges
+                      Order-time charge preview
                     </span>
                     <span style={{ color: '#f59e0b', fontSize: '1.25rem', fontWeight: '950' }}>
-                      ₹0.00
+                      Live in form
                     </span>
                   </div>
                 </div>
@@ -2552,9 +2709,9 @@ export default function MutualFundsClient() {
                     lineHeight: '1.4',
                   }}
                 >
-                  * For Direct Mutual Funds, there are typically no transaction charges. Stamp duty
-                  is only levied on purchase. Exit loads may apply if redeemed within the lock-in
-                  period.
+                  * Direct mutual fund orders on Zerodha Coin do not add brokerage. Stamp duty is
+                  applied only on fresh investments and the effective invested amount is shown while
+                  you enter the order.
                 </p>
 
                 <button

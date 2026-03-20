@@ -2,26 +2,19 @@ import { NextResponse } from 'next/server';
 import {
   createErrorResponse,
   createSuccessResponse,
-  fetchWithTimeout,
   withErrorHandling,
   applyRateLimit,
   getCache,
   setCache,
   parseCommaSeparatedParam,
 } from '@/lib/services/api';
+import { getMutualFundQuotes } from '@/lib/services/mutual-funds';
 import { logError } from '@/lib/utils/logger';
-
-interface MFAPIResponse {
-  meta?: {
-    scheme_code?: string;
-    scheme_name?: string;
-  };
-  data?: Array<{ nav: string; date: string }>;
-}
 
 interface MFQuoteData {
   schemeCode: string;
   schemeName: string;
+  category: string;
   currentNav: number;
   previousNav: number;
   date: string;
@@ -44,57 +37,10 @@ async function handleMFBatchQuote(request: Request): Promise<NextResponse> {
   if (cached) return createSuccessResponse(cached);
 
   try {
-    const results: Record<string, MFQuoteData> = {};
-
-    // Process in chunks to avoid overwhelming the provider
-    const CHUNK_SIZE = 5;
-    for (let i = 0; i < codes.length; i += CHUNK_SIZE) {
-      const chunk = codes.slice(i, i + CHUNK_SIZE);
-      await Promise.all(
-        chunk.map(async (code) => {
-          const individualCacheKey = `mf_quote_${code}`;
-          const individualCached = getCache<MFQuoteData>(individualCacheKey);
-          if (individualCached) {
-            results[code] = individualCached;
-            return;
-          }
-
-          try {
-            const response = await fetchWithTimeout(
-              `https://api.mfapi.in/mf/${code}`,
-              {
-                headers: {
-                  'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                  Accept: '*/*',
-                  'Accept-Language': 'en-US,en;q=0.9',
-                  Connection: 'keep-alive',
-                },
-              },
-              8000
-            );
-            if (!response.ok) return;
-
-            const data = (await response.json()) as MFAPIResponse;
-            if (data?.meta && data.data && data.data.length > 0) {
-              const latestNav = data.data[0];
-              const mfData: MFQuoteData = {
-                schemeCode: data.meta.scheme_code || code,
-                schemeName: data.meta.scheme_name || code,
-                currentNav: parseFloat(latestNav.nav) || 0,
-                previousNav: data.data.length > 1 ? parseFloat(data.data[1].nav) || 0 : 0,
-                date: latestNav.date,
-              };
-              results[code] = mfData;
-              setCache(individualCacheKey, mfData, 300000); // 5 minutes cache for individual items
-            }
-          } catch (err) {
-            logError(`Failed to fetch MF ${code}:`, err);
-          }
-        })
-      );
+    const results = (await getMutualFundQuotes(codes)) as Record<string, MFQuoteData>;
+    for (const [code, quote] of Object.entries(results)) {
+      setCache(`mf_quote_${code}`, quote, 300000);
     }
-
     setCache(cacheKey, results, 60000); // 1 minute cache for batch request
     return createSuccessResponse(results);
   } catch (error) {

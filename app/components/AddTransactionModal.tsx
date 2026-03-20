@@ -1,10 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { X, Search, Loader2, TrendingUp, Activity, Zap, Banknote, Info } from 'lucide-react';
 import { useFinance } from './FinanceContext';
 import { useNotifications } from './NotificationContext';
-import { calculateStockCharges } from '@/lib/utils/charges';
+import {
+  calculateFnoCharges,
+  calculateMfCharges,
+  calculateStockCharges,
+} from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
 
 interface AddTransactionModalProps {
@@ -80,8 +84,6 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
   const [previousPrice, setPreviousPrice] = useState<number | null>(null); // For "Day's Change" fix
-  const [brokerage, setBrokerage] = useState('');
-  const [taxes, setTaxes] = useState('');
 
   // FnO Specific
   const [fnoProduct, setFnoProduct] = useState<'NRML' | 'MIS'>('NRML');
@@ -89,23 +91,129 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
   const [exitPrice, setExitPrice] = useState('');
   const [exitDate, setExitDate] = useState('');
 
-  const resetForm = useCallback(() => {
-    setSearchQuery('');
-    setSelectedItem(null);
-    setQuantity('');
-    setPrice('');
-    setPreviousPrice(null);
-    setBrokerage('');
-    setTaxes('');
-    setNotes('');
-    setAccountId(settings.defaultMfAccountId || '');
-  }, [settings.defaultMfAccountId]);
+  const getDefaultAccountId = useCallback(
+    (nextType: TransactionType) => {
+      if (nextType === 'STOCK' || nextType === 'FNO') {
+        return settings.defaultStockAccountId || '';
+      }
+      return settings.defaultMfAccountId || '';
+    },
+    [settings.defaultMfAccountId, settings.defaultStockAccountId]
+  );
+
+  const resetForm = useCallback(
+    (nextType: TransactionType = type) => {
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowResults(false);
+      setIsSearching(false);
+      setIsFetchingQuote(false);
+      setSelectedItem(null);
+      setSubType('BUY');
+      setDate(new Date().toISOString().split('T')[0]);
+      setQuantity('');
+      setPrice('');
+      setPreviousPrice(null);
+      setNotes('');
+      setAccountId(getDefaultAccountId(nextType));
+      setFnoProduct('NRML');
+      setFnoStatus('OPEN');
+      setExitPrice('');
+      setExitDate('');
+    },
+    [getDefaultAccountId, type]
+  );
 
   useEffect(() => {
     if (!isOpen) {
       resetForm();
     }
   }, [isOpen, resetForm]);
+
+  const numericQuantity = Number.parseFloat(quantity);
+  const numericPrice = Number.parseFloat(price);
+  const numericExitPrice = Number.parseFloat(exitPrice);
+
+  const stockChargePreview = useMemo(() => {
+    if (
+      type !== 'STOCK' ||
+      !quantity ||
+      !price ||
+      Number.isNaN(numericQuantity) ||
+      Number.isNaN(numericPrice)
+    ) {
+      return null;
+    }
+
+    const exchange =
+      selectedItem && 'exchange' in selectedItem && selectedItem.exchange.includes('BSE')
+        ? 'BSE'
+        : 'NSE';
+
+    return calculateStockCharges(
+      subType as 'BUY' | 'SELL',
+      numericQuantity,
+      numericPrice,
+      exchange
+    );
+  }, [type, quantity, price, numericQuantity, numericPrice, selectedItem, subType]);
+
+  const mutualFundChargePreview = useMemo(() => {
+    if (
+      type !== 'MUTUAL_FUND' ||
+      !quantity ||
+      !price ||
+      Number.isNaN(numericQuantity) ||
+      Number.isNaN(numericPrice)
+    ) {
+      return null;
+    }
+
+    return calculateMfCharges(subType as 'BUY' | 'SELL' | 'SIP', numericQuantity * numericPrice);
+  }, [type, quantity, price, numericQuantity, numericPrice, subType]);
+
+  const fnoChargePreview = useMemo(() => {
+    if (
+      type !== 'FNO' ||
+      fnoStatus !== 'CLOSED' ||
+      !quantity ||
+      !price ||
+      !exitPrice ||
+      Number.isNaN(numericQuantity) ||
+      Number.isNaN(numericPrice) ||
+      Number.isNaN(numericExitPrice)
+    ) {
+      return null;
+    }
+
+    return calculateFnoCharges(
+      subType as 'BUY' | 'SELL',
+      numericQuantity,
+      numericPrice,
+      numericExitPrice,
+      searchQuery
+    );
+  }, [
+    type,
+    fnoStatus,
+    quantity,
+    price,
+    exitPrice,
+    numericQuantity,
+    numericPrice,
+    numericExitPrice,
+    subType,
+    searchQuery,
+  ]);
+
+  const grossFnoPnl =
+    fnoStatus === 'CLOSED' &&
+    !Number.isNaN(numericQuantity) &&
+    !Number.isNaN(numericPrice) &&
+    !Number.isNaN(numericExitPrice)
+      ? (subType === 'BUY' ? numericExitPrice - numericPrice : numericPrice - numericExitPrice) *
+        numericQuantity
+      : 0;
 
   const handleSearch = useCallback(
     async (query: string) => {
@@ -183,55 +291,50 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
     // Check if stock already exists in portfolio
     const existingStock = stocks.find((s) => s.symbol === selectedItem.symbol);
+    if (!existingStock && subType === 'SELL') {
+      showNotification('error', `Add a BUY transaction for ${selectedItem.symbol} before selling.`);
+      return;
+    }
 
-    if (!existingStock) {
-      // Add to portfolio first
-      await addStock({
+    let targetStockId = existingStock?.id;
+    if (!targetStockId) {
+      const newStock = await addStock({
         symbol: selectedItem.symbol,
         companyName: selectedItem.companyName,
-        quantity: qty,
+        quantity: 0,
         avgPrice: p,
         currentPrice: p,
         previousPrice: previousPrice || p,
         exchange: selectedItem.exchange?.includes('BSE') ? 'BSE' : 'NSE',
-        investmentAmount: total,
-        currentValue: total,
+        investmentAmount: 0,
+        currentValue: 0,
         pnl: 0,
         pnlPercentage: 0,
       });
-
-      // Note: We'd ideally wait for the response to get the ID,
-      // but addStock returns void in our current context.
-      // The FinanceContext update will happen.
-      // For transactions, we should probably find it by symbol after it's added.
-      showNotification('success', `${selectedItem.symbol} added to portfolio`);
-      onClose();
-      return;
+      targetStockId = newStock.id;
     }
 
-    let finalBrokerage = brokerage ? parseFloat(brokerage) : undefined;
-    let finalTaxes = taxes ? parseFloat(taxes) : undefined;
-
-    if (settings.autoCalculateCharges && qty && p) {
-      const calculated = calculateStockCharges(subType as 'BUY' | 'SELL', qty, p, settings);
-      finalBrokerage = calculated.brokerage;
-      finalTaxes = calculated.taxes;
-    }
+    const charges = calculateStockCharges(
+      subType as 'BUY' | 'SELL',
+      qty,
+      p,
+      selectedItem.exchange?.includes('BSE') ? 'BSE' : 'NSE'
+    );
 
     await addStockTransaction({
-      stockId: existingStock.id,
+      stockId: targetStockId,
       transactionType: subType as 'BUY' | 'SELL',
       quantity: qty,
       price: p,
       totalAmount: total,
-      brokerage: finalBrokerage,
-      taxes: finalTaxes,
+      brokerage: charges.brokerage,
+      taxes: charges.taxes,
       transactionDate: date,
       notes: notes || undefined,
       accountId: accountId ? Number(accountId) : undefined,
     });
 
-    showNotification('success', `Transaction recorded: ${subType} ${qty} shares`);
+    showNotification('success', `${selectedItem.symbol} transaction recorded successfully`);
     onClose();
   };
 
@@ -244,28 +347,35 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
     const existingMf = mutualFunds.find((m) => m.schemeCode === selectedItem.schemeCode);
 
-    if (!existingMf) {
-      await addMutualFund({
+    if (!existingMf && subType === 'SELL') {
+      showNotification(
+        'error',
+        `Add a BUY or SIP transaction for ${selectedItem.schemeName} before redeeming.`
+      );
+      return;
+    }
+
+    let targetMutualFundId = existingMf?.id;
+    if (!targetMutualFundId) {
+      const newMutualFund = await addMutualFund({
         schemeName: selectedItem.schemeName,
         schemeCode: selectedItem.schemeCode,
         category: selectedItem.category,
-        units: qty,
+        units: 0,
         avgNav: p,
         currentNav: p,
         previousNav: previousPrice || p,
-        investmentAmount: total,
-        currentValue: total,
+        investmentAmount: 0,
+        currentValue: 0,
         pnl: 0,
         pnlPercentage: 0,
         isin: selectedItem.isin,
       });
-      showNotification('success', `New fund added to portfolio`);
-      onClose();
-      return;
+      targetMutualFundId = newMutualFund.id;
     }
 
     await addMutualFundTransaction({
-      mutualFundId: existingMf.id,
+      mutualFundId: targetMutualFundId,
       transactionType: subType as 'BUY' | 'SELL' | 'SIP',
       units: qty,
       nav: p,
@@ -275,7 +385,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       notes: notes || undefined,
     });
 
-    showNotification('success', `Investment of ₹${total.toLocaleString()} recorded`);
+    showNotification('success', `Investment of INR ${total.toLocaleString()} recorded`);
     onClose();
   };
 
@@ -289,6 +399,15 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     let pnl = 0;
     if (fnoStatus === 'CLOSED') {
       pnl = subType === 'BUY' ? (exitP - entryP) * qty : (entryP - exitP) * qty;
+      if (exitP > 0) {
+        pnl -= calculateFnoCharges(
+          subType as 'BUY' | 'SELL',
+          qty,
+          entryP,
+          exitP,
+          searchQuery
+        ).total;
+      }
     }
 
     await addFnoTrade({
@@ -409,8 +528,9 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
             <button
               key={t.id}
               onClick={() => {
-                setType(t.id as TransactionType);
-                resetForm();
+                const nextType = t.id as TransactionType;
+                setType(nextType);
+                resetForm(nextType);
               }}
               style={{
                 padding: '8px 6px',
@@ -852,6 +972,177 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
             </>
           )}
 
+          {stockChargePreview && (
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '16px',
+                background: 'rgba(16, 185, 129, 0.06)',
+                border: '1px solid rgba(16, 185, 129, 0.16)',
+                display: 'grid',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: '900',
+                  color: '#34d399',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}
+              >
+                Zerodha Delivery Estimate
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Trade value</span>
+                <span style={{ color: '#fff', fontWeight: '800' }}>
+                  INR {stockChargePreview.turnover.toFixed(2)}
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Brokerage</span>
+                <span style={{ color: '#fff', fontWeight: '800' }}>
+                  INR {stockChargePreview.brokerage.toFixed(2)}
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
+                <span style={{ color: '#fff', fontWeight: '800' }}>
+                  INR {stockChargePreview.taxes.toFixed(2)}
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>
+                  {subType === 'BUY' ? 'Estimated debit' : 'Estimated credit'}
+                </span>
+                <span style={{ color: '#34d399', fontWeight: '900' }}>
+                  INR {stockChargePreview.settlementAmount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {mutualFundChargePreview && (
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '16px',
+                background: 'rgba(245, 158, 11, 0.06)',
+                border: '1px solid rgba(245, 158, 11, 0.16)',
+                display: 'grid',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: '900',
+                  color: '#f59e0b',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}
+              >
+                Zerodha Coin Estimate
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Order amount</span>
+                <span style={{ color: '#fff', fontWeight: '800' }}>
+                  INR {(numericQuantity * numericPrice).toFixed(2)}
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Stamp duty</span>
+                <span style={{ color: '#fff', fontWeight: '800' }}>
+                  INR {mutualFundChargePreview.stampDuty.toFixed(2)}
+                </span>
+              </div>
+              {(subType === 'BUY' || subType === 'SIP') && (
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+                >
+                  <span style={{ color: '#94a3b8' }}>Effective invested amount</span>
+                  <span style={{ color: '#fbbf24', fontWeight: '900' }}>
+                    INR {mutualFundChargePreview.effectiveInvestment.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {fnoChargePreview && (
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '16px',
+                background: 'rgba(99, 102, 241, 0.06)',
+                border: '1px solid rgba(99, 102, 241, 0.16)',
+                display: 'grid',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: '900',
+                  color: '#818cf8',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}
+              >
+                Zerodha F&amp;O Estimate
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Gross P&amp;L</span>
+                <span
+                  style={{
+                    color: grossFnoPnl >= 0 ? '#34d399' : '#f87171',
+                    fontWeight: '800',
+                  }}
+                >
+                  {grossFnoPnl >= 0 ? '+' : ''}
+                  INR {grossFnoPnl.toFixed(2)}
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Charges</span>
+                <span style={{ color: '#fff', fontWeight: '800' }}>
+                  INR {fnoChargePreview.total.toFixed(2)}
+                </span>
+              </div>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}
+              >
+                <span style={{ color: '#94a3b8' }}>Net P&amp;L</span>
+                <span
+                  style={{
+                    color: grossFnoPnl - fnoChargePreview.total >= 0 ? '#34d399' : '#f87171',
+                    fontWeight: '900',
+                  }}
+                >
+                  {grossFnoPnl - fnoChargePreview.total >= 0 ? '+' : ''}
+                  INR {(grossFnoPnl - fnoChargePreview.total).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div>
             <label
               style={{
@@ -880,7 +1171,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               <option value="">No Account (Ledger Only)</option>
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>
-                  {acc.name} - ₹{acc.balance.toLocaleString()}
+                  {acc.name} - INR {acc.balance.toLocaleString()}
                 </option>
               ))}
             </select>
