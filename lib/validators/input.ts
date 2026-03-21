@@ -69,6 +69,28 @@ export function validateStockQuery(query: string): ValidationResult {
 }
 
 /**
+ * Validate bond search query / identifier
+ */
+export function validateBondQuery(query: string): ValidationResult {
+  if (!query || query.trim() === '') {
+    return { isValid: false, error: 'Bond query is required' };
+  }
+
+  const trimmed = query.trim();
+
+  if (trimmed.length < 2 || trimmed.length > 80) {
+    return { isValid: false, error: 'Bond query must be between 2 and 80 characters' };
+  }
+
+  // Allow ISINs plus common bond search symbols like coupon percentages and bracketed series names.
+  if (!/^[A-Za-z0-9\s\-&.%()/]+$/.test(trimmed)) {
+    return { isValid: false, error: 'Invalid characters in bond query' };
+  }
+
+  return { isValid: true };
+}
+
+/**
  * Validate mutual fund code
  */
 export function validateMFCode(code: string): ValidationResult {

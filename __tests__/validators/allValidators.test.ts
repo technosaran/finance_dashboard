@@ -1,5 +1,6 @@
 import {
   validateEmail,
+  validateBondQuery,
   validatePassword,
   validateStockQuery,
   validateMFCode,
@@ -63,6 +64,18 @@ describe('validateStockQuery', () => {
     expect(validateStockQuery('RELIANCE').isValid).toBe(true);
     expect(validateStockQuery('M&M').isValid).toBe(true);
     expect(validateStockQuery('TCS.NS').isValid).toBe(true);
+  });
+});
+
+describe('validateBondQuery', () => {
+  it('accepts valid bond queries and ISIN lookups', () => {
+    expect(validateBondQuery('NHAI 7.9% 2035').isValid).toBe(true);
+    expect(validateBondQuery('IN0020230085').isValid).toBe(true);
+  });
+
+  it('rejects empty or unsafe bond queries', () => {
+    expect(validateBondQuery('').isValid).toBe(false);
+    expect(validateBondQuery('<script>alert(1)</script>').isValid).toBe(false);
   });
 });
 

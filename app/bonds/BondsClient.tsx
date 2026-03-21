@@ -7,8 +7,17 @@ import { useNotifications } from '@/app/components/NotificationContext';
 import { Plus, Trash2, Edit3, Search, Loader2 } from 'lucide-react';
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 import { logError } from '@/lib/utils/logger';
+import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
 
-// Simplified type based on database schema for local use
+interface BondSearchResult {
+  symbol: string;
+  companyName: string;
+  issuer?: string;
+  name?: string;
+  couponRate?: number;
+  maturityDate?: string;
+}
+
 export interface Bond {
   id: number;
   name: string;
@@ -26,83 +35,176 @@ export interface Bond {
   yield_to_maturity: number | null;
 }
 
+const fieldStyles = {
+  label: {
+    display: 'block',
+    color: '#64748b',
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    marginBottom: '8px',
+  },
+  input: {
+    width: '100%',
+    padding: '12px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid #111111',
+    borderRadius: '12px',
+    color: '#fff',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: '16px',
+  },
+} as const;
+
+function StatCard({
+  label,
+  value,
+  valueColor = '#fff',
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+}) {
+  return (
+    <div
+      className="premium-card"
+      style={{
+        background: '#050505',
+        padding: '20px',
+        borderRadius: '24px',
+        border: '1px solid #111111',
+      }}
+    >
+      <div
+        style={{
+          color: '#64748b',
+          fontSize: '0.65rem',
+          fontWeight: '900',
+          textTransform: 'uppercase',
+          letterSpacing: '1px',
+          marginBottom: '10px',
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: valueColor }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required = false,
+  placeholder,
+  min,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  min?: string;
+}) {
+  return (
+    <div>
+      <label style={fieldStyles.label}>{label}</label>
+      <input
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type={type}
+        placeholder={placeholder}
+        min={min}
+        step={type === 'number' ? 'any' : undefined}
+        style={fieldStyles.input}
+      />
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
+  return (
+    <div>
+      <label style={fieldStyles.label}>{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={fieldStyles.input}>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function BondsClient() {
   const { user } = useAuth();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [bonds, setBonds] = useState<Bond[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Form states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [avgPrice, setAvgPrice] = useState('');
+  const [currentPrice, setCurrentPrice] = useState('');
   const [couponRate, setCouponRate] = useState('');
   const [maturityDate, setMaturityDate] = useState('');
   const [status, setStatus] = useState('ACTIVE');
-
-  // Search States
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<
-    Array<{ symbol: string; companyName: string }>
-  >([]);
+  const [searchResults, setSearchResults] = useState<BondSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState('');
 
-  // Debounced search
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchQuery.length >= 2) {
-        handleSearch(searchQuery);
-      } else {
-        setSearchResults([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
-
-  const handleSearch = async (query: string) => {
-    setIsSearching(true);
-    try {
-      const res = await fetch(`/api/bonds/search?q=${query}`);
-      const data = await res.json();
-      if (!data.error) {
-        setSearchResults(Array.isArray(data) ? data : []);
-      }
-      setShowResults(true);
-    } catch (error) {
-      logError('Search failed:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const selectBond = async (item: { symbol: string; companyName: string }) => {
-    setSearchQuery(item.symbol);
-    setName(item.companyName.split(' - ')[0] || item.companyName);
-    setCompanyName(item.companyName.split(' - ')[1] || '');
+  const resetForm = useCallback((closeModal: boolean = true) => {
+    setEditId(null);
+    setName('');
+    setCompanyName('');
+    setQuantity('');
+    setAvgPrice('');
+    setCurrentPrice('');
+    setCouponRate('');
+    setMaturityDate('');
+    setStatus('ACTIVE');
+    setSearchQuery('');
+    setSearchResults([]);
     setShowResults(false);
-
-    try {
-      const res = await fetch(`/api/bonds/quote?symbol=${item.symbol}`);
-      const data = await res.json();
-      if (!data.error && data.currentPrice != null) {
-        setAvgPrice(data.currentPrice.toString());
-        setCurrentPrice(data.currentPrice.toString());
-        setCouponRate(data.couponRate.toString());
-        setMaturityDate(data.maturityDate);
-      }
-    } catch (error) {
-      logError('Quote fetch failed:', error);
+    if (closeModal) {
+      setIsModalOpen(false);
     }
+  }, []);
+
+  const openCreateModal = () => {
+    resetForm(false);
+    setIsModalOpen(true);
   };
 
   const fetchBonds = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setBonds([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -112,8 +214,8 @@ export default function BondsClient() {
       if (error) throw error;
       setBonds(data as Bond[]);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch bonds';
-      showNotification('error', errorMessage);
+      const message = error instanceof Error ? error.message : 'Failed to fetch bonds';
+      showNotification('error', message);
     } finally {
       setLoading(false);
     }
@@ -123,46 +225,162 @@ export default function BondsClient() {
     fetchBonds();
   }, [fetchBonds]);
 
-  const stats = useMemo(() => {
-    const totalInvested = bonds.reduce((sum, b) => sum + (b.avg_price || 0) * (b.quantity || 0), 0);
-    const totalCurrent = bonds.reduce(
-      (sum, b) => sum + (b.current_value || (b.avg_price || 0) * (b.quantity || 0)),
-      0
-    );
-    const totalPnl = totalCurrent - totalInvested;
-    const avgYield =
-      bonds.length > 0 ? bonds.reduce((sum, b) => sum + (b.coupon_rate || 0), 0) / bonds.length : 0;
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+    const timer = setTimeout(() => {
+      if (trimmedQuery.length >= 2) {
+        void handleSearch(trimmedQuery);
+      } else {
+        setSearchResults([]);
+        setShowResults(false);
+      }
+    }, 500);
 
-    return { totalInvested, totalCurrent, totalPnl, avgYield };
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/bonds/search?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Bond search failed');
+      }
+
+      const results = Array.isArray(data) ? (data as BondSearchResult[]) : [];
+      setSearchResults(results);
+      setShowResults(results.length > 0);
+    } catch (error) {
+      setSearchResults([]);
+      setShowResults(false);
+      logError('Bond search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const selectBond = async (item: BondSearchResult) => {
+    const [fallbackName, fallbackIssuer] = item.companyName.split(' - ');
+
+    setSearchQuery(item.symbol);
+    setName(item.name || fallbackName || item.companyName);
+    setCompanyName(item.issuer || fallbackIssuer || '');
+    if (item.couponRate != null) setCouponRate(item.couponRate.toString());
+    if (item.maturityDate) setMaturityDate(item.maturityDate);
+    setShowResults(false);
+
+    try {
+      const response = await fetch(`/api/bonds/quote?symbol=${encodeURIComponent(item.symbol)}`);
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Bond quote fetch failed');
+      }
+
+      if (data.name) setName(data.name);
+      if (data.companyName) setCompanyName(data.companyName);
+      if (data.currentPrice != null) {
+        setAvgPrice(data.currentPrice.toString());
+        setCurrentPrice(data.currentPrice.toString());
+      }
+      if (data.couponRate != null) setCouponRate(data.couponRate.toString());
+      if (data.maturityDate) setMaturityDate(data.maturityDate);
+    } catch (error) {
+      logError('Bond quote fetch failed:', error);
+    }
+  };
+
+  const stats = useMemo(() => {
+    const totalInvested = bonds.reduce((sum, bond) => {
+      return sum + (bond.avg_price || 0) * (bond.quantity || 0);
+    }, 0);
+    const totalCurrent = bonds.reduce((sum, bond) => {
+      return (
+        sum +
+        (bond.current_value || (bond.current_price || bond.avg_price || 0) * (bond.quantity || 0))
+      );
+    }, 0);
+    const totalPnl = totalCurrent - totalInvested;
+    const yieldBearingBonds = bonds.filter(
+      (bond) => (bond.yield_to_maturity ?? bond.coupon_rate ?? 0) > 0
+    );
+    const avgYield =
+      yieldBearingBonds.length > 0
+        ? yieldBearingBonds.reduce((sum, bond) => {
+            return sum + (bond.yield_to_maturity ?? bond.coupon_rate ?? 0);
+          }, 0) / yieldBearingBonds.length
+        : 0;
+
+    return { totalInvested, totalCurrent, totalPnl, avgYield, activeCount: bonds.length };
   }, [bonds]);
 
   const handleAction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !name || !quantity || !avgPrice) return;
 
-    const qty = parseFloat(quantity);
-    const price = parseFloat(avgPrice);
-    const currentPriceFloat = currentPrice ? parseFloat(currentPrice) : price;
-    const invested = qty * price;
-    const currentVal = qty * currentPriceFloat;
-    const pnlCalc = currentVal - invested;
-    const pnlPercent = invested > 0 ? (pnlCalc / invested) * 100 : 0;
+    if (!user) {
+      showNotification('error', 'Please sign in before saving bond holdings.');
+      return;
+    }
+
+    if (!searchQuery.trim() || !name.trim()) {
+      showNotification('error', 'Bond identifier and display name are required.');
+      return;
+    }
+
+    const qty = Number(quantity);
+    const price = Number(avgPrice);
+    const marketPrice = Number(currentPrice || avgPrice);
+    const couponValue = couponRate ? Number(couponRate) : null;
+
+    if (!Number.isFinite(qty) || qty <= 0) {
+      showNotification('error', 'Quantity must be a positive number.');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      showNotification('error', 'Average price must be a positive number.');
+      return;
+    }
+    if (!Number.isFinite(marketPrice) || marketPrice <= 0) {
+      showNotification('error', 'Current price must be a positive number.');
+      return;
+    }
+    if (couponRate && (!Number.isFinite(couponValue) || couponValue! < 0)) {
+      showNotification('error', 'Coupon rate must be a non-negative number.');
+      return;
+    }
+    if (maturityDate && Number.isNaN(new Date(`${maturityDate}T00:00:00`).getTime())) {
+      showNotification('error', 'Please provide a valid maturity date.');
+      return;
+    }
+
+    const metrics = calculateBondPositionMetrics(qty, price, marketPrice);
+    const ytm =
+      couponValue != null && maturityDate
+        ? calculateApproxBondYield({
+            currentPrice: marketPrice,
+            couponRate: couponValue,
+            maturityDate,
+            faceValue: 1000,
+          })
+        : null;
 
     const bondData = {
       user_id: user.id,
-      name,
-      company_name: companyName,
-      isin: searchQuery || null,
+      name: name.trim(),
+      company_name: companyName.trim() || null,
+      isin: searchQuery.trim().toUpperCase() || null,
       quantity: qty,
       avg_price: price,
-      current_price: currentPriceFloat,
-      coupon_rate: couponRate ? parseFloat(couponRate) : null,
+      current_price: marketPrice,
+      previous_price: marketPrice,
+      coupon_rate: couponValue,
       maturity_date: maturityDate || null,
       status,
-      investment_amount: invested,
-      current_value: currentVal,
-      pnl: pnlCalc,
-      pnl_percentage: pnlPercent,
+      investment_amount: metrics.invested,
+      current_value: metrics.currentValue,
+      pnl: metrics.pnl,
+      pnl_percentage: metrics.pnlPercentage,
+      yield_to_maturity: ytm,
     };
 
     try {
@@ -175,54 +393,47 @@ export default function BondsClient() {
         if (error) throw error;
         showNotification('success', 'Bond added successfully');
       }
+
       resetForm();
       fetchBonds();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error saving bond';
-      showNotification('error', errorMessage);
+      const message = error instanceof Error ? error.message : 'Error saving bond';
+      showNotification('error', message);
     }
   };
 
-  const handleEdit = (b: Bond) => {
-    setEditId(b.id);
-    setName(b.name);
-    setCompanyName(b.company_name || '');
-    setSearchQuery(b.isin || '');
-    setCurrentPrice(b.current_price?.toString() || b.current_value?.toString() || '');
-    setQuantity(b.quantity?.toString() || '');
-    setAvgPrice(b.avg_price?.toString() || '');
-    setCouponRate(b.coupon_rate?.toString() || '');
-    setMaturityDate(b.maturity_date || '');
-    setStatus(b.status || 'ACTIVE');
+  const handleEdit = (bond: Bond) => {
+    setEditId(bond.id);
+    setName(bond.name);
+    setCompanyName(bond.company_name || '');
+    setSearchQuery(bond.isin || '');
+    setQuantity(bond.quantity?.toString() || '');
+    setAvgPrice(bond.avg_price?.toString() || '');
+    setCurrentPrice(bond.current_price?.toString() || bond.avg_price?.toString() || '');
+    setCouponRate(bond.coupon_rate?.toString() || '');
+    setMaturityDate(bond.maturity_date || '');
+    setStatus(bond.status || 'ACTIVE');
+    setSearchResults([]);
+    setShowResults(false);
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (await customConfirm({ title: 'Delete Bond', message: 'Are you sure?', type: 'warning' })) {
-      try {
-        const { error } = await supabase.from('bonds').delete().eq('id', id);
-        if (error) throw error;
-        showNotification('success', 'Bond removed');
-        fetchBonds();
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Error';
-        showNotification('error', errorMessage);
-      }
+    if (
+      !(await customConfirm({ title: 'Delete Bond', message: 'Are you sure?', type: 'warning' }))
+    ) {
+      return;
     }
-  };
 
-  const resetForm = () => {
-    setEditId(null);
-    setName('');
-    setCompanyName('');
-    setSearchQuery('');
-    setQuantity('');
-    setAvgPrice('');
-    setCurrentPrice('');
-    setCouponRate('');
-    setMaturityDate('');
-    setStatus('ACTIVE');
-    setIsModalOpen(false);
+    try {
+      const { error } = await supabase.from('bonds').delete().eq('id', id);
+      if (error) throw error;
+      showNotification('success', 'Bond removed');
+      fetchBonds();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error deleting bond';
+      showNotification('error', message);
+    }
   };
 
   if (loading) {
@@ -243,7 +454,6 @@ export default function BondsClient() {
 
   return (
     <div className="page-container">
-      {/* Header */}
       <div
         className="flex-col-mobile"
         style={{
@@ -267,11 +477,12 @@ export default function BondsClient() {
             Bonds Terminal
           </h1>
           <p style={{ color: '#64748b', marginTop: '8px' }}>
-            Manage and track your fixed-income securities securely.
+            Manage and track your fixed-income securities securely across {stats.activeCount}{' '}
+            positions.
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           style={{
             background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
             color: 'white',
@@ -291,119 +502,17 @@ export default function BondsClient() {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '32px' }}>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Total Invested
-          </div>
-          <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#fff' }}>
-            ₹{stats.totalInvested.toLocaleString()}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Total P&L
-          </div>
-          <div
-            style={{
-              fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
-              fontWeight: '950',
-              color: stats.totalPnl >= 0 ? '#10b981' : '#f43f5e',
-            }}
-          >
-            ₹{stats.totalPnl.toLocaleString()}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Avg Yield
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#2dd4bf' }}
-          >
-            {stats.avgYield.toFixed(2)}%
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Active Bonds
-          </div>
-          <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#fff' }}>
-            {bonds.length}
-          </div>
-        </div>
+        <StatCard label="Total Invested" value={`INR ${stats.totalInvested.toLocaleString()}`} />
+        <StatCard label="Current Value" value={`INR ${stats.totalCurrent.toLocaleString()}`} />
+        <StatCard
+          label="Total P&L"
+          value={`INR ${stats.totalPnl.toLocaleString()}`}
+          valueColor={stats.totalPnl >= 0 ? '#10b981' : '#f43f5e'}
+        />
+        <StatCard label="Avg Yield" value={`${stats.avgYield.toFixed(2)}%`} valueColor="#2dd4bf" />
       </div>
 
-      {/* Bond List */}
       <div className="premium-card" style={{ padding: 0, overflow: 'hidden' }}>
         {bonds.length > 0 ? (
           <table
@@ -418,123 +527,139 @@ export default function BondsClient() {
               <tr
                 style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #111111' }}
               >
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Bond Name
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                  }}
-                >
-                  Qty / Avg Price
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                  }}
-                >
-                  Coupon Rate
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                  }}
-                >
-                  Current Value
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'center',
-                  }}
-                >
-                  Actions
-                </th>
+                {['Bond Name', 'Qty / Price', 'Yield', 'Current Value', 'Actions'].map((label) => (
+                  <th
+                    key={label}
+                    style={{
+                      padding: '16px',
+                      color: '#64748b',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      textAlign:
+                        label === 'Actions' ? 'center' : label === 'Bond Name' ? 'left' : 'right',
+                    }}
+                  >
+                    {label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {bonds.map((bond) => (
-                <tr key={bond.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ fontWeight: 800, color: '#fff' }}>{bond.name}</div>
-                    {bond.company_name && (
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                        {bond.company_name}
+              {bonds.map((bond) => {
+                const statusColor =
+                  bond.status === 'MATURED'
+                    ? '#f59e0b'
+                    : bond.status === 'SOLD'
+                      ? '#f43f5e'
+                      : '#10b981';
+                const pnl = bond.pnl || 0;
+
+                return (
+                  <tr key={bond.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 800, color: '#fff' }}>{bond.name}</div>
+                      {bond.company_name && (
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
+                          {bond.company_name}
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          flexWrap: 'wrap',
+                          marginTop: '8px',
+                          alignItems: 'center',
+                        }}
+                      >
+                        {bond.maturity_date && (
+                          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            Matures{' '}
+                            {new Date(`${bond.maturity_date}T00:00:00`).toLocaleDateString()}
+                          </span>
+                        )}
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: '900',
+                            padding: '4px 8px',
+                            borderRadius: '999px',
+                            background: `${statusColor}18`,
+                            color: statusColor,
+                          }}
+                        >
+                          {bond.status || 'ACTIVE'}
+                        </span>
                       </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right', color: '#cbd5e1' }}>
-                    {bond.quantity} / ₹{bond.avg_price?.toLocaleString()}
-                  </td>
-                  <td
-                    style={{
-                      padding: '16px',
-                      textAlign: 'right',
-                      fontWeight: '700',
-                      color: '#2dd4bf',
-                    }}
-                  >
-                    {bond.coupon_rate ? `${bond.coupon_rate}%` : 'N/A'}
-                  </td>
-                  <td
-                    style={{
-                      padding: '16px',
-                      textAlign: 'right',
-                      fontWeight: '700',
-                      color: '#fff',
-                    }}
-                  >
-                    ₹{bond.current_value?.toLocaleString()}
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <button
-                      onClick={() => handleEdit(bond)}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right', color: '#cbd5e1' }}>
+                      <div>
+                        {bond.quantity} / INR {bond.avg_price?.toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                        Last price INR {bond.current_price?.toLocaleString()}
+                      </div>
+                    </td>
+                    <td
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#64748b',
-                        cursor: 'pointer',
-                        marginRight: '12px',
+                        padding: '16px',
+                        textAlign: 'right',
+                        fontWeight: '700',
+                        color: '#2dd4bf',
                       }}
                     >
-                      <Edit3 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(bond.id)}
+                      <div>{bond.coupon_rate ? `${bond.coupon_rate}% coupon` : 'N/A'}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                        {bond.yield_to_maturity ? `YTM ${bond.yield_to_maturity}%` : 'YTM pending'}
+                      </div>
+                    </td>
+                    <td
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#f43f5e',
-                        cursor: 'pointer',
+                        padding: '16px',
+                        textAlign: 'right',
+                        fontWeight: '700',
+                        color: '#fff',
                       }}
                     >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <div>INR {bond.current_value?.toLocaleString()}</div>
+                      <div
+                        style={{
+                          fontSize: '0.75rem',
+                          color: pnl >= 0 ? '#10b981' : '#f43f5e',
+                          marginTop: '4px',
+                        }}
+                      >
+                        {pnl >= 0 ? '+' : ''}INR {pnl.toLocaleString()}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleEdit(bond)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#64748b',
+                          cursor: 'pointer',
+                          marginRight: '12px',
+                        }}
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(bond.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#f43f5e',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         ) : (
@@ -547,7 +672,6 @@ export default function BondsClient() {
         )}
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <div
           style={{
@@ -567,7 +691,7 @@ export default function BondsClient() {
             className="premium-card fade-in"
             style={{
               width: '100%',
-              maxWidth: '500px',
+              maxWidth: '560px',
               background: '#050505',
               padding: '32px',
               borderRadius: '24px',
@@ -581,17 +705,7 @@ export default function BondsClient() {
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               <div style={{ position: 'relative' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    color: '#64748b',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    marginBottom: '8px',
-                  }}
-                >
-                  Search Bond / ISIN *
-                </label>
+                <label style={fieldStyles.label}>Search Bond / ISIN *</label>
                 <div style={{ position: 'relative' }}>
                   <Search
                     size={16}
@@ -602,10 +716,13 @@ export default function BondsClient() {
                     required
                     value={searchQuery}
                     onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      if (!e.target.value) {
+                      const nextValue = e.target.value;
+                      setSearchQuery(nextValue);
+                      if (!nextValue) {
                         setName('');
                         setCompanyName('');
+                        setCouponRate('');
+                        setMaturityDate('');
                         setShowResults(false);
                       }
                     }}
@@ -613,14 +730,7 @@ export default function BondsClient() {
                       if (searchResults.length > 0) setShowResults(true);
                     }}
                     placeholder="e.g. NHAI or IN0020230085"
-                    style={{
-                      width: '100%',
-                      padding: '12px 12px 12px 36px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
+                    style={{ ...fieldStyles.input, padding: '12px 12px 12px 36px' }}
                   />
                   {isSearching && (
                     <Loader2
@@ -648,14 +758,15 @@ export default function BondsClient() {
                       boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
                     }}
                   >
-                    {searchResults.map((res, i) => (
+                    {searchResults.map((result, index) => (
                       <div
-                        key={i}
-                        onClick={() => selectBond(res)}
+                        key={`${result.symbol}-${index}`}
+                        onClick={() => selectBond(result)}
                         style={{
                           padding: '12px 16px',
                           cursor: 'pointer',
-                          borderBottom: i < searchResults.length - 1 ? '1px solid #1a1a1a' : 'none',
+                          borderBottom:
+                            index < searchResults.length - 1 ? '1px solid #1a1a1a' : 'none',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '4px',
@@ -665,9 +776,13 @@ export default function BondsClient() {
                         }
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <div style={{ color: '#fff', fontWeight: 'bold' }}>{res.symbol}</div>
+                        <div style={{ color: '#fff', fontWeight: 'bold' }}>{result.symbol}</div>
                         <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                          {res.companyName}
+                          {result.companyName}
+                        </div>
+                        <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
+                          {result.couponRate ? `${result.couponRate}% coupon` : 'Coupon pending'}
+                          {result.maturityDate ? ` • Matures ${result.maturityDate}` : ''}
                         </div>
                       </div>
                     ))}
@@ -675,152 +790,70 @@ export default function BondsClient() {
                 )}
               </div>
 
-              {/* Hidden Name field for fallback/override but keep it invisible if not editing, or we can just always show it and it auto-populates. Let's show it so they can edit. */}
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    color: '#64748b',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                    marginBottom: '8px',
-                  }}
-                >
-                  Bond Name (Display) *
-                </label>
-                <input
+              <TextField
+                label="Bond Name (Display) *"
+                value={name}
+                onChange={setName}
+                required
+                placeholder="Auto-filled or specify custom name"
+              />
+              <TextField
+                label="Issuer / Company"
+                value={companyName}
+                onChange={setCompanyName}
+                placeholder="Issuer name"
+              />
+              <div style={fieldStyles.grid}>
+                <TextField
+                  label="Quantity *"
+                  value={quantity}
+                  onChange={setQuantity}
+                  type="number"
                   required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  type="text"
-                  placeholder="Auto-filled or specify custom name"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid #111111',
-                    borderRadius: '12px',
-                    color: '#fff',
-                  }}
+                  min="0"
+                />
+                <TextField
+                  label="Avg Price *"
+                  value={avgPrice}
+                  onChange={setAvgPrice}
+                  type="number"
+                  required
+                  min="0"
+                />
+                <TextField
+                  label="Current Price *"
+                  value={currentPrice}
+                  onChange={setCurrentPrice}
+                  type="number"
+                  required
+                  min="0"
                 />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Quantity *
-                  </label>
-                  <input
-                    required
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    type="number"
-                    step="any"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Avg Price *
-                  </label>
-                  <input
-                    required
-                    value={avgPrice}
-                    onChange={(e) => setAvgPrice(e.target.value)}
-                    type="number"
-                    step="any"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Coupon Rate (%)
-                  </label>
-                  <input
-                    value={couponRate}
-                    onChange={(e) => setCouponRate(e.target.value)}
-                    type="number"
-                    step="any"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Maturity Date
-                  </label>
-                  <input
-                    value={maturityDate}
-                    onChange={(e) => setMaturityDate(e.target.value)}
-                    type="date"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
+              <div style={fieldStyles.grid}>
+                <TextField
+                  label="Coupon Rate (%)"
+                  value={couponRate}
+                  onChange={setCouponRate}
+                  type="number"
+                  min="0"
+                />
+                <TextField
+                  label="Maturity Date"
+                  value={maturityDate}
+                  onChange={setMaturityDate}
+                  type="date"
+                />
+                <SelectField
+                  label="Status"
+                  value={status}
+                  onChange={setStatus}
+                  options={['ACTIVE', 'MATURED', 'SOLD']}
+                />
               </div>
               <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
                 <button
                   type="button"
-                  onClick={resetForm}
+                  onClick={() => resetForm()}
                   style={{
                     flex: 1,
                     padding: '14px',
