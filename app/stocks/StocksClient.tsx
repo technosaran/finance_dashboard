@@ -1353,7 +1353,7 @@ export default function StocksClient() {
                 ) : (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={10}
                       style={{ padding: '80px 24px', textAlign: 'center', color: '#64748b' }}
                     >
                       <EmptyPortfolioVisual />
@@ -1382,7 +1382,7 @@ export default function StocksClient() {
                     <td style={{ padding: '20px 24px', fontWeight: '800', color: '#64748b' }}>
                       TOTAL
                     </td>
-                    <td colSpan={3}></td>
+                    <td colSpan={4}></td>
                     <td
                       style={{
                         padding: '20px 24px',
