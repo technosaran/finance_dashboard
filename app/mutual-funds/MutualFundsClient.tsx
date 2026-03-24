@@ -999,6 +999,18 @@ export default function MutualFundsClient() {
                       textAlign: 'right',
                     }}
                   >
+                    Invested
+                  </th>
+                  <th
+                    style={{
+                      padding: '16px 24px',
+                      color: '#64748b',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem',
+                      textAlign: 'right',
+                    }}
+                  >
                     Curr. NAV
                   </th>
                   <th
@@ -1088,6 +1100,16 @@ export default function MutualFundsClient() {
                         }}
                       >
                         ₹{mf.avgNav.toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: '16px 24px',
+                          textAlign: 'right',
+                          fontWeight: '700',
+                          color: '#94a3b8',
+                        }}
+                      >
+                        ₹{mf.investmentAmount.toLocaleString()}
                       </td>
                       <td
                         style={{
