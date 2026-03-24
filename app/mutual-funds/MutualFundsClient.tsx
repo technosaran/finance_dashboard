@@ -429,6 +429,7 @@ export default function MutualFundsClient() {
           </h1>
         </div>
         <div
+          className="mobile-page-header__actions"
           style={{
             display: 'flex',
             gap: '12px',
@@ -493,18 +494,7 @@ export default function MutualFundsClient() {
       </div>
 
       {/* Performance Cards */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '16px',
-          marginBottom: '32px',
-          width: '100%',
-          overflowX: 'auto',
-          paddingBottom: '8px',
-        }}
-        className="hide-scrollbar"
-      >
+      <div className="grid-responsive-4" style={{ marginBottom: '32px' }}>
         <div
           className="premium-card"
           style={{
@@ -512,8 +502,6 @@ export default function MutualFundsClient() {
             padding: '20px',
             borderRadius: '24px',
             border: '1px solid #111111',
-            flex: '1',
-            minWidth: '200px',
           }}
         >
           <div
@@ -531,7 +519,6 @@ export default function MutualFundsClient() {
             style={{
               fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
               fontWeight: '900',
-              whiteSpace: 'nowrap',
             }}
           >
             ₹{totalInvestment.toLocaleString()}
@@ -544,8 +531,6 @@ export default function MutualFundsClient() {
             padding: '20px',
             borderRadius: '24px',
             border: '1px solid #111111',
-            flex: '1',
-            minWidth: '200px',
           }}
         >
           <div
@@ -563,7 +548,6 @@ export default function MutualFundsClient() {
             style={{
               fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
               fontWeight: '900',
-              whiteSpace: 'nowrap',
             }}
           >
             ₹{totalCurrentValue.toLocaleString()}
@@ -576,8 +560,6 @@ export default function MutualFundsClient() {
             padding: '20px',
             borderRadius: '24px',
             border: '1px solid #111111',
-            flex: '1',
-            minWidth: '200px',
           }}
         >
           <div
@@ -596,7 +578,6 @@ export default function MutualFundsClient() {
               fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
               fontWeight: '900',
               color: totalPnL >= 0 ? '#34d399' : '#f87171',
-              whiteSpace: 'nowrap',
             }}
           >
             {totalPnL >= 0 ? '+' : ''}₹{totalPnL.toLocaleString()}
@@ -609,8 +590,6 @@ export default function MutualFundsClient() {
             padding: '20px',
             borderRadius: '24px',
             border: '1px solid #111111',
-            flex: '1',
-            minWidth: '200px',
           }}
         >
           <div
@@ -629,7 +608,6 @@ export default function MutualFundsClient() {
               fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
               fontWeight: '900',
               color: totalDayPnL >= 0 ? '#34d399' : '#f87171',
-              whiteSpace: 'nowrap',
             }}
           >
             {totalDayPnL >= 0 ? '+' : ''}₹
@@ -652,7 +630,7 @@ export default function MutualFundsClient() {
 
       {/* Tabs */}
       <div
-        className="hide-scrollbar"
+        className="mobile-tab-scroll"
         style={{
           display: 'flex',
           background: '#050505',
@@ -1126,14 +1104,14 @@ export default function MutualFundsClient() {
                           style={{
                             fontWeight: '800',
                             color:
-                              mf.currentNav - (mf.previousNav || mf.currentNav) >= 0
+                              mf.currentNav - (mf.previousNav ?? mf.currentNav) >= 0
                                 ? '#10b981'
                                 : '#f87171',
                           }}
                         >
-                          {mf.currentNav - (mf.previousNav || mf.currentNav) >= 0 ? '+' : ''}₹
+                          {mf.currentNav - (mf.previousNav ?? mf.currentNav) >= 0 ? '+' : ''}₹
                           {(
-                            (mf.currentNav - (mf.previousNav || mf.currentNav)) *
+                            (mf.currentNav - (mf.previousNav ?? mf.currentNav)) *
                             mf.units
                           ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                           <div style={{ fontSize: '0.65rem', fontWeight: '600', opacity: 0.8 }}>
@@ -1274,7 +1252,7 @@ export default function MutualFundsClient() {
                 ) : (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={9}
                       style={{ padding: '60px 24px', textAlign: 'center', color: '#64748b' }}
                     >
                       <EmptyPortfolioVisual size={150} />
@@ -1303,7 +1281,7 @@ export default function MutualFundsClient() {
                     <td style={{ padding: '20px 24px', fontWeight: '800', color: '#64748b' }}>
                       TOTAL
                     </td>
-                    <td colSpan={3}></td>
+                    <td colSpan={4}></td>
                     <td
                       style={{
                         padding: '20px 24px',
