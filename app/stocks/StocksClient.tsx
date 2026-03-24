@@ -1070,6 +1070,18 @@ export default function StocksClient() {
                       textAlign: 'right',
                     }}
                   >
+                    Invested
+                  </th>
+                  <th
+                    style={{
+                      padding: '16px 24px',
+                      color: '#64748b',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem',
+                      textAlign: 'right',
+                    }}
+                  >
                     LTP
                   </th>
                   <th
@@ -1173,6 +1185,16 @@ export default function StocksClient() {
                         }}
                       >
                         ₹{stock.avgPrice.toFixed(2)}
+                      </td>
+                      <td
+                        style={{
+                          padding: '16px 24px',
+                          textAlign: 'right',
+                          fontWeight: '700',
+                          color: '#94a3b8',
+                        }}
+                      >
+                        ₹{stock.investmentAmount.toLocaleString()}
                       </td>
                       <td
                         style={{
