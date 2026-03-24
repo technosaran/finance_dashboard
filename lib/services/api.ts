@@ -122,9 +122,9 @@ export async function rateLimit(
       const [current] = await Promise.all([
         kv.incr(key),
         // If it's 1, it's the first time we've set this key, so we expire it
-        kv.expire(key, Math.floor(windowMs / 1000), 'NX' as any)
+        kv.expire(key, Math.floor(windowMs / 1000), 'NX' as const),
       ]);
-      
+
       const count = Number(current) || 1;
       return { success: count <= limit, remaining: Math.max(0, limit - count) };
     } catch (err) {
