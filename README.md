@@ -59,7 +59,7 @@ An enterprise-grade financial tracking and portfolio management dashboard built 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - npm 9+
 - A [Supabase](https://supabase.com) project
 
@@ -175,7 +175,6 @@ Comprehensive documentation is available:
 - **[Testing](./docs/TESTING.md)** — Testing strategy, examples, and best practices
 - **[Contributing](./docs/CONTRIBUTING.md)** — Contribution guidelines and workflow
 - **[Security](./docs/SECURITY.md)** — Security policy and vulnerability reporting
-- **[Changelog](./docs/CHANGELOG.md)** — Version history and release notes
 
 ## 🔒 Security & Quality
 
@@ -186,14 +185,14 @@ This project follows industry-standard security and quality practices:
 - **Authentication**: Supabase Auth with Row Level Security (RLS)
 - **Automated Security Scanning**: CodeQL analysis on every push
 - **Dependency Monitoring**: Dependabot for automated dependency updates
-- **Vulnerability Reporting**: See [SECURITY.md](./SECURITY.md) for responsible disclosure
+- **Vulnerability Reporting**: See [SECURITY.md](./docs/SECURITY.md) for responsible disclosure
 
 ### Code Quality Standards
 
 - **Type Safety**: TypeScript strict mode enabled
 - **Linting**: ESLint with Next.js recommended rules
 - **Formatting**: Prettier for consistent code style
-- **Testing**: Jest with 75+ unit tests and growing
+- **Testing**: Jest with unit tests and growing
 - **Pre-commit Hooks**: Automated quality checks before commits
 - **Commit Standards**: Conventional Commits specification
 - **Continuous Integration**: Automated testing, linting, and building
@@ -219,7 +218,7 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 - Pull request process
 - Testing requirements
 
-Before contributing, please read our [Code of Conduct](./CODE_OF_CONDUCT.md).
+Before contributing, please read our [Code of Conduct](./docs/CODE_OF_CONDUCT.md).
 
 ## 🐛 Reporting Issues
 
@@ -244,7 +243,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## 📧 Support
 
-- **Documentation**: Check our comprehensive [docs](./DEVELOPER_GUIDE.md)
+- **Documentation**: Check our comprehensive [docs](./docs/DEVELOPER_GUIDE.md)
 - **Issues**: [GitHub Issues](https://github.com/technosaran/fin_dashboard/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/technosaran/fin_dashboard/discussions)
 

@@ -46,6 +46,28 @@ import {
 // and the client is typed as createClient<Database> — no any-casts needed.
 
 const FinanceContext = createContext<FinanceContextState | undefined>(undefined);
+export const LedgerContext = createContext<FinanceContextState | undefined>(undefined);
+export const PortfolioContext = createContext<FinanceContextState | undefined>(undefined);
+export const SettingsContext = createContext<FinanceContextState | undefined>(undefined);
+
+export const useLedger = () => {
+  const context = useContext(LedgerContext);
+  if (!context) throw new Error('useLedger must be used within FinanceProvider');
+  return context;
+};
+
+export const usePortfolio = () => {
+  const context = useContext(PortfolioContext);
+  if (!context) throw new Error('usePortfolio must be used within FinanceProvider');
+  return context;
+};
+
+export const useSettings = () => {
+  const context = useContext(SettingsContext);
+  if (!context) throw new Error('useSettings must be used within FinanceProvider');
+  return context;
+};
+
 
 export const useFinance = () => {
   const context = useContext(FinanceContext);
@@ -861,22 +883,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const pnlPercentage =
                   stock.investmentAmount > 0 ? (pnl / stock.investmentAmount) * 100 : 0;
 
-                if (currentPrice > 0) {
-                  supabase
-                    .from('stocks')
-                    .update({
-                      current_price: currentPrice,
-                      previous_price: previousPrice,
-                      current_value: currentValue,
-                      pnl,
-                      pnl_percentage: pnlPercentage,
-                    })
-                    .eq('id', stock.id)
-                    .then(({ error }: { error: Error | null }) => {
-                      if (error) logError(`Failed to persist stock ${stock.symbol}`, error);
-                    });
-                }
-
                 return {
                   ...stock,
                   currentPrice: currentPrice > 0 ? currentPrice : stock.currentPrice,
@@ -922,22 +928,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const pnl = currentValue - mf.investmentAmount;
                 const pnlPercentage =
                   mf.investmentAmount > 0 ? (pnl / mf.investmentAmount) * 100 : 0;
-
-                if (currentNav > 0) {
-                  supabase
-                    .from('mutual_funds')
-                    .update({
-                      current_nav: currentNav,
-                      previous_nav: previousNav,
-                      current_value: currentValue,
-                      pnl,
-                      pnl_percentage: pnlPercentage,
-                    })
-                    .eq('id', mf.id)
-                    .then(({ error }: { error: Error | null }) => {
-                      if (error) logError(`Failed to persist MF ${mf.schemeName}`, error);
-                    });
-                }
 
                 return {
                   ...mf,
@@ -1188,18 +1178,64 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // refresh, an immediate refresh is triggered so previousClose resets correctly.
   useEffect(() => {
     if (!user) return;
-    const intervalId = setInterval(() => {
-      const today = new Date().toISOString().split('T')[0];
-      if (!lastRefreshDateRef.current) lastRefreshDateRef.current = today;
-      if (lastRefreshDateRef.current !== today) {
-        // New trading day detected — refresh to get updated previousClose values
-        lastRefreshDateRef.current = today;
-      }
-      refreshLivePricesRef.current(true);
-    }, 60000);
+    // 5 minute interval (reduced from 1 minute to cut unnecessary API calls)
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+    let intervalId: ReturnType<typeof setInterval>;
 
-    return () => clearInterval(intervalId);
+    const startPolling = () => {
+      intervalId = setInterval(() => {
+        const today = new Date().toISOString().split('T')[0];
+        if (!lastRefreshDateRef.current) lastRefreshDateRef.current = today;
+        if (lastRefreshDateRef.current !== today) {
+          // New trading day detected — refresh to get updated previousClose values
+          lastRefreshDateRef.current = today;
+        }
+        refreshLivePricesRef.current(true);
+      }, REFRESH_INTERVAL_MS);
+    };
+
+    const stopPolling = () => {
+      clearInterval(intervalId);
+    };
+
+    // Pause polling when user switches away from the tab (Page Visibility API)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        // Refresh immediately when user returns, then resume interval
+        refreshLivePricesRef.current(true);
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]); // only resets when user logs in/out
 
-  return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
+  
+  const ledgerValue = useMemo(() => ({ accounts, addAccount, updateAccount, deleteAccount, addFunds, transactions, addTransaction, updateTransaction, deleteTransaction, goals, addGoal, updateGoal, deleteGoal, familyTransfers, addFamilyTransfer, updateFamilyTransfer, deleteFamilyTransfer, isTransactionModalOpen, setIsTransactionModalOpen, loading, error }), [accounts, addAccount, updateAccount, deleteAccount, addFunds, transactions, addTransaction, updateTransaction, deleteTransaction, goals, addGoal, updateGoal, deleteGoal, familyTransfers, addFamilyTransfer, updateFamilyTransfer, deleteFamilyTransfer, isTransactionModalOpen, setIsTransactionModalOpen, loading, error]);
+
+  const portfolioValue = useMemo(() => ({ stocks, addStock, updateStock, deleteStock, stockTransactions, addStockTransaction, deleteStockTransaction, watchlist, mutualFunds, addMutualFund, updateMutualFund, deleteMutualFund, mutualFundTransactions, addMutualFundTransaction, deleteMutualFundTransaction, fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, refreshPortfolio, refreshLivePrices, loading, error }), [stocks, addStock, updateStock, deleteStock, stockTransactions, addStockTransaction, deleteStockTransaction, watchlist, mutualFunds, addMutualFund, updateMutualFund, deleteMutualFund, mutualFundTransactions, addMutualFundTransaction, deleteMutualFundTransaction, fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, refreshPortfolio, refreshLivePrices, loading, error]);
+
+  const settingsValue = useMemo(() => ({ settings, updateSettings, loading, error }), [settings, updateSettings, loading, error]);
+
+
+  return (
+    <SettingsContext.Provider value={settingsValue as unknown as FinanceContextState}>
+      <LedgerContext.Provider value={ledgerValue as unknown as FinanceContextState}>
+        <PortfolioContext.Provider value={portfolioValue as unknown as FinanceContextState}>
+          <FinanceContext.Provider value={value}>
+            {children}
+          </FinanceContext.Provider>
+        </PortfolioContext.Provider>
+      </LedgerContext.Provider>
+    </SettingsContext.Provider>
+  );
+
 };

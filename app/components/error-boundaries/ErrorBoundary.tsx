@@ -125,8 +125,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 lineHeight: '1.6',
               }}
             >
-              We encountered an unexpected error. Our team has been notified and is working on a
-              fix.
+              We encountered an unexpected error. Please try refreshing the page or returning to
+              the home screen.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (

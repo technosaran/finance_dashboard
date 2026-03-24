@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
 import { Stock } from '@/lib/types';
 import { calculateStockCharges, getStockChargeMeta } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
@@ -43,19 +43,9 @@ const COLORS = [
 ];
 
 export default function StocksClient() {
-  const {
-    accounts,
-    stocks,
-    stockTransactions,
-    addStock,
-    updateStock,
-    deleteStock,
-    addStockTransaction,
-    deleteStockTransaction,
-    settings,
-    loading,
-    refreshLivePrices,
-  } = useFinance();
+  const { accounts, loading } = useLedger();
+  const { stocks, stockTransactions, addStock, updateStock, deleteStock, addStockTransaction, deleteStockTransaction, refreshLivePrices } = usePortfolio();
+  const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [activeTab, setActiveTab] = useState<'portfolio' | 'history' | 'lifetime' | 'allocation'>(
     'portfolio'

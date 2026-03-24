@@ -14,7 +14,7 @@ import { logError } from '@/lib/utils/logger';
  */
 async function handleMFSearch(request: Request): Promise<NextResponse> {
   // Apply rate limiting
-  const rateLimitResponse = applyRateLimit(request);
+  const rateLimitResponse = await applyRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   const { searchParams } = new URL(request.url);

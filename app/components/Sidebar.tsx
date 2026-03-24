@@ -21,7 +21,7 @@ import {
 
 import { useAuth } from './AuthContext';
 import { useNotifications } from './NotificationContext';
-import { useFinance } from './FinanceContext';
+import { useSettings } from './FinanceContext';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -47,7 +47,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const { confirm: customConfirm } = useNotifications();
-  const { settings } = useFinance();
+  const { settings } = useSettings();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const isVisible = (key?: string) => {

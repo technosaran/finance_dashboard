@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useNotifications } from '../components/NotificationContext';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger } from '../components/FinanceContext';
 import { FamilyTransfer } from '@/lib/types';
 import {
   Users,
@@ -45,14 +45,7 @@ const memberColors = [
 ];
 
 export default function FamilyClient() {
-  const {
-    accounts,
-    familyTransfers,
-    addFamilyTransfer,
-    updateFamilyTransfer,
-    deleteFamilyTransfer,
-    loading,
-  } = useFinance();
+  const { accounts, familyTransfers, addFamilyTransfer, updateFamilyTransfer, deleteFamilyTransfer, loading } = useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);

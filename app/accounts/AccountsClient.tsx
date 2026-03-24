@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger } from '../components/FinanceContext';
 import { Account, AccountType } from '@/lib/types';
 import { exportAccountsToCSV } from '../../lib/utils/export';
 import {
@@ -23,7 +23,7 @@ import {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
 export default function AccountsClient() {
-  const { accounts, addAccount, updateAccount, deleteAccount, addFunds, loading } = useFinance();
+  const { accounts, addAccount, updateAccount, deleteAccount, addFunds, loading } = useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);

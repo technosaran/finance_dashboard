@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useNotifications } from '../components/NotificationContext';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger, useSettings } from '../components/FinanceContext';
 import { Transaction, TransactionCategory } from '@/lib/types';
 import {
   TrendingUp,
@@ -35,15 +35,8 @@ const categoryConfig: Record<string, { icon: React.ReactNode; color: string; lab
 };
 
 export default function IncomeClient() {
-  const {
-    accounts,
-    transactions,
-    addTransaction,
-    updateTransaction,
-    deleteTransaction,
-    settings,
-    loading,
-  } = useFinance();
+  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } = useLedger();
+  const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);

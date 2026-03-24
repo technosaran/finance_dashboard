@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { useNotifications } from '../components/NotificationContext';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger, useSettings } from '../components/FinanceContext';
 import { AppSettings, Account } from '@/lib/types';
 import {
   Undo,
@@ -130,7 +130,8 @@ const SIDEBAR_ITEMS: Array<{
 ];
 
 export default function SettingsPage() {
-  const { settings, updateSettings, accounts, loading } = useFinance();
+  const { accounts, loading } = useLedger();
+  const { settings, updateSettings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 

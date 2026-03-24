@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Sidebar from './Sidebar';
 import { AuthProvider, useAuth } from './AuthContext';
-import { FinanceProvider, useFinance } from './FinanceContext';
+import { FinanceProvider, useLedger } from './FinanceContext';
 import { NotificationProvider } from './NotificationContext';
 import { ErrorBoundary } from './error-boundaries/ErrorBoundary';
 
@@ -225,7 +225,7 @@ function AuthConsumer({
 }
 
 function TransactionModalWrapper() {
-  const { isTransactionModalOpen, setIsTransactionModalOpen } = useFinance();
+  const { isTransactionModalOpen, setIsTransactionModalOpen } = useLedger();
   return (
     <AddTransactionModal
       isOpen={isTransactionModalOpen}
@@ -237,7 +237,7 @@ function TransactionModalWrapper() {
 function MobileNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { setIsTransactionModalOpen } = useFinance();
+  const { setIsTransactionModalOpen } = useLedger();
 
   const navItems = [
     { label: 'Dash', icon: <LayoutDashboard size={20} />, path: '/' },

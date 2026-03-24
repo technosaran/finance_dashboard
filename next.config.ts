@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: process.env.NEXT_PUBLIC_APP_URL || '*',
+            value: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
           },
           {
             key: 'Access-Control-Allow-Methods',

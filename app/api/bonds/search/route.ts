@@ -9,7 +9,7 @@ import {
 } from '@/lib/services/api';
 
 async function handleBondSearch(request: Request): Promise<NextResponse> {
-  const rateLimitResponse = applyRateLimit(request);
+  const rateLimitResponse = await applyRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   const { searchParams } = new URL(request.url);

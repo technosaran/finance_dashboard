@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger, usePortfolio } from '../components/FinanceContext';
 import { FnoTrade } from '@/lib/types';
 import { calculateFnoCharges } from '@/lib/utils/charges';
 import { useNotifications } from '../components/NotificationContext';
@@ -20,8 +20,8 @@ import {
 } from 'recharts';
 
 export default function FnOClient() {
-  const { fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, loading, accounts } =
-    useFinance();
+  const { accounts, loading } = useLedger();
+  const { fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade } = usePortfolio();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
   const [activeTab, setActiveTab] = useState<'positions' | 'history' | 'lifetime'>('positions');

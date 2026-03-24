@@ -22,7 +22,7 @@ interface FnoPositionData {
  * Batch FnO position quote API endpoint
  */
 async function handleFnoBatchQuote(request: Request): Promise<NextResponse> {
-  const rateLimitResponse = applyRateLimit(request);
+  const rateLimitResponse = await applyRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   const { searchParams } = new URL(request.url);

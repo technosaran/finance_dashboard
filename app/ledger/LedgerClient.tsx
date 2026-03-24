@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger } from '../components/FinanceContext';
 import { Transaction } from '@/lib/types';
 import { exportTransactionsToCSV } from '../../lib/utils/export';
 import {
@@ -29,8 +29,7 @@ import {
 import { EmptyTransactionsVisual } from '../components/Visuals';
 
 export default function LedgerClient() {
-  const { transactions, accounts, addTransaction, updateTransaction, deleteTransaction, loading } =
-    useFinance();
+  const { transactions, accounts, addTransaction, updateTransaction, deleteTransaction, loading } = useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
   // UI State

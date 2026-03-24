@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { X, Search, Loader2, TrendingUp, Activity, Zap, Banknote, Info } from 'lucide-react';
-import { useFinance } from './FinanceContext';
+import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useNotifications } from './NotificationContext';
 import {
   calculateFnoCharges,
@@ -49,17 +49,9 @@ type SelectedItem = SelectedStockItem | SelectedMFItem;
 type SearchResult = StockSearchResult | MutualFundSearchResult;
 
 export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
-  const {
-    stocks,
-    mutualFunds,
-    accounts,
-    settings,
-    addStockTransaction,
-    addMutualFundTransaction,
-    addFnoTrade,
-    addStock,
-    addMutualFund,
-  } = useFinance();
+  const { accounts } = useLedger();
+  const { stocks, mutualFunds, addStockTransaction, addMutualFundTransaction, addFnoTrade, addStock, addMutualFund } = usePortfolio();
+  const { settings } = useSettings();
   const { showNotification } = useNotifications();
 
   const [type, setType] = useState<TransactionType>('STOCK');

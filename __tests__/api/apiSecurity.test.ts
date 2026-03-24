@@ -21,21 +21,21 @@ jest.mock('next/server', () => ({
 
 describe('API Security Utilities', () => {
   describe('rateLimit', () => {
-    it('should allow requests within limit', () => {
+    it('should allow requests within limit', async () => {
       const identifier = 'test-user-1';
-      const result = rateLimit(identifier, 10, 60000);
+      const result = await rateLimit(identifier, 10, 60000);
       expect(result.success).toBe(true);
       expect(result.remaining).toBe(9);
     });
 
-    it('should block requests exceeding limit', () => {
+    it('should block requests exceeding limit', async () => {
       const identifier = 'test-user-2';
       // Make 10 requests
       for (let i = 0; i < 10; i++) {
-        rateLimit(identifier, 10, 60000);
+        await rateLimit(identifier, 10, 60000);
       }
       // 11th request should fail
-      const result = rateLimit(identifier, 10, 60000);
+      const result = await rateLimit(identifier, 10, 60000);
       expect(result.success).toBe(false);
       expect(result.remaining).toBe(0);
     });
@@ -43,14 +43,14 @@ describe('API Security Utilities', () => {
     it('should reset after window expires', async () => {
       const identifier = 'test-user-3';
       // Use very short window
-      rateLimit(identifier, 2, 100);
-      rateLimit(identifier, 2, 100);
+      await rateLimit(identifier, 2, 100);
+      await rateLimit(identifier, 2, 100);
 
       // Wait for window to expire
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Should allow new requests
-      const result = rateLimit(identifier, 2, 100);
+      const result = await rateLimit(identifier, 2, 100);
       expect(result.success).toBe(true);
     });
   });

@@ -18,7 +18,7 @@ import { logError } from '@/lib/utils/logger';
  */
 async function handleStockSearch(request: Request): Promise<NextResponse> {
   // Apply rate limiting
-  const rateLimitResponse = applyRateLimit(request);
+  const rateLimitResponse = await applyRateLimit(request);
   if (rateLimitResponse) return rateLimitResponse;
 
   // Parse and validate query parameter

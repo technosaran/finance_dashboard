@@ -20,7 +20,7 @@ Thank you for your interest in contributing to FINCORE! This guide will help you
 
 ### Prerequisites
 
-- **Node.js**: 18+ (check with `node --version`)
+- **Node.js**: 22+ (check with `node --version`)
 - **npm**: 9+ (check with `npm --version`)
 - **Git**: Latest version
 - **Code Editor**: VS Code recommended with extensions:
@@ -99,9 +99,9 @@ git commit -m "feat: your change description"
 Always create a new branch for your work:
 
 ```bash
-# Update your main branch
-git checkout main
-git pull upstream main
+# Update your master branch
+git checkout master
+git pull upstream master
 
 # Create a feature branch
 git checkout -b feature/your-feature-name

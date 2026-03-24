@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useNotifications } from '../components/NotificationContext';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger, useSettings } from '../components/FinanceContext';
 import { Transaction } from '@/lib/types';
 import {
   TrendingDown,
@@ -23,15 +23,8 @@ import {
 import { EmptyTransactionsVisual } from '../components/Visuals';
 
 export default function ExpensesClient() {
-  const {
-    accounts,
-    transactions,
-    addTransaction,
-    updateTransaction,
-    deleteTransaction,
-    settings,
-    loading,
-  } = useFinance();
+  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } = useLedger();
+  const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);

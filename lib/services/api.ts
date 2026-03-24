@@ -5,12 +5,15 @@
 
 import { NextResponse } from 'next/server';
 import { logError, logWarn } from '../utils/logger';
+import { kv } from '@vercel/kv';
 
 export interface ApiError {
   error: string;
   message?: string;
   status: number;
 }
+
+const IS_KV_AVAILABLE = !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN;
 
 /**
  * Handle CORS preflight requests (OPTIONS method)
@@ -108,11 +111,28 @@ const RATE_LIMIT_MAX_SIZE = 1000;
  * Simple in-memory rate limiter
  * For production, use a proper rate limiting service like Upstash
  */
-export function rateLimit(
+export async function rateLimit(
   identifier: string,
   limit: number = 10,
   windowMs: number = 60000
-): { success: boolean; remaining: number } {
+): Promise<{ success: boolean; remaining: number }> {
+  if (IS_KV_AVAILABLE) {
+    try {
+      const key = `ratelimit:${identifier}`;
+      const [current] = await Promise.all([
+        kv.incr(key),
+        // If it's 1, it's the first time we've set this key, so we expire it
+        kv.expire(key, Math.floor(windowMs / 1000), 'NX' as any)
+      ]);
+      
+      const count = Number(current) || 1;
+      return { success: count <= limit, remaining: Math.max(0, limit - count) };
+    } catch (err) {
+      logError('KV rate limiting failed, falling back to memory', err);
+      // Fall through to memory
+    }
+  }
+
   const now = Date.now();
   const record = rateLimitStore.get(identifier);
 
@@ -176,9 +196,9 @@ export function getClientIP(request: Request): string {
 /**
  * Apply rate limiting to a request
  */
-export function applyRateLimit(request: Request): NextResponse | null {
+export async function applyRateLimit(request: Request): Promise<NextResponse | null> {
   const ip = getClientIP(request);
-  const { success } = rateLimit(ip, 30, 60000); // 30 requests per minute
+  const { success } = await rateLimit(ip, 30, 60000); // 30 requests per minute
 
   if (!success) {
     return NextResponse.json(

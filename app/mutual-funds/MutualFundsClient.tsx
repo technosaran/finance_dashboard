@@ -34,7 +34,7 @@ import {
   PieChart as PieChartIcon,
 } from 'lucide-react';
 import { EmptyPortfolioVisual } from '../components/Visuals';
-import { useFinance } from '../components/FinanceContext';
+import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
 import { logError } from '@/lib/utils/logger';
 import { calculateMfCharges } from '@/lib/utils/charges';
@@ -42,19 +42,9 @@ import { calculateMfCharges } from '@/lib/utils/charges';
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
 export default function MutualFundsClient() {
-  const {
-    accounts,
-    mutualFunds,
-    mutualFundTransactions,
-    addMutualFund,
-    updateMutualFund,
-    deleteMutualFund,
-    addMutualFundTransaction,
-    deleteMutualFundTransaction,
-    settings,
-    loading,
-    refreshLivePrices,
-  } = useFinance();
+  const { accounts, loading } = useLedger();
+  const { mutualFunds, mutualFundTransactions, addMutualFund, updateMutualFund, deleteMutualFund, addMutualFundTransaction, deleteMutualFundTransaction, refreshLivePrices } = usePortfolio();
+  const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
   const [activeTab, setActiveTab] = useState<'holdings' | 'history' | 'lifetime' | 'allocation'>(

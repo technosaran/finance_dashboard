@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { useFinance } from './FinanceContext';
+import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useAuth } from './AuthContext';
 import { MutualFundTransaction } from '@/lib/types';
 import { SkeletonCard } from './SkeletonLoader';
@@ -73,19 +73,9 @@ function getUserDisplayName(
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const {
-    accounts,
-    stocks,
-    mutualFunds,
-    goals,
-    stockTransactions,
-    mutualFundTransactions,
-    fnoTrades,
-    transactions,
-    loading,
-    error,
-    settings,
-  } = useFinance();
+  const { accounts, goals, transactions, loading, error } = useLedger();
+  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades } = usePortfolio();
+  const { settings } = useSettings();
   const { user } = useAuth();
 
   const greeting = useMemo(() => getGreeting(), []);
