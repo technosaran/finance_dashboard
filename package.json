@@ -16,7 +16,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@sentry/nextjs": "^10.45.0",
     "@supabase/supabase-js": "^2.94.0",
     "@vercel/kv": "^3.0.0",
     "lucide-react": "^0.563.0",
