@@ -29,7 +29,8 @@ import {
 import { EmptyTransactionsVisual } from '../components/Visuals';
 
 export default function LedgerClient() {
-  const { transactions, accounts, addTransaction, updateTransaction, deleteTransaction, loading } = useLedger();
+  const { transactions, accounts, addTransaction, updateTransaction, deleteTransaction, loading } =
+    useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
   // UI State

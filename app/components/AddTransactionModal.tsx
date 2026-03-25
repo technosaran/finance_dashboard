@@ -50,7 +50,15 @@ type SearchResult = StockSearchResult | MutualFundSearchResult;
 
 export default function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
   const { accounts } = useLedger();
-  const { stocks, mutualFunds, addStockTransaction, addMutualFundTransaction, addFnoTrade, addStock, addMutualFund } = usePortfolio();
+  const {
+    stocks,
+    mutualFunds,
+    addStockTransaction,
+    addMutualFundTransaction,
+    addFnoTrade,
+    addStock,
+    addMutualFund,
+  } = usePortfolio();
   const { settings } = useSettings();
   const { showNotification } = useNotifications();
 

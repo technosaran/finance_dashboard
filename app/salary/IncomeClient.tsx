@@ -35,7 +35,8 @@ const categoryConfig: Record<string, { icon: React.ReactNode; color: string; lab
 };
 
 export default function IncomeClient() {
-  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } = useLedger();
+  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } =
+    useLedger();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);

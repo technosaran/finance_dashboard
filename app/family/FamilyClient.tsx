@@ -45,7 +45,14 @@ const memberColors = [
 ];
 
 export default function FamilyClient() {
-  const { accounts, familyTransfers, addFamilyTransfer, updateFamilyTransfer, deleteFamilyTransfer, loading } = useLedger();
+  const {
+    accounts,
+    familyTransfers,
+    addFamilyTransfer,
+    updateFamilyTransfer,
+    deleteFamilyTransfer,
+    loading,
+  } = useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);

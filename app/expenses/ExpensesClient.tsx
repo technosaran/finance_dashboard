@@ -23,7 +23,8 @@ import {
 import { EmptyTransactionsVisual } from '../components/Visuals';
 
 export default function ExpensesClient() {
-  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } = useLedger();
+  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } =
+    useLedger();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);

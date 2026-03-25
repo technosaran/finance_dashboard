@@ -44,7 +44,16 @@ const COLORS = [
 
 export default function StocksClient() {
   const { accounts, loading } = useLedger();
-  const { stocks, stockTransactions, addStock, updateStock, deleteStock, addStockTransaction, deleteStockTransaction, refreshLivePrices } = usePortfolio();
+  const {
+    stocks,
+    stockTransactions,
+    addStock,
+    updateStock,
+    deleteStock,
+    addStockTransaction,
+    deleteStockTransaction,
+    refreshLivePrices,
+  } = usePortfolio();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [activeTab, setActiveTab] = useState<'portfolio' | 'history' | 'lifetime' | 'allocation'>(

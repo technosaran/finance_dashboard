@@ -43,7 +43,16 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'
 
 export default function MutualFundsClient() {
   const { accounts, loading } = useLedger();
-  const { mutualFunds, mutualFundTransactions, addMutualFund, updateMutualFund, deleteMutualFund, addMutualFundTransaction, deleteMutualFundTransaction, refreshLivePrices } = usePortfolio();
+  const {
+    mutualFunds,
+    mutualFundTransactions,
+    addMutualFund,
+    updateMutualFund,
+    deleteMutualFund,
+    addMutualFundTransaction,
+    deleteMutualFundTransaction,
+    refreshLivePrices,
+  } = usePortfolio();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
 

@@ -68,7 +68,6 @@ export const useSettings = () => {
   return context;
 };
 
-
 export const useFinance = () => {
   const context = useContext(FinanceContext);
   if (!context) throw new Error('useFinance must be used within a FinanceProvider');
@@ -1218,24 +1217,120 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [user]); // only resets when user logs in/out
 
-  
-  const ledgerValue = useMemo(() => ({ accounts, addAccount, updateAccount, deleteAccount, addFunds, transactions, addTransaction, updateTransaction, deleteTransaction, goals, addGoal, updateGoal, deleteGoal, familyTransfers, addFamilyTransfer, updateFamilyTransfer, deleteFamilyTransfer, isTransactionModalOpen, setIsTransactionModalOpen, loading, error }), [accounts, addAccount, updateAccount, deleteAccount, addFunds, transactions, addTransaction, updateTransaction, deleteTransaction, goals, addGoal, updateGoal, deleteGoal, familyTransfers, addFamilyTransfer, updateFamilyTransfer, deleteFamilyTransfer, isTransactionModalOpen, setIsTransactionModalOpen, loading, error]);
+  const ledgerValue = useMemo(
+    () => ({
+      accounts,
+      addAccount,
+      updateAccount,
+      deleteAccount,
+      addFunds,
+      transactions,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      goals,
+      addGoal,
+      updateGoal,
+      deleteGoal,
+      familyTransfers,
+      addFamilyTransfer,
+      updateFamilyTransfer,
+      deleteFamilyTransfer,
+      isTransactionModalOpen,
+      setIsTransactionModalOpen,
+      loading,
+      error,
+    }),
+    [
+      accounts,
+      addAccount,
+      updateAccount,
+      deleteAccount,
+      addFunds,
+      transactions,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      goals,
+      addGoal,
+      updateGoal,
+      deleteGoal,
+      familyTransfers,
+      addFamilyTransfer,
+      updateFamilyTransfer,
+      deleteFamilyTransfer,
+      isTransactionModalOpen,
+      setIsTransactionModalOpen,
+      loading,
+      error,
+    ]
+  );
 
-  const portfolioValue = useMemo(() => ({ stocks, addStock, updateStock, deleteStock, stockTransactions, addStockTransaction, deleteStockTransaction, watchlist, mutualFunds, addMutualFund, updateMutualFund, deleteMutualFund, mutualFundTransactions, addMutualFundTransaction, deleteMutualFundTransaction, fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, refreshPortfolio, refreshLivePrices, loading, error }), [stocks, addStock, updateStock, deleteStock, stockTransactions, addStockTransaction, deleteStockTransaction, watchlist, mutualFunds, addMutualFund, updateMutualFund, deleteMutualFund, mutualFundTransactions, addMutualFundTransaction, deleteMutualFundTransaction, fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade, refreshPortfolio, refreshLivePrices, loading, error]);
+  const portfolioValue = useMemo(
+    () => ({
+      stocks,
+      addStock,
+      updateStock,
+      deleteStock,
+      stockTransactions,
+      addStockTransaction,
+      deleteStockTransaction,
+      watchlist,
+      mutualFunds,
+      addMutualFund,
+      updateMutualFund,
+      deleteMutualFund,
+      mutualFundTransactions,
+      addMutualFundTransaction,
+      deleteMutualFundTransaction,
+      fnoTrades,
+      addFnoTrade,
+      updateFnoTrade,
+      deleteFnoTrade,
+      refreshPortfolio,
+      refreshLivePrices,
+      loading,
+      error,
+    }),
+    [
+      stocks,
+      addStock,
+      updateStock,
+      deleteStock,
+      stockTransactions,
+      addStockTransaction,
+      deleteStockTransaction,
+      watchlist,
+      mutualFunds,
+      addMutualFund,
+      updateMutualFund,
+      deleteMutualFund,
+      mutualFundTransactions,
+      addMutualFundTransaction,
+      deleteMutualFundTransaction,
+      fnoTrades,
+      addFnoTrade,
+      updateFnoTrade,
+      deleteFnoTrade,
+      refreshPortfolio,
+      refreshLivePrices,
+      loading,
+      error,
+    ]
+  );
 
-  const settingsValue = useMemo(() => ({ settings, updateSettings, loading, error }), [settings, updateSettings, loading, error]);
-
+  const settingsValue = useMemo(
+    () => ({ settings, updateSettings, loading, error }),
+    [settings, updateSettings, loading, error]
+  );
 
   return (
     <SettingsContext.Provider value={settingsValue as unknown as FinanceContextState}>
       <LedgerContext.Provider value={ledgerValue as unknown as FinanceContextState}>
         <PortfolioContext.Provider value={portfolioValue as unknown as FinanceContextState}>
-          <FinanceContext.Provider value={value}>
-            {children}
-          </FinanceContext.Provider>
+          <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>
         </PortfolioContext.Provider>
       </LedgerContext.Provider>
     </SettingsContext.Provider>
   );
-
 };

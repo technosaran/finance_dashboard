@@ -74,7 +74,8 @@ function getUserDisplayName(
 
 export default function Dashboard() {
   const { accounts, goals, transactions, loading, error } = useLedger();
-  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades } = usePortfolio();
+  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades } =
+    usePortfolio();
   const { settings } = useSettings();
   const { user } = useAuth();
 
