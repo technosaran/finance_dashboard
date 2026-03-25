@@ -11,6 +11,8 @@ import {
   MutualFundTransaction,
   FnoTrade,
   AppSettings,
+  Bond,
+  BondTransaction,
 } from '../types';
 
 // Database row types
@@ -138,7 +140,36 @@ export type FnoTradeRow = {
   account_id?: number | null;
   [key: string]: unknown;
 };
-
+export type BondRow = {
+  id: number | string;
+  name: string;
+  company_name?: string | null;
+  isin?: string | null;
+  quantity: number | null;
+  avg_price: number | null;
+  current_price: number | null;
+  coupon_rate?: number | null;
+  maturity_date?: string | null;
+  status?: string | null;
+  investment_amount: number | null;
+  current_value: number | null;
+  pnl: number | null;
+  pnl_percentage: number | null;
+  yield_to_maturity?: number | null;
+  [key: string]: unknown;
+};
+export type BondTransactionRow = {
+  id: number | string;
+  bond_id: number | null;
+  transaction_type: string;
+  quantity: number | null;
+  price: number | null;
+  total_amount: number;
+  transaction_date: string | null;
+  notes?: string | null;
+  account_id?: number | null;
+  [key: string]: unknown;
+};
 export type AppSettingsRow = {
   user_id: string;
   brokerage_type: string;
@@ -325,6 +356,36 @@ export const dbFnoTradeToFnoTrade = (dbTx: FnoTradeRow): FnoTrade => ({
   exitDate: dbTx.exit_date || undefined,
   status: dbTx.status as FnoTrade['status'],
   pnl: dbTx.pnl ? Number(dbTx.pnl) : 0,
+  notes: dbTx.notes || undefined,
+  accountId: dbTx.account_id ? Number(dbTx.account_id) : undefined,
+});
+
+export const dbBondToBond = (dbBond: BondRow): Bond => ({
+  id: Number(dbBond.id),
+  name: dbBond.name,
+  companyName: dbBond.company_name || undefined,
+  isin: dbBond.isin || undefined,
+  quantity: Number(dbBond.quantity),
+  avgPrice: Number(dbBond.avg_price),
+  currentPrice: Number(dbBond.current_price),
+  couponRate: dbBond.coupon_rate ? Number(dbBond.coupon_rate) : undefined,
+  maturityDate: dbBond.maturity_date || undefined,
+  status: dbBond.status || 'ACTIVE',
+  investmentAmount: Number(dbBond.investment_amount),
+  currentValue: Number(dbBond.current_value),
+  pnl: Number(dbBond.pnl),
+  pnlPercentage: Number(dbBond.pnl_percentage),
+  yieldToMaturity: dbBond.yield_to_maturity ? Number(dbBond.yield_to_maturity) : undefined,
+});
+
+export const dbBondTransactionToBondTransaction = (dbTx: BondTransactionRow): BondTransaction => ({
+  id: Number(dbTx.id),
+  bondId: dbTx.bond_id != null ? Number(dbTx.bond_id) : 0,
+  transactionType: dbTx.transaction_type as 'BUY' | 'SELL',
+  quantity: Number(dbTx.quantity),
+  price: Number(dbTx.price),
+  totalAmount: Number(dbTx.total_amount),
+  transactionDate: dbTx.transaction_date || '',
   notes: dbTx.notes || undefined,
   accountId: dbTx.account_id ? Number(dbTx.account_id) : undefined,
 });

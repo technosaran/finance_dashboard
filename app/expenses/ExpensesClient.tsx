@@ -35,7 +35,9 @@ export default function ExpensesClient() {
   );
 
   // Expense Data Filtering
-  const expenseItems = transactions.filter((t) => t.type === 'Expense');
+  const expenseItems = transactions.filter(
+    (t) => t.type === 'Expense' && t.category !== 'Investment'
+  );
 
   // Process Categories
   const categoriesMap = expenseItems.reduce(

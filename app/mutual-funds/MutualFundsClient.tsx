@@ -36,7 +36,6 @@ import {
 import { EmptyPortfolioVisual } from '../components/Visuals';
 import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
-import { logError } from '@/lib/utils/logger';
 import { calculateMfCharges } from '@/lib/utils/charges';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
@@ -64,8 +63,43 @@ export default function MutualFundsClient() {
   const [editId, setEditId] = useState<number | null>(null);
   const [viewingCharges, setViewingCharges] = useState<MutualFund | null>(null);
 
-  // Filter out closed positions (units = 0) to mimic Zerodha/brokerage behavior
-  const activeMutualFunds = mutualFunds.filter((mf) => mf.units > 0);
+  // Group mutual funds by scheme code to avoid duplicate entries in the UI (e.g. from different accounts)
+  const groupedMutualFunds = useMemo(() => {
+    const groups: Record<string, MutualFund> = {};
+    mutualFunds.forEach((mf) => {
+      const key = mf.schemeCode.toUpperCase();
+      if (!groups[key]) {
+        groups[key] = { ...mf };
+      } else {
+        const existing = groups[key];
+        const totalUnits = existing.units + mf.units;
+        const totalInvestment = existing.investmentAmount + mf.investmentAmount;
+
+        // Calculate weighted average previous NAV to preserve Day's P&L correctly
+        const existingPrevNav = existing.previousNav ?? existing.currentNav;
+        const mfPrevNav = mf.previousNav ?? mf.currentNav;
+        const totalPrevValue = existingPrevNav * existing.units + mfPrevNav * mf.units;
+
+        existing.units = totalUnits;
+        existing.investmentAmount = totalInvestment;
+        existing.avgNav = totalUnits > 0 ? totalInvestment / totalUnits : 0;
+        existing.currentNav = mf.currentNav; // Latest LTP
+        existing.previousNav = totalUnits > 0 ? totalPrevValue / totalUnits : existing.currentNav;
+
+        existing.currentValue += mf.currentValue;
+        existing.pnl += mf.pnl;
+        existing.pnlPercentage =
+          existing.investmentAmount > 0 ? (existing.pnl / existing.investmentAmount) * 100 : 0;
+      }
+    });
+    // Filter out closed positions (units = 0) to mimic Zerodha/brokerage behavior
+    return Object.values(groups)
+      .filter((mf) => mf.units > 0)
+      .sort((a, b) => b.currentValue - a.currentValue);
+  }, [mutualFunds]);
+
+  // Keep activeMutualFunds as the grouped list for UI components
+  const activeMutualFunds = groupedMutualFunds;
 
   // Search & Data Fetching States
   const [searchQuery, setSearchQuery] = useState('');
@@ -139,6 +173,9 @@ export default function MutualFundsClient() {
     return sum + prevNav * mf.units;
   }, 0);
   const totalDayPnLPercentage = totalPrevDayValue > 0 ? (totalDayPnL / totalPrevDayValue) * 100 : 0;
+
+  // Use the grouped (active) funds for portfolio health and lifetime metrics
+  const portfolioSummaryFunds = activeMutualFunds;
 
   // Lifetime Metrics Calculation
   const totalBuys = mutualFundTransactions
@@ -1387,7 +1424,7 @@ export default function MutualFundsClient() {
               </h3>
             </div>
             <div style={{ height: '400px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer key={activeTab} width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={categoryData}
@@ -1504,7 +1541,7 @@ export default function MutualFundsClient() {
                 Scheme Weightage
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-                {mutualFunds
+                {activeMutualFunds
                   .sort((a, b) => b.currentValue - a.currentValue)
                   .slice(0, 5)
                   .map((mf) => (
@@ -1589,7 +1626,7 @@ export default function MutualFundsClient() {
               <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
                 Your top three funds command{' '}
                 {(
-                  (mutualFunds
+                  (activeMutualFunds
                     .sort((a, b) => b.currentValue - a.currentValue)
                     .slice(0, 3)
                     .reduce((s, tx) => s + tx.currentValue, 0) /
@@ -1794,8 +1831,8 @@ export default function MutualFundsClient() {
                 border: '1px solid rgba(255,255,255,0.05)',
               }}
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mutualFunds.slice(0, 6)}>
+              <ResponsiveContainer key={activeTab} width="100%" height="100%">
+                <BarChart data={activeMutualFunds.slice(0, 6)}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
@@ -1809,7 +1846,7 @@ export default function MutualFundsClient() {
                     itemStyle={{ color: '#e8eef4' }}
                   />
                   <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
-                    {mutualFunds.map((_, index) => (
+                    {activeMutualFunds.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Bar>

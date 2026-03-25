@@ -31,6 +31,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Check active sessions and sets the user
+    // Added safety timeout to ensure application doesn't hang indefinitely if network/Supabase responds slowly
+    const initTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 8000);
+
     const getSession = async () => {
       try {
         const {
@@ -39,9 +44,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        clearTimeout(initTimeout);
       } catch (err: unknown) {
         logError('Failed to get auth session:', err);
         setLoading(false);
+        clearTimeout(initTimeout);
       }
     };
 
@@ -54,10 +61,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      clearTimeout(initTimeout);
     });
 
     return () => {
       subscription.unsubscribe();
+      clearTimeout(initTimeout);
     };
   }, []);
 

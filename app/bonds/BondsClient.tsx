@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '@/lib/config/supabase';
 import { useAuth } from '@/app/components/AuthContext';
+import { usePortfolio } from '../components/FinanceContext';
 import { useNotifications } from '@/app/components/NotificationContext';
 import { Plus, Trash2, Edit3, Search, Loader2 } from 'lucide-react';
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 import { logError } from '@/lib/utils/logger';
 import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
+
+import { Bond, BondTransaction } from '@/lib/types';
 
 interface BondSearchResult {
   symbol: string;
@@ -16,23 +18,6 @@ interface BondSearchResult {
   name?: string;
   couponRate?: number;
   maturityDate?: string;
-}
-
-export interface Bond {
-  id: number;
-  name: string;
-  company_name: string | null;
-  isin: string | null;
-  avg_price: number | null;
-  current_price: number | null;
-  coupon_rate: number | null;
-  quantity: number | null;
-  current_value: number | null;
-  maturity_date: string | null;
-  status: string | null;
-  pnl: number | null;
-  pnl_percentage: number | null;
-  yield_to_maturity: number | null;
 }
 
 const fieldStyles = {
@@ -157,9 +142,8 @@ function SelectField({
 
 export default function BondsClient() {
   const { user } = useAuth();
+  const { bonds, loading, addBond, updateBond, deleteBond, refreshPortfolio } = usePortfolio();
   const { showNotification, confirm: customConfirm } = useNotifications();
-  const [bonds, setBonds] = useState<Bond[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [name, setName] = useState('');
@@ -198,32 +182,11 @@ export default function BondsClient() {
     setIsModalOpen(true);
   };
 
-  const fetchBonds = useCallback(async () => {
-    if (!user) {
-      setBonds([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('bonds')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setBonds(data as Bond[]);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch bonds';
-      showNotification('error', message);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, showNotification]);
-
   useEffect(() => {
-    fetchBonds();
-  }, [fetchBonds]);
+    if (bonds.length === 0 && !loading) {
+      refreshPortfolio();
+    }
+  }, [bonds.length, loading, refreshPortfolio]);
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
@@ -292,22 +255,22 @@ export default function BondsClient() {
 
   const stats = useMemo(() => {
     const totalInvested = bonds.reduce((sum, bond) => {
-      return sum + (bond.avg_price || 0) * (bond.quantity || 0);
+      return sum + (bond.avgPrice || 0) * (bond.quantity || 0);
     }, 0);
     const totalCurrent = bonds.reduce((sum, bond) => {
       return (
         sum +
-        (bond.current_value || (bond.current_price || bond.avg_price || 0) * (bond.quantity || 0))
+        (bond.currentValue || (bond.currentPrice || bond.avgPrice || 0) * (bond.quantity || 0))
       );
     }, 0);
     const totalPnl = totalCurrent - totalInvested;
     const yieldBearingBonds = bonds.filter(
-      (bond) => (bond.yield_to_maturity ?? bond.coupon_rate ?? 0) > 0
+      (bond) => (bond.yieldToMaturity ?? bond.couponRate ?? 0) > 0
     );
     const avgYield =
       yieldBearingBonds.length > 0
         ? yieldBearingBonds.reduce((sum, bond) => {
-            return sum + (bond.yield_to_maturity ?? bond.coupon_rate ?? 0);
+            return sum + (bond.yieldToMaturity ?? bond.couponRate ?? 0);
           }, 0) / yieldBearingBonds.length
         : 0;
 
@@ -364,38 +327,33 @@ export default function BondsClient() {
           })
         : null;
 
-    const bondData = {
-      user_id: user.id,
+    const bondData: Omit<Bond, 'id'> = {
       name: name.trim(),
-      company_name: companyName.trim() || null,
-      isin: searchQuery.trim().toUpperCase() || null,
+      companyName: companyName.trim() || undefined,
+      isin: searchQuery.trim().toUpperCase() || undefined,
       quantity: qty,
-      avg_price: price,
-      current_price: marketPrice,
-      previous_price: marketPrice,
-      coupon_rate: couponValue,
-      maturity_date: maturityDate || null,
-      status,
-      investment_amount: metrics.invested,
-      current_value: metrics.currentValue,
+      avgPrice: price,
+      currentPrice: marketPrice,
+      couponRate: couponValue || undefined,
+      maturityDate: maturityDate || undefined,
+      status: status || 'ACTIVE',
+      investmentAmount: metrics.invested,
+      currentValue: metrics.currentValue,
       pnl: metrics.pnl,
-      pnl_percentage: metrics.pnlPercentage,
-      yield_to_maturity: ytm,
+      pnlPercentage: metrics.pnlPercentage,
+      yieldToMaturity: ytm ?? undefined,
     };
 
     try {
       if (editId) {
-        const { error } = await supabase.from('bonds').update(bondData).eq('id', editId);
-        if (error) throw error;
+        await updateBond(editId, bondData);
         showNotification('success', 'Bond updated successfully');
       } else {
-        const { error } = await supabase.from('bonds').insert([bondData]);
-        if (error) throw error;
+        await addBond(bondData);
         showNotification('success', 'Bond added successfully');
       }
 
       resetForm();
-      fetchBonds();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error saving bond';
       showNotification('error', message);
@@ -405,13 +363,13 @@ export default function BondsClient() {
   const handleEdit = (bond: Bond) => {
     setEditId(bond.id);
     setName(bond.name);
-    setCompanyName(bond.company_name || '');
+    setCompanyName(bond.companyName || '');
     setSearchQuery(bond.isin || '');
     setQuantity(bond.quantity?.toString() || '');
-    setAvgPrice(bond.avg_price?.toString() || '');
-    setCurrentPrice(bond.current_price?.toString() || bond.avg_price?.toString() || '');
-    setCouponRate(bond.coupon_rate?.toString() || '');
-    setMaturityDate(bond.maturity_date || '');
+    setAvgPrice(bond.avgPrice?.toString() || '');
+    setCurrentPrice(bond.currentPrice?.toString() || bond.avgPrice?.toString() || '');
+    setCouponRate(bond.couponRate?.toString() || '');
+    setMaturityDate(bond.maturityDate || '');
     setStatus(bond.status || 'ACTIVE');
     setSearchResults([]);
     setShowResults(false);
@@ -426,13 +384,11 @@ export default function BondsClient() {
     }
 
     try {
-      const { error } = await supabase.from('bonds').delete().eq('id', id);
-      if (error) throw error;
-      showNotification('success', 'Bond removed');
-      fetchBonds();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error deleting bond';
-      showNotification('error', message);
+      await deleteBond(id);
+      showNotification('success', 'Bond deleted successfully');
+    } catch (error) {
+      logError('Failed to delete bond:', error);
+      showNotification('error', 'Failed to delete bond');
     }
   };
 
@@ -558,9 +514,9 @@ export default function BondsClient() {
                   <tr key={bond.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                     <td style={{ padding: '16px' }}>
                       <div style={{ fontWeight: 800, color: '#fff' }}>{bond.name}</div>
-                      {bond.company_name && (
+                      {bond.companyName && (
                         <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
-                          {bond.company_name}
+                          {bond.companyName}
                         </div>
                       )}
                       <div
@@ -572,10 +528,9 @@ export default function BondsClient() {
                           alignItems: 'center',
                         }}
                       >
-                        {bond.maturity_date && (
+                        {bond.maturityDate && (
                           <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                            Matures{' '}
-                            {new Date(`${bond.maturity_date}T00:00:00`).toLocaleDateString()}
+                            Matures {new Date(`${bond.maturityDate}T00:00:00`).toLocaleDateString()}
                           </span>
                         )}
                         <span
@@ -594,10 +549,10 @@ export default function BondsClient() {
                     </td>
                     <td style={{ padding: '16px', textAlign: 'right', color: '#cbd5e1' }}>
                       <div>
-                        {bond.quantity} / INR {bond.avg_price?.toLocaleString()}
+                        {bond.quantity} / INR {bond.avgPrice?.toLocaleString()}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                        Last price INR {bond.current_price?.toLocaleString()}
+                        Last price INR {bond.currentPrice?.toLocaleString()}
                       </div>
                     </td>
                     <td
@@ -608,9 +563,9 @@ export default function BondsClient() {
                         color: '#2dd4bf',
                       }}
                     >
-                      <div>{bond.coupon_rate ? `${bond.coupon_rate}% coupon` : 'N/A'}</div>
+                      <div>{bond.couponRate ? `${bond.couponRate}% coupon` : 'N/A'}</div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                        {bond.yield_to_maturity ? `YTM ${bond.yield_to_maturity}%` : 'YTM pending'}
+                        {bond.yieldToMaturity ? `YTM ${bond.yieldToMaturity}%` : 'YTM pending'}
                       </div>
                     </td>
                     <td
@@ -621,7 +576,7 @@ export default function BondsClient() {
                         color: '#fff',
                       }}
                     >
-                      <div>INR {bond.current_value?.toLocaleString()}</div>
+                      <div>INR {bond.currentValue?.toLocaleString()}</div>
                       <div
                         style={{
                           fontSize: '0.75rem',

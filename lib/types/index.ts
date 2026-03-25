@@ -219,6 +219,46 @@ export interface MutualFundTransaction {
 }
 
 // ============================================================================
+// Bond Types
+// ============================================================================
+
+export interface Bond {
+  id: number;
+  name: string;
+  companyName?: string;
+  isin?: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;
+  couponRate?: number;
+  maturityDate?: string;
+  status: 'ACTIVE' | 'MATURED' | 'SOLD' | string;
+  investmentAmount: number;
+  currentValue: number;
+  pnl: number;
+  pnlPercentage: number;
+  yieldToMaturity?: number;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BondTransaction {
+  id: number;
+  bondId: number;
+  transactionType: 'BUY' | 'SELL';
+  quantity: number;
+  price: number;
+  totalAmount: number;
+  transactionDate: string;
+  notes?: string;
+  accountId?: number;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ============================================================================
 // F&O Types
 // ============================================================================
 
@@ -363,6 +403,15 @@ export interface FinanceContextState {
   addFnoTrade: (trade: Omit<FnoTrade, 'id'>) => Promise<void>;
   updateFnoTrade: (id: number, trade: Partial<FnoTrade>) => Promise<void>;
   deleteFnoTrade: (id: number) => Promise<void>;
+
+  // Bonds
+  bonds: Bond[];
+  addBond: (bond: Omit<Bond, 'id'>) => Promise<Bond>;
+  updateBond: (id: number, bond: Partial<Bond>) => Promise<void>;
+  deleteBond: (id: number) => Promise<void>;
+  bondTransactions: BondTransaction[];
+  addBondTransaction: (tx: Omit<BondTransaction, 'id'>) => Promise<void>;
+  deleteBondTransaction: (id: number) => Promise<void>;
 
   // Family Transfers
   familyTransfers: FamilyTransfer[];

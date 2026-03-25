@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useLedger, usePortfolio, useSettings } from './FinanceContext';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/app/components/AuthContext';
 import { MutualFundTransaction } from '@/lib/types';
 import { SkeletonCard } from './SkeletonLoader';
 import { EmptyPortfolioVisual } from './Visuals';
@@ -54,28 +54,41 @@ function getGreeting(): { text: string; subtext: string; emoji: string } {
 
 /** Extract first name from Supabase user email or metadata */
 function getUserDisplayName(
-  user: { email?: string; user_metadata?: Record<string, string | undefined> } | null | undefined
+  user: { email?: string; user_metadata?: Record<string, unknown> } | null | undefined
 ): string {
   if (!user) return 'there';
-  if (user.user_metadata?.full_name) {
-    return user.user_metadata.full_name.split(' ')[0];
+
+  // 1. Try metadata first (Full Name or Name)
+  const metadataName =
+    user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name;
+  if (metadataName) {
+    return (metadataName as string).split(' ')[0];
   }
-  if (user.user_metadata?.name) {
-    return user.user_metadata.name.split(' ')[0];
+
+  // 2. Fallback to email local part
+  if (user.email) {
+    const localPart = user.email.split('@')[0];
+    // Capitalize first letter, handle dots/underscores/dashes
+    const name = localPart.split(/[._-]/)[0];
+    return name.charAt(0).toUpperCase() + name.slice(1);
   }
-  if (!user.email) return 'there';
-  const localPart = user.email.split('@')[0];
-  // Capitalize first letter, handle dots/underscores
-  const name = localPart.split(/[._-]/)[0];
-  return name.charAt(0).toUpperCase() + name.slice(1);
+
+  return 'User';
 }
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const { accounts, goals, transactions, loading, error } = useLedger();
-  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades } =
-    usePortfolio();
+  const {
+    stocks,
+    mutualFunds,
+    stockTransactions,
+    mutualFundTransactions,
+    fnoTrades,
+    bonds,
+    bondTransactions,
+  } = usePortfolio();
   const { settings } = useSettings();
   const { user } = useAuth();
 
@@ -96,14 +109,16 @@ export default function Dashboard() {
       .reduce((sum, s) => sum + s.currentValue, 0);
 
     const mfValue = mutualFunds.reduce((sum, m) => sum + m.currentValue, 0);
+    const bondsValue = bonds.reduce((sum, b) => sum + b.currentValue, 0);
 
-    const totalNetWorth = liquidityINR + stocksValue + mfValue;
+    const totalNetWorth = liquidityINR + stocksValue + mfValue + bondsValue;
 
     const stockInvestment = stocks
       .filter((s) => s.quantity > 0)
       .reduce((sum, s) => sum + s.investmentAmount, 0);
     const mfInvestment = mutualFunds.reduce((sum, m) => sum + m.investmentAmount, 0);
-    const totalInvestment = stockInvestment + mfInvestment;
+    const bondsInvestment = bonds.reduce((sum, b) => sum + b.investmentAmount, 0);
+    const totalInvestment = stockInvestment + mfInvestment + bondsInvestment;
 
     // Lifetime wealth (realised + unrealised across all instruments)
     const stockBuys = stockTransactions
@@ -140,11 +155,14 @@ export default function Dashboard() {
       .filter((t) => t.status === 'CLOSED')
       .reduce((sum, t) => sum + t.pnl, 0);
 
-    const globalLifetimeWealth = stockLifetime + mfLifetime + fnoLifetime;
+    const bondLifetime = bonds.reduce((sum, b) => sum + b.pnl, 0);
+
+    const globalLifetimeWealth = stockLifetime + mfLifetime + fnoLifetime + bondLifetime;
 
     const stockPnl = stocks.filter((s) => s.quantity > 0).reduce((sum, s) => sum + s.pnl, 0);
     const mfPnl = mfValue - mfInvestment;
-    const totalUnrealizedPnl = stockPnl + mfPnl;
+    const bondPnl = bondsValue - bondsInvestment;
+    const totalUnrealizedPnl = stockPnl + mfPnl + bondPnl;
 
     const stockDayChange = stocks
       .filter((s) => s.quantity > 0)
@@ -163,13 +181,23 @@ export default function Dashboard() {
       liquidityINR,
       stocksValue,
       mfValue,
+      bondsValue,
       totalNetWorth,
       totalInvestment,
       globalLifetimeWealth,
       totalUnrealizedPnl,
       stockDayChange: totalDayChange,
     };
-  }, [accounts, stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades]);
+  }, [
+    accounts,
+    stocks,
+    mutualFunds,
+    bonds,
+    stockTransactions,
+    mutualFundTransactions,
+    bondTransactions,
+    fnoTrades,
+  ]);
 
   // ── Derived lists for sub-components ───────────────────────────────────────
   const allocationData = useMemo(
@@ -178,6 +206,7 @@ export default function Dashboard() {
         { name: 'Cash', value: financialMetrics.liquidityINR, color: '#818cf8' },
         { name: 'Stocks', value: financialMetrics.stocksValue, color: '#10b981' },
         { name: 'Mutual Funds', value: financialMetrics.mfValue, color: '#f59e0b' },
+        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#ec4899' },
       ].filter((a) => a.value > 0),
     [financialMetrics]
   );
@@ -256,9 +285,6 @@ export default function Dashboard() {
               height: '64px',
               background: 'rgba(239, 68, 68, 0.1)',
               borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
           >
             <AlertTriangle size={32} color="#ef4444" />

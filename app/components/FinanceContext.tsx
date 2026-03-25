@@ -24,6 +24,8 @@ import {
   FnoTrade,
   AppSettings,
   FamilyTransfer,
+  Bond,
+  BondTransaction,
   FinanceContextState,
 } from '@/lib/types';
 import { logError, logInfo, logWarn } from '../../lib/utils/logger';
@@ -38,6 +40,8 @@ import {
   dbMutualFundTransactionToMutualFundTransaction,
   dbFnoTradeToFnoTrade,
   dbSettingsToSettings,
+  dbBondToBond,
+  dbBondTransactionToBondTransaction,
   AppSettingsRow,
 } from '../../lib/utils/db-converters';
 
@@ -85,6 +89,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [mutualFunds, setMutualFunds] = useState<MutualFund[]>([]);
   const [mutualFundTransactions, setMutualFundTransactions] = useState<MutualFundTransaction[]>([]);
   const [fnoTrades, setFnoTrades] = useState<FnoTrade[]>([]);
+  const [bonds, setBonds] = useState<Bond[]>([]);
+  const [bondTransactions, setBondTransactions] = useState<BondTransaction[]>([]);
   const [settings, setSettings] = useState<AppSettings>({
     displayName: '',
     brokerageType: 'flat',
@@ -104,6 +110,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     expensesVisible: true,
     goalsVisible: true,
     familyVisible: true,
+    bondsVisible: true,
+    forexVisible: true,
   });
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -156,10 +164,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const refreshPortfolio = useCallback(async () => {
     setLoading(true);
     try {
-      const [stockResult, mfResult, fnoResult] = await Promise.allSettled([
+      const [stockResult, mfResult, fnoResult, bondResult] = await Promise.allSettled([
         supabase.from('stocks').select('*'),
         supabase.from('mutual_funds').select('*'),
         supabase.from('fno_trades').select('*'),
+        supabase.from('bonds').select('*'),
       ]);
 
       if (stockResult.status === 'fulfilled' && stockResult.value.data)
@@ -175,6 +184,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (fnoResult.status === 'fulfilled' && fnoResult.value.data)
         setFnoTrades(fnoResult.value.data.map(dbFnoTradeToFnoTrade));
       else if (fnoResult.status === 'rejected') logError('Error refreshing F&O:', fnoResult.reason);
+
+      if (bondResult.status === 'fulfilled' && bondResult.value.data)
+        setBonds(bondResult.value.data.map(dbBondToBond));
+      else if (bondResult.status === 'rejected')
+        logError('Error refreshing bonds:', bondResult.reason);
 
       logInfo('Portfolio refreshed successfully');
     } catch (err) {
@@ -838,6 +852,117 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [refreshAccounts]
   );
 
+  // ─── BONDS ──────────────────────────────────────────────────────────────────
+
+  const addBond = useCallback(
+    async (bond: Omit<Bond, 'id'>) => {
+      if (!user) throw new Error('Authentication required');
+      const { data, error } = await supabase
+        .from('bonds')
+        .insert({
+          user_id: user.id,
+          name: bond.name,
+          company_name: bond.companyName,
+          isin: bond.isin,
+          quantity: bond.quantity,
+          avg_price: bond.avgPrice,
+          current_price: bond.currentPrice,
+          coupon_rate: bond.couponRate,
+          maturity_date: bond.maturityDate,
+          status: bond.status,
+          investment_amount: bond.investmentAmount,
+          current_value: bond.currentValue,
+          pnl: bond.pnl,
+          pnl_percentage: bond.pnlPercentage,
+          yield_to_maturity: bond.yieldToMaturity,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        logError('Error adding bond:', error);
+        throw error;
+      }
+
+      const newBond = dbBondToBond(data);
+      setBonds((prev) => [...prev, newBond]);
+      return newBond;
+    },
+    [user]
+  );
+
+  const updateBond = useCallback(async (id: number, bond: Partial<Bond>) => {
+    const { error } = await supabase
+      .from('bonds')
+      .update({
+        name: bond.name,
+        company_name: bond.companyName,
+        isin: bond.isin,
+        quantity: bond.quantity,
+        avg_price: bond.avgPrice,
+        current_price: bond.currentPrice,
+        coupon_rate: bond.couponRate,
+        maturity_date: bond.maturityDate,
+        status: bond.status,
+        investment_amount: bond.investmentAmount,
+        current_value: bond.currentValue,
+        pnl: bond.pnl,
+        pnl_percentage: bond.pnlPercentage,
+        yield_to_maturity: bond.yieldToMaturity,
+      })
+      .eq('id', id);
+
+    if (error) {
+      logError('Error updating bond:', error);
+      throw error;
+    }
+
+    setBonds((prev) => prev.map((b) => (b.id === id ? { ...b, ...bond } : b)));
+  }, []);
+
+  const deleteBond = useCallback(
+    (id: number) => makeDeleteFromTable('bonds', 'bond', setBonds)(id),
+    []
+  );
+
+  const addBondTransaction = useCallback(
+    async (tx: Omit<BondTransaction, 'id'>) => {
+      if (!user) throw new Error('Authentication required');
+      const { data, error } = await supabase
+        .from('bond_transactions')
+        .insert({
+          user_id: user.id,
+          bond_id: tx.bondId,
+          transaction_type: tx.transactionType,
+          quantity: tx.quantity,
+          price: tx.price,
+          total_amount: tx.totalAmount,
+          transaction_date: tx.transactionDate,
+          notes: tx.notes,
+          account_id: tx.accountId,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        logError('Error adding bond transaction:', error);
+        throw error;
+      }
+
+      setBondTransactions((prev) => [dbBondTransactionToBondTransaction(data), ...prev]);
+      refreshAccounts();
+      refreshTransactions();
+      refreshPortfolio();
+    },
+    [user, refreshAccounts, refreshTransactions, refreshPortfolio]
+  );
+
+  const deleteBondTransaction = useCallback(
+    (id: number) =>
+      makeDeleteFromTable('bond_transactions', 'bond transaction', setBondTransactions)(id),
+    []
+  );
+
   // â”€â”€â”€ LIVE PRICE REFRESH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const refreshLivePrices = useCallback(
@@ -966,6 +1091,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
+      // Safety timeout for data loading (15 seconds)
+      const dataTimeout = setTimeout(() => {
+        if (loading) {
+          logError('Initial data load timed out. Proceeding with partial/empty state.');
+          setLoading(false);
+        }
+      }, 15000);
+
       try {
         // FIX: Promise.allSettled â€” individual query failures no longer abort all data loading
         const [
@@ -977,6 +1110,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           goalResult,
           familyResult,
           fnoResult,
+          bondResult,
+          bondTxResult,
           stockTxResult,
           mfTxResult,
         ] = await Promise.allSettled([
@@ -988,6 +1123,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           supabase.from('goals').select('*'),
           supabase.from('family_transfers').select('*'),
           supabase.from('fno_trades').select('*'),
+          supabase.from('bonds').select('*'),
+          supabase
+            .from('bond_transactions')
+            .select('*')
+            .order('transaction_date', { ascending: false }),
           supabase
             .from('stock_transactions')
             .select('*')
@@ -1039,6 +1179,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         else if (fnoResult.status === 'rejected')
           logError('Failed to load F&O trades:', fnoResult.reason);
 
+        if (bondResult.status === 'fulfilled' && bondResult.value.data)
+          setBonds(bondResult.value.data.map(dbBondToBond));
+        else if (bondResult.status === 'rejected')
+          logError('Failed to load bonds:', bondResult.reason);
+
+        if (bondTxResult.status === 'fulfilled' && bondTxResult.value.data)
+          setBondTransactions(bondTxResult.value.data.map(dbBondTransactionToBondTransaction));
+        else if (bondTxResult.status === 'rejected')
+          logError('Failed to load bond transactions:', bondTxResult.reason);
+
         if (stockTxResult.status === 'fulfilled' && stockTxResult.value.data)
           setStockTransactions(stockTxResult.value.data.map(dbStockTransactionToStockTransaction));
         else if (stockTxResult.status === 'rejected')
@@ -1052,15 +1202,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           logError('Failed to load MF transactions:', mfTxResult.reason);
 
         setLoading(false);
+        clearTimeout(dataTimeout);
       } catch (err) {
         logError('Failed to load initial data:', err);
         setError('Failed to load financial data');
         setLoading(false);
+        clearTimeout(dataTimeout);
       }
     };
 
     loadInitialData();
-  }, [user, authLoading]);
+  }, [user, authLoading, loading]);
 
   // â”€â”€â”€ MEMOISED CONTEXT VALUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -1098,6 +1250,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addFnoTrade,
       updateFnoTrade,
       deleteFnoTrade,
+      bonds,
+      addBond,
+      updateBond,
+      deleteBond,
+      bondTransactions,
+      addBondTransaction,
+      deleteBondTransaction,
       familyTransfers,
       addFamilyTransfer,
       updateFamilyTransfer,
@@ -1144,6 +1303,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addFnoTrade,
       updateFnoTrade,
       deleteFnoTrade,
+      bonds,
+      addBond,
+      updateBond,
+      deleteBond,
+      bondTransactions,
+      addBondTransaction,
+      deleteBondTransaction,
       familyTransfers,
       addFamilyTransfer,
       updateFamilyTransfer,
@@ -1287,6 +1453,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addFnoTrade,
       updateFnoTrade,
       deleteFnoTrade,
+      bonds,
+      addBond,
+      updateBond,
+      deleteBond,
+      bondTransactions,
+      addBondTransaction,
+      deleteBondTransaction,
       refreshPortfolio,
       refreshLivePrices,
       loading,
@@ -1312,6 +1485,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       addFnoTrade,
       updateFnoTrade,
       deleteFnoTrade,
+      bonds,
+      addBond,
+      updateBond,
+      deleteBond,
+      bondTransactions,
+      addBondTransaction,
+      deleteBondTransaction,
       refreshPortfolio,
       refreshLivePrices,
       loading,

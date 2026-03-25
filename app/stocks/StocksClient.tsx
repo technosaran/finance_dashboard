@@ -1482,7 +1482,7 @@ export default function StocksClient() {
               </h4>
             </div>
             <div style={{ height: '400px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer key={activeTab} width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={sectorData}

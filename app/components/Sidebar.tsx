@@ -399,10 +399,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Bottom Section */}
         <div
           style={{
-            padding: '12px 10px',
+            marginTop: 'auto',
+            padding: '16px 12px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '2px',
+            gap: '4px',
             borderTop: '1px solid rgba(255, 255, 255, 0.05)',
             position: 'relative',
           }}
