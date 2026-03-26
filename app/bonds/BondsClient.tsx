@@ -9,7 +9,7 @@ import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 import { logError } from '@/lib/utils/logger';
 import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
 
-import { Bond, BondTransaction } from '@/lib/types';
+import { Bond } from '@/lib/types';
 
 interface BondSearchResult {
   symbol: string;

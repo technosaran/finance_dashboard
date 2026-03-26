@@ -37,6 +37,7 @@ import { EmptyPortfolioVisual } from '../components/Visuals';
 import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
 import { calculateMfCharges } from '@/lib/utils/charges';
+import { logError } from '@/lib/utils/logger';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
@@ -173,9 +174,6 @@ export default function MutualFundsClient() {
     return sum + prevNav * mf.units;
   }, 0);
   const totalDayPnLPercentage = totalPrevDayValue > 0 ? (totalDayPnL / totalPrevDayValue) * 100 : 0;
-
-  // Use the grouped (active) funds for portfolio health and lifetime metrics
-  const portfolioSummaryFunds = activeMutualFunds;
 
   // Lifetime Metrics Calculation
   const totalBuys = mutualFundTransactions
