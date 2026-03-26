@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useAuth } from '@/app/components/AuthContext';
@@ -80,15 +80,8 @@ function getUserDisplayName(
 
 export default function Dashboard() {
   const { accounts, goals, transactions, loading, error } = useLedger();
-  const {
-    stocks,
-    mutualFunds,
-    stockTransactions,
-    mutualFundTransactions,
-    fnoTrades,
-    bonds,
-    bondTransactions,
-  } = usePortfolio();
+  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades, bonds } =
+    usePortfolio();
   const { settings } = useSettings();
   const { user } = useAuth();
 
@@ -188,16 +181,7 @@ export default function Dashboard() {
       totalUnrealizedPnl,
       stockDayChange: totalDayChange,
     };
-  }, [
-    accounts,
-    stocks,
-    mutualFunds,
-    bonds,
-    stockTransactions,
-    mutualFundTransactions,
-    bondTransactions,
-    fnoTrades,
-  ]);
+  }, [accounts, stocks, mutualFunds, bonds, stockTransactions, mutualFundTransactions, fnoTrades]);
 
   // ── Derived lists for sub-components ───────────────────────────────────────
   const allocationData = useMemo(
