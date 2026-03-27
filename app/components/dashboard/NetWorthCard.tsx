@@ -31,81 +31,132 @@ export function NetWorthCard({
       <div className="premium-card" style={{ padding: '0' }}>
         {/* No decorative glow for ultra-dark look */}
 
-        <div className="wealth-card-inner">
-          {/* Left: Net Worth Summary */}
-          <div className="wealth-section">
-            <div className="badge-wrapper" style={{ marginBottom: '24px' }}>
+        <div
+          className="wealth-card-inner"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '32px',
+            padding: '32px',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            className="wealth-section"
+            style={{
+              flex: '2 1 400px',
+              minWidth: '0',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '28px',
+                flexWrap: 'wrap',
+              }}
+            >
               <div
                 className="icon-badge"
                 style={{
+                  width: '40px',
+                  height: '40px',
                   background: 'rgba(255, 255, 255, 0.05)',
                   color: '#ffffff',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
-                  boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <Zap size={20} />
               </div>
               <span
                 className="stat-label"
-                style={{ fontSize: '0.85rem', color: '#94a3b8', letterSpacing: '0.1em' }}
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--text-tertiary)',
+                  letterSpacing: '0.12em',
+                  fontWeight: '800',
+                }}
               >
                 TOTAL NET WORTH
               </span>
               {investmentsTotal > 0 && (
                 <div
                   style={{
-                    marginLeft: 'auto',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    padding: '4px 10px',
+                    gap: '6px',
+                    padding: '6px 14px',
                     borderRadius: '8px',
-                    background: 'rgba(167, 139, 250, 0.1)',
-                    border: '1px solid rgba(167, 139, 250, 0.2)',
+                    background: 'rgba(167, 139, 250, 0.12)',
+                    border: '1px solid rgba(167, 139, 250, 0.25)',
+                    marginLeft: 'auto',
                   }}
                 >
-                  <Award size={12} color="#a78bfa" />
-                  <span style={{ fontSize: '0.65rem', fontWeight: '800', color: '#a78bfa' }}>
+                  <Award size={14} color="#a78bfa" />
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: '800',
+                      color: '#a78bfa',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
                     {lifetimePct >= 0 ? '+' : ''}
-                    {lifetimePct.toFixed(1)}% lifetime
+                    {lifetimePct.toFixed(1)}% performance
                   </span>
                 </div>
               )}
             </div>
 
-            <div style={{ marginBottom: '32px' }}>
+            <div style={{ marginBottom: '40px' }}>
               <div
                 className="stat-value"
                 style={{
-                  fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+                  fontSize: 'clamp(2.4rem, 8vw, 4.4rem)',
                   lineHeight: 1,
                   marginBottom: '16px',
+                  color: '#ffffff',
+                  wordBreak: 'break-word',
                 }}
               >
                 ₹{totalNetWorth.toLocaleString()}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <div
                   style={{
-                    padding: '6px 12px',
-                    borderRadius: '4px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
                     fontSize: '0.85rem',
                     fontWeight: '800',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '10px',
                   }}
                 >
                   {globalLifetimeWealth >= 0 ? (
-                    <TrendingUp size={16} />
+                    <TrendingUp size={16} color="var(--success)" />
                   ) : (
-                    <TrendingDown size={16} />
+                    <TrendingDown size={16} color="var(--error)" />
                   )}{' '}
+                  {globalLifetimeWealth >= 0 ? (
+                    <span style={{ color: 'var(--success)' }}>Profit</span>
+                  ) : (
+                    <span style={{ color: 'var(--error)' }}>Loss</span>
+                  )}
+                  <div
+                    style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.1)' }}
+                  />
                   {globalLifetimeWealth >= 0 ? '+' : '-'}₹
-                  {Math.abs(globalLifetimeWealth).toLocaleString()} lifetime
+                  {Math.abs(globalLifetimeWealth).toLocaleString()}
                 </div>
               </div>
             </div>
@@ -113,41 +164,59 @@ export function NetWorthCard({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '24px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                paddingTop: '24px',
+                padding: '24px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                borderRadius: '16px',
               }}
             >
               <div>
                 <div
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     fontWeight: '800',
                     color: '#475569',
                     textTransform: 'uppercase',
                     marginBottom: '8px',
+                    letterSpacing: '0.05em',
                   }}
                 >
                   Liquid Cash
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff' }}>
+                <div
+                  style={{
+                    fontSize: '1.4rem',
+                    fontWeight: '900',
+                    color: '#fff',
+                    letterSpacing: '-0.5px',
+                  }}
+                >
                   ₹{liquidityINR.toLocaleString()}
                 </div>
               </div>
               <div>
                 <div
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     fontWeight: '800',
                     color: '#475569',
                     textTransform: 'uppercase',
                     marginBottom: '8px',
+                    letterSpacing: '0.05em',
                   }}
                 >
                   Investments
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '900', color: '#fff' }}>
+                <div
+                  style={{
+                    fontSize: '1.4rem',
+                    fontWeight: '900',
+                    color: '#fff',
+                    letterSpacing: '-0.5px',
+                  }}
+                >
                   ₹{investmentsTotal.toLocaleString()}
                 </div>
               </div>
@@ -157,12 +226,12 @@ export function NetWorthCard({
           {/* Right: Asset Allocation Donut Chart */}
           <div
             style={{
-              flex: '1 1 280px',
-              minWidth: '0',
-              maxWidth: '400px',
+              flex: '1 1 300px',
+              minWidth: '280px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <div

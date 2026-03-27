@@ -306,57 +306,47 @@ export default function Dashboard() {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="page-container">
-      <div className="bg-mesh" />
-
+    <div className="fade-in" style={{ width: '100%' }}>
       {/* ── Header ── */}
-      <header className="dashboard-header" style={{ marginBottom: '40px' }}>
-        <div
-          className="fade-in"
+      <header className="dashboard-header" style={{ marginBottom: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '1.5rem' }}>{greeting.emoji}</span>
+          <span
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: '800',
+              color: 'var(--accent)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.2em',
+            }}
+          >
+            {greeting.text}
+          </span>
+        </div>
+        <h1
+          className="greeting-text"
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: '24px',
-            width: '100%',
+            margin: 0,
+            background: 'linear-gradient(to right, #fff 20%, #94a3b8 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            lineHeight: 1.1,
           }}
         >
-          <div style={{ flex: 1 }}>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
-            >
-              <span style={{ fontSize: '2rem' }}>{greeting.emoji}</span>
-              <h1
-                style={{
-                  color: 'var(--foreground)',
-                  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                  fontWeight: '800',
-                  letterSpacing: '-0.02em',
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '10px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                {greeting.text}, <span className="gradient-text">{displayName}!</span>
-              </h1>
-            </div>
-            <p
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: '1.1rem',
-                fontWeight: '500',
-                marginTop: '8px',
-                maxWidth: '600px',
-                lineHeight: 1.6,
-              }}
-            >
-              {greeting.subtext}
-            </p>
-          </div>
-        </div>
+          {displayName.toUpperCase()}!
+        </h1>
+        <p
+          style={{
+            color: 'var(--text-secondary)',
+            fontSize: '1rem',
+            fontWeight: '500',
+            marginTop: '8px',
+            maxWidth: '600px',
+            lineHeight: 1.6,
+          }}
+        >
+          {greeting.subtext}
+        </p>
       </header>
 
       {/* ── Quick Stats Row ── */}

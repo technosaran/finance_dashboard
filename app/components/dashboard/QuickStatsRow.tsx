@@ -90,103 +90,82 @@ export function QuickStatsRow({
   const animationDelays = ['0s', '0.07s', '0.14s', '0.21s'];
 
   return (
-    <section
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-        gap: '12px',
-        marginBottom: '24px',
-      }}
-    >
+    <section className="stats-grid">
       {stats.map((stat, idx) => (
         <div
           key={idx}
-          className="fade-in"
+          className="fade-in premium-card"
           style={{
             animationDelay: animationDelays[idx] ?? '0s',
-            background: '#000000',
-            borderRadius: '4px',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
             padding: '24px',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: `0 4px 20px -5px ${stat.color}05`,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.background = '#0a0a0a';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.9)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.background = '#000000';
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: '160px',
           }}
         >
-          {/* Top accent bar */}
-          <div
-            style={{
-              display: 'none',
-            }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <div>
             <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                background: `${stat.color}15`,
-                color: stat.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}
             >
-              {stat.icon}
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: `${stat.color}15`,
+                  color: stat.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `1px solid ${stat.color}20`,
+                }}
+              >
+                {stat.icon}
+              </div>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: '800',
+                  color: 'var(--text-tertiary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                {stat.label}
+              </span>
             </div>
-            <span
+            <div
+              className="stat-value"
               style={{
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                fontSize: 'clamp(1.2rem, 4vw, 1.8rem)',
+                color: '#ffffff',
+                marginBottom: '4px',
               }}
             >
-              {stat.label}
-            </span>
+              {stat.value}
+            </div>
           </div>
-          <div
-            className="stat-value"
-            style={{
-              fontSize: 'clamp(1.1rem, 3.5vw, 1.4rem)',
-              fontWeight: '900',
-              color: stat.trend !== 'neutral' ? stat.color : '#fff',
-              letterSpacing: '-0.02em',
-              position: 'relative',
-              background: stat.trend !== 'neutral' ? 'none' : undefined,
-              WebkitTextFillColor: stat.trend !== 'neutral' ? 'currentColor' : undefined,
-            }}
-          >
-            {stat.value}
-          </div>
+
           {stat.subValue && (
             <div
               style={{
-                fontSize: '0.72rem',
-                fontWeight: '700',
-                color: stat.trend !== 'neutral' ? stat.color : '#64748b',
-                marginTop: '6px',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                color:
+                  stat.trend === 'up'
+                    ? 'var(--success)'
+                    : stat.trend === 'down'
+                      ? 'var(--error)'
+                      : 'var(--text-tertiary)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
+                marginTop: 'auto',
               }}
             >
-              {stat.trend === 'up' && <span style={{ fontSize: '0.65rem' }}>▲</span>}
-              {stat.trend === 'down' && <span style={{ fontSize: '0.65rem' }}>▼</span>}
+              {stat.trend === 'up' && <span style={{ fontSize: '0.6rem' }}>▲</span>}
+              {stat.trend === 'down' && <span style={{ fontSize: '0.6rem' }}>▼</span>}
               {stat.subValue}
             </div>
           )}

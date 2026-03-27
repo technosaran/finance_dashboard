@@ -89,6 +89,7 @@ export type Database = {
           default_mf_account_id: number | null;
           default_salary_account_id: number | null;
           default_stock_account_id: number | null;
+          display_name: string | null;
           dp_charges: number;
           expenses_visible: boolean | null;
           family_visible: boolean | null;
@@ -116,6 +117,7 @@ export type Database = {
           default_mf_account_id?: number | null;
           default_salary_account_id?: number | null;
           default_stock_account_id?: number | null;
+          display_name?: string | null;
           dp_charges?: number;
           expenses_visible?: boolean | null;
           family_visible?: boolean | null;
@@ -143,6 +145,7 @@ export type Database = {
           default_mf_account_id?: number | null;
           default_salary_account_id?: number | null;
           default_stock_account_id?: number | null;
+          display_name?: string | null;
           dp_charges?: number;
           expenses_visible?: boolean | null;
           family_visible?: boolean | null;

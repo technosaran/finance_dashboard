@@ -155,29 +155,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <>
       <style jsx>{`
         aside {
-          width: 230px;
-          min-width: 230px;
-          background: var(--sidebar-bg);
+          width: var(--sidebar-width);
+          min-width: var(--sidebar-width);
+          background: #000000;
           border-right: 1px solid rgba(255, 255, 255, 0.05);
           display: flex;
           flex-direction: column;
           position: fixed;
-          left: ${isOpen ? '0' : '-230px'};
+          left: ${isOpen ? '0' : `calc(-1 * var(--sidebar-width))`};
           top: 0;
           bottom: 0;
           height: 100dvh;
           z-index: 100;
           transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           overflow: hidden;
-        }
-        aside::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 1px;
-          height: 100%;
-          background: transparent;
         }
         @media (min-width: 768px) {
           aside {
@@ -194,7 +185,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Logo / Brand */}
         <div
           style={{
-            padding: '20px 16px 16px',
+            padding: '24px 20px 20px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
@@ -204,66 +195,40 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           }}
         >
           <div
+            className="icon-badge"
             style={{
-              position: 'absolute',
-              width: '120px',
-              height: '120px',
-              background: 'transparent',
-              top: '-20px',
-              left: '-20px',
-              filter: 'none',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              minWidth: '40px',
-              height: '40px',
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               color: '#ffffff',
-              fontWeight: '950',
-              fontSize: '1.2rem',
-              boxShadow: '0 0 20px rgba(0, 0, 0, 1)',
-              flexShrink: 0,
-              position: 'relative',
+              boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
             }}
           >
-            <Command size={20} />
+            <Command size={22} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <span
               style={{
-                fontSize: '1.15rem',
-                fontWeight: '900',
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.5px',
+                fontSize: '1.25rem',
+                fontWeight: '950',
+                color: '#ffffff',
+                letterSpacing: '-1px',
                 whiteSpace: 'nowrap',
-                lineHeight: 1.2,
+                lineHeight: 1,
               }}
             >
-              FIN
-              <span
-                style={{
-                  color: '#ffffff',
-                }}
-              >
-                CORE
-              </span>
+              FINCORE
             </span>
             <span
               style={{
-                fontSize: '0.6rem',
+                fontSize: '0.65rem',
                 color: 'var(--text-tertiary)',
-                fontWeight: '600',
-                letterSpacing: '0.5px',
+                fontWeight: '800',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                marginTop: '4px',
               }}
             >
-              Financial Dashboard
+              Intelligence
             </span>
           </div>
         </div>
@@ -272,7 +237,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav
           style={{
             flex: 1,
-            padding: '8px 10px',
+            padding: '12px 14px',
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
@@ -285,14 +250,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {navSections.map((section, sectionIdx) => (
             <div
               key={section.title}
-              style={{ marginBottom: sectionIdx < navSections.length - 1 ? '4px' : '0' }}
+              style={{ marginBottom: sectionIdx < navSections.length - 1 ? '16px' : '0' }}
             >
               <div
                 style={{
-                  padding: '8px 12px 4px',
-                  fontSize: '0.6rem',
+                  padding: '8px 12px 6px',
+                  fontSize: '0.65rem',
                   fontWeight: '800',
-                  color: '#475569',
+                  color: 'var(--text-tertiary)',
                   letterSpacing: '1.5px',
                   textTransform: 'uppercase' as const,
                   userSelect: 'none' as const,
@@ -311,80 +276,55 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
-                      padding: isActive ? '18px' : '10px 14px',
-                      marginTop: isActive ? '12px' : '2px',
-                      marginBottom: '2px',
-                      borderRadius: isActive ? '18px' : '12px',
+                      padding: '10px 12px',
+                      margin: '2px 0',
+                      borderRadius: '10px',
                       textDecoration: 'none',
                       position: 'relative',
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isActive
-                        ? 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)'
+                        ? 'rgba(255, 255, 255, 0.08)'
                         : isHovered
-                          ? 'rgba(255, 255, 255, 0.05)'
+                          ? 'rgba(255, 255, 255, 0.04)'
                           : 'transparent',
-                      color: isActive ? '#ffffff' : isHovered ? 'var(--text-primary)' : '#64748b',
+                      color:
+                        isActive || isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
                       border: isActive
-                        ? '1px solid rgba(255, 255, 255, 0.3)'
-                        : isHovered
-                          ? '1px solid rgba(255, 255, 255, 0.1)'
-                          : '1px solid transparent',
-                      boxShadow: 'none',
+                        ? '1px solid rgba(255, 255, 255, 0.1)'
+                        : '1px solid transparent',
                     }}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={onClose}
                     onMouseEnter={() => setHoveredItem(item.href)}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
-                    {isActive && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          top: '20%',
-                          bottom: '20%',
-                          width: '3px',
-                          background: '#6366f1',
-                          borderRadius: '0 4px 4px 0',
-                          boxShadow: '0 0 10px rgba(99, 102, 241, 0.4)',
-                        }}
-                      />
-                    )}
                     <div
                       style={{
-                        color: isActive ? '#ffffff' : 'inherit',
-                        transition: 'all 0.3s ease',
+                        color: isActive ? 'var(--accent)' : 'inherit',
+                        transition: 'transform 0.2s ease',
                         transform: isActive || isHovered ? 'scale(1.1)' : 'scale(1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: '24px',
+                        width: '20px',
                       }}
                     >
                       {item.icon}
                     </div>
                     <span
                       style={{
-                        fontWeight: isActive ? '700' : '600',
+                        fontWeight: isActive ? '700' : '500',
                         fontSize: '0.9rem',
                         flex: 1,
                         whiteSpace: 'nowrap',
-                        letterSpacing: isActive ? '0.01em' : '0',
                       }}
                     >
                       {item.label}
                     </span>
                     {item.badge && (
                       <span
-                        style={{
-                          padding: '2px 6px',
-                          borderRadius: '6px',
-                          fontSize: '0.65rem',
-                          fontWeight: '800',
-                          background: `${item.color}20`,
-                          color: item.color,
-                          border: `1px solid ${item.color}30`,
-                        }}
+                        className="pill-badge pill-badge--accent"
+                        style={{ fontSize: '0.6rem' }}
                       >
                         {item.badge}
                       </span>
@@ -396,43 +336,78 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Bottom Section */}
+        {/* User / Settings / Logout */}
         <div
           style={{
             marginTop: 'auto',
-            padding: '16px 12px',
+            padding: '16px 14px',
             display: 'flex',
             flexDirection: 'column',
             gap: '4px',
             borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            position: 'relative',
           }}
         >
-          <div
-            style={{
-              display: 'none',
-            }}
-          />
-
-          <Link href="/settings" style={{ textDecoration: 'none' }} onClick={onClose}>
+          {user && (
             <div
               style={{
                 padding: '12px',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                color: hoveredItem === 'settings' ? 'var(--text-primary)' : '#64748b',
+                gap: '12px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                marginBottom: '8px',
+              }}
+            >
+              <div
+                className="user-avatar"
+                style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}
+              >
+                {user.email?.[0].toUpperCase()}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    color: 'var(--text-tertiary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {user.email}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <Link href="/settings" style={{ textDecoration: 'none' }} onClick={onClose}>
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: hoveredItem === 'settings' ? 'var(--text-primary)' : 'var(--text-secondary)',
                 transition: 'all 0.2s',
                 cursor: 'pointer',
                 background:
-                  hoveredItem === 'settings' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                minHeight: '44px',
+                  hoveredItem === 'settings' ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
               }}
               onMouseEnter={() => setHoveredItem('settings')}
               onMouseLeave={() => setHoveredItem(null)}
-              onTouchStart={() => setHoveredItem('settings')}
-              onTouchEnd={() => setHoveredItem(null)}
             >
               <Settings size={18} />
               <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>Settings</span>
@@ -444,36 +419,29 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={async () => {
               const isConfirmed = await customConfirm({
                 title: 'Leaving FINCORE?',
-                message: 'Are you sure you want to log out of your secure session?',
+                message: 'Are you sure you want to log out?',
                 type: 'warning',
                 confirmLabel: 'Logout',
                 cancelLabel: 'Stay',
               });
-              if (isConfirmed) {
-                signOut();
-                onClose?.();
-              }
+              if (isConfirmed) signOut();
             }}
             style={{
-              padding: '12px',
-              borderRadius: '12px',
+              padding: '10px 12px',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              color: hoveredItem === 'logout' ? '#fca5a5' : '#ef4444',
+              gap: '12px',
+              color: '#ef4444',
               transition: 'all 0.2s',
               cursor: 'pointer',
               border: 'none',
-              background: hoveredItem === 'logout' ? 'rgba(239, 68, 68, 0.06)' : 'transparent',
-              opacity: 0.8,
-              minHeight: '44px',
               width: '100%',
-              textAlign: 'left' as const,
+              background: hoveredItem === 'logout' ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
+              textAlign: 'left',
             }}
             onMouseEnter={() => setHoveredItem('logout')}
             onMouseLeave={() => setHoveredItem(null)}
-            onTouchStart={() => setHoveredItem('logout')}
-            onTouchEnd={() => setHoveredItem(null)}
           >
             <LogOut size={18} />
             <span style={{ fontWeight: '700', fontSize: '0.85rem' }}>Logout</span>
