@@ -78,6 +78,52 @@ export const useFinance = () => {
   return context;
 };
 
+const ACCOUNT_SELECT_FIELDS = 'id,name,bank_name,type,balance,currency';
+const TRANSACTION_SELECT_FIELDS = 'id,date,description,category,type,amount,account_id';
+const GOAL_SELECT_FIELDS = 'id,name,target_amount,current_amount,deadline,category,description';
+const FAMILY_TRANSFER_SELECT_FIELDS =
+  'id,date,recipient,relationship,amount,purpose,notes,account_id';
+const STOCK_SELECT_FIELDS =
+  'id,symbol,company_name,quantity,avg_price,current_price,sector,exchange,investment_amount,current_value,pnl,pnl_percentage,previous_price';
+const STOCK_TRANSACTION_SELECT_FIELDS =
+  'id,stock_id,transaction_type,quantity,price,total_amount,brokerage,taxes,transaction_date,notes,account_id';
+const MUTUAL_FUND_SELECT_FIELDS =
+  'id,name,scheme_code,category,units,avg_nav,current_nav,investment_amount,current_value,pnl,pnl_percentage,folio_number,isin,previous_nav';
+const MUTUAL_FUND_TRANSACTION_SELECT_FIELDS =
+  'id,mutual_fund_id,transaction_type,units,nav,total_amount,transaction_date,notes,account_id';
+const FNO_TRADE_SELECT_FIELDS =
+  'id,instrument,trade_type,product,quantity,avg_price,exit_price,entry_date,exit_date,status,pnl,notes,account_id';
+const BOND_SELECT_FIELDS =
+  'id,name,company_name,isin,quantity,avg_price,current_price,coupon_rate,maturity_date,status,investment_amount,current_value,pnl,pnl_percentage,yield_to_maturity';
+const BOND_TRANSACTION_SELECT_FIELDS =
+  'id,bond_id,transaction_type,quantity,price,total_amount,transaction_date,notes,account_id';
+const SETTINGS_SELECT_FIELDS = [
+  'user_id',
+  'display_name',
+  'brokerage_type',
+  'brokerage_value',
+  'stt_rate',
+  'transaction_charge_rate',
+  'sebi_charge_rate',
+  'stamp_duty_rate',
+  'gst_rate',
+  'dp_charges',
+  'auto_calculate_charges',
+  'default_stock_account_id',
+  'default_mf_account_id',
+  'default_salary_account_id',
+  'stocks_visible',
+  'mutual_funds_visible',
+  'fno_visible',
+  'ledger_visible',
+  'income_visible',
+  'expenses_visible',
+  'goals_visible',
+  'family_visible',
+  'bonds_enabled',
+  'forex_enabled',
+].join(',');
+
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -145,7 +191,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // â”€â”€â”€ REFRESH HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const refreshAccounts = useCallback(async () => {
-    const { data, error } = await supabase.from('accounts').select('*');
+    const { data, error } = await supabase
+      .from('accounts')
+      .select(ACCOUNT_SELECT_FIELDS)
+      .order('name');
     if (error) logError('Error refreshing accounts:', error);
     else setAccounts(data.map(dbAccountToAccount));
   }, []);
@@ -154,7 +203,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const refreshTransactions = useCallback(async () => {
     const { data, error } = await supabase
       .from('transactions')
-      .select('*')
+      .select(TRANSACTION_SELECT_FIELDS)
       .order('date', { ascending: false })
       .limit(100);
     if (error) logError('Error refreshing transactions:', error);
@@ -165,10 +214,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLoading(true);
     try {
       const [stockResult, mfResult, fnoResult, bondResult] = await Promise.allSettled([
-        supabase.from('stocks').select('*'),
-        supabase.from('mutual_funds').select('*'),
-        supabase.from('fno_trades').select('*'),
-        supabase.from('bonds').select('*'),
+        supabase.from('stocks').select(STOCK_SELECT_FIELDS),
+        supabase.from('mutual_funds').select(MUTUAL_FUND_SELECT_FIELDS),
+        supabase.from('fno_trades').select(FNO_TRADE_SELECT_FIELDS),
+        supabase.from('bonds').select(BOND_SELECT_FIELDS),
       ]);
 
       if (stockResult.status === 'fulfilled' && stockResult.value.data)
@@ -197,6 +246,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setLoading(false);
     }
   }, []);
+
+  const refreshLedgerState = useCallback(async () => {
+    await Promise.allSettled([refreshAccounts(), refreshTransactions()]);
+  }, [refreshAccounts, refreshTransactions]);
+
+  const refreshInvestmentState = useCallback(async () => {
+    await Promise.allSettled([refreshAccounts(), refreshTransactions(), refreshPortfolio()]);
+  }, [refreshAccounts, refreshTransactions, refreshPortfolio]);
 
   // â”€â”€â”€ ACCOUNTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -478,9 +535,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // FIX: was useMemo â€” useCallback is semantically correct for functions
   const deleteStock = useCallback(
-    (id: number) => makeDeleteFromTable('stocks', 'stock', setStocks)(id),
-
-    []
+    async (id: number) => {
+      await makeDeleteFromTable('stocks', 'stock', setStocks)(id);
+      setStockTransactions((prev) => prev.filter((tx) => tx.stockId !== id));
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   const addStockTransaction = useCallback(
@@ -510,19 +570,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setStockTransactions((prev) => [dbStockTransactionToStockTransaction(data), ...prev]);
       // DB trigger creates ledger entry + updates account balance + updates stock holdings
-      refreshAccounts();
-      refreshTransactions();
-      refreshPortfolio();
+      void refreshInvestmentState();
     },
-    [user, refreshAccounts, refreshTransactions, refreshPortfolio]
+    [user, refreshInvestmentState]
   );
 
   // FIX: was useMemo â€” useCallback is semantically correct for functions
   const deleteStockTransaction = useCallback(
-    (id: number) =>
-      makeDeleteFromTable('stock_transactions', 'stock transaction', setStockTransactions)(id),
-
-    []
+    async (id: number) => {
+      await makeDeleteFromTable(
+        'stock_transactions',
+        'stock transaction',
+        setStockTransactions
+      )(id);
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   // â”€â”€â”€ MUTUAL FUNDS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -592,9 +655,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // FIX: was useMemo â€” useCallback is semantically correct for functions
   const deleteMutualFund = useCallback(
-    (id: number) => makeDeleteFromTable('mutual_funds', 'mutual fund', setMutualFunds)(id),
-
-    []
+    async (id: number) => {
+      await makeDeleteFromTable('mutual_funds', 'mutual fund', setMutualFunds)(id);
+      setMutualFundTransactions((prev) => prev.filter((tx) => tx.mutualFundId !== id));
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   const addMutualFundTransaction = useCallback(
@@ -625,23 +691,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ...prev,
       ]);
       // DB trigger creates ledger entry + updates account balance + updates mf holdings
-      refreshAccounts();
-      refreshTransactions();
-      refreshPortfolio();
+      void refreshInvestmentState();
     },
-    [user, refreshAccounts, refreshTransactions, refreshPortfolio]
+    [user, refreshInvestmentState]
   );
 
   // FIX: was useMemo â€” useCallback is semantically correct for functions
   const deleteMutualFundTransaction = useCallback(
-    (id: number) =>
-      makeDeleteFromTable(
+    async (id: number) => {
+      await makeDeleteFromTable(
         'mutual_fund_transactions',
         'mutual fund transaction',
         setMutualFundTransactions
-      )(id),
-
-    []
+      )(id);
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   // â”€â”€â”€ F&O â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -675,11 +740,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setFnoTrades((prev) => [dbFnoTradeToFnoTrade(data), ...prev]);
       // DB trigger creates ledger entry + updates account balance
-      refreshAccounts();
-      refreshTransactions();
-      refreshPortfolio();
+      void refreshInvestmentState();
     },
-    [user, refreshAccounts, refreshTransactions, refreshPortfolio]
+    [user, refreshInvestmentState]
   );
 
   const updateFnoTrade = useCallback(
@@ -710,19 +773,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setFnoTrades((prev) => prev.map((t) => (t.id === id ? { ...t, ...trade } : t)));
       // DB trigger fires on OPENâ†’CLOSED status change: creates ledger entry + updates balance
       if (trade.status === 'CLOSED') {
-        refreshAccounts();
-        refreshTransactions();
-        refreshPortfolio();
+        void refreshInvestmentState();
       }
     },
-    [refreshAccounts, refreshTransactions, refreshPortfolio]
+    [refreshInvestmentState]
   );
 
   // FIX: was useMemo â€” useCallback is semantically correct for functions
   const deleteFnoTrade = useCallback(
-    (id: number) => makeDeleteFromTable('fno_trades', 'fno trade', setFnoTrades)(id),
-
-    []
+    async (id: number) => {
+      await makeDeleteFromTable('fno_trades', 'fno trade', setFnoTrades)(id);
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   // â”€â”€â”€ GOALS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -806,9 +869,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       setFamilyTransfers((prev) => [...prev, dbFamilyTransferToFamilyTransfer(data)]);
-      refreshAccounts();
+      void refreshLedgerState();
     },
-    [user, refreshAccounts]
+    [user, refreshLedgerState]
   );
 
   const updateFamilyTransfer = useCallback(
@@ -832,9 +895,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       setFamilyTransfers((prev) => prev.map((t) => (t.id === id ? { ...t, ...transfer } : t)));
-      refreshAccounts();
+      void refreshLedgerState();
     },
-    [refreshAccounts]
+    [refreshLedgerState]
   );
 
   const deleteFamilyTransfer = useCallback(
@@ -847,9 +910,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       setFamilyTransfers((prev) => prev.filter((t) => t.id !== id));
-      refreshAccounts();
+      void refreshLedgerState();
     },
-    [refreshAccounts]
+    [refreshLedgerState]
   );
 
   // ─── BONDS ──────────────────────────────────────────────────────────────────
@@ -921,8 +984,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const deleteBond = useCallback(
-    (id: number) => makeDeleteFromTable('bonds', 'bond', setBonds)(id),
-    []
+    async (id: number) => {
+      await makeDeleteFromTable('bonds', 'bond', setBonds)(id);
+      setBondTransactions((prev) => prev.filter((tx) => tx.bondId !== id));
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   const addBondTransaction = useCallback(
@@ -950,17 +1017,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       setBondTransactions((prev) => [dbBondTransactionToBondTransaction(data), ...prev]);
-      refreshAccounts();
-      refreshTransactions();
-      refreshPortfolio();
+      void refreshInvestmentState();
     },
-    [user, refreshAccounts, refreshTransactions, refreshPortfolio]
+    [user, refreshInvestmentState]
   );
 
   const deleteBondTransaction = useCallback(
-    (id: number) =>
-      makeDeleteFromTable('bond_transactions', 'bond transaction', setBondTransactions)(id),
-    []
+    async (id: number) => {
+      await makeDeleteFromTable('bond_transactions', 'bond transaction', setBondTransactions)(id);
+      void refreshInvestmentState();
+    },
+    [refreshInvestmentState]
   );
 
   // â”€â”€â”€ LIVE PRICE REFRESH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1085,15 +1152,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // â”€â”€â”€ INITIAL DATA LOAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
+    let isActive = true;
+    let didFinish = false;
+    let dataTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const loadInitialData = async () => {
       if (!user) {
         if (!authLoading) setLoading(false);
         return;
       }
 
+      setLoading(true);
+      setError(null);
+
       // Safety timeout for data loading (15 seconds)
-      const dataTimeout = setTimeout(() => {
-        if (loading) {
+      dataTimeout = setTimeout(() => {
+        if (!didFinish && isActive) {
           logError('Initial data load timed out. Proceeding with partial/empty state.');
           setLoading(false);
         }
@@ -1115,28 +1189,40 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           stockTxResult,
           mfTxResult,
         ] = await Promise.allSettled([
-          supabase.from('accounts').select('*').order('name'),
-          supabase.from('transactions').select('*').order('date', { ascending: false }).limit(100),
-          supabase.from('app_settings').select('*').eq('user_id', user.id).maybeSingle(),
-          supabase.from('stocks').select('*'),
-          supabase.from('mutual_funds').select('*'),
-          supabase.from('goals').select('*'),
-          supabase.from('family_transfers').select('*'),
-          supabase.from('fno_trades').select('*'),
-          supabase.from('bonds').select('*'),
+          supabase.from('accounts').select(ACCOUNT_SELECT_FIELDS).order('name'),
+          supabase
+            .from('transactions')
+            .select(TRANSACTION_SELECT_FIELDS)
+            .order('date', { ascending: false })
+            .limit(100),
+          supabase
+            .from('app_settings')
+            .select(SETTINGS_SELECT_FIELDS)
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase.from('stocks').select(STOCK_SELECT_FIELDS),
+          supabase.from('mutual_funds').select(MUTUAL_FUND_SELECT_FIELDS),
+          supabase.from('goals').select(GOAL_SELECT_FIELDS),
+          supabase.from('family_transfers').select(FAMILY_TRANSFER_SELECT_FIELDS),
+          supabase.from('fno_trades').select(FNO_TRADE_SELECT_FIELDS),
+          supabase.from('bonds').select(BOND_SELECT_FIELDS),
           supabase
             .from('bond_transactions')
-            .select('*')
+            .select(BOND_TRANSACTION_SELECT_FIELDS)
             .order('transaction_date', { ascending: false }),
           supabase
             .from('stock_transactions')
-            .select('*')
+            .select(STOCK_TRANSACTION_SELECT_FIELDS)
             .order('transaction_date', { ascending: false }),
           supabase
             .from('mutual_fund_transactions')
-            .select('*')
+            .select(MUTUAL_FUND_TRANSACTION_SELECT_FIELDS)
             .order('transaction_date', { ascending: false }),
         ]);
+
+        if (!isActive) {
+          return;
+        }
 
         // Apply each result independently â€” partial failures are tolerated
         if (accResult.status === 'fulfilled' && accResult.value.data)
@@ -1201,18 +1287,28 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         else if (mfTxResult.status === 'rejected')
           logError('Failed to load MF transactions:', mfTxResult.reason);
 
+        didFinish = true;
         setLoading(false);
-        clearTimeout(dataTimeout);
+        if (dataTimeout) clearTimeout(dataTimeout);
       } catch (err) {
+        if (!isActive) {
+          return;
+        }
         logError('Failed to load initial data:', err);
         setError('Failed to load financial data');
+        didFinish = true;
         setLoading(false);
-        clearTimeout(dataTimeout);
+        if (dataTimeout) clearTimeout(dataTimeout);
       }
     };
 
-    loadInitialData();
-  }, [user, authLoading, loading]);
+    void loadInitialData();
+
+    return () => {
+      isActive = false;
+      if (dataTimeout) clearTimeout(dataTimeout);
+    };
+  }, [user, authLoading]);
 
   // â”€â”€â”€ MEMOISED CONTEXT VALUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
