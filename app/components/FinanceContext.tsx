@@ -97,32 +97,8 @@ const BOND_SELECT_FIELDS =
   'id,name,company_name,isin,quantity,avg_price,current_price,coupon_rate,maturity_date,status,investment_amount,current_value,pnl,pnl_percentage,yield_to_maturity';
 const BOND_TRANSACTION_SELECT_FIELDS =
   'id,bond_id,transaction_type,quantity,price,total_amount,transaction_date,notes,account_id';
-const SETTINGS_SELECT_FIELDS = [
-  'user_id',
-  'display_name',
-  'brokerage_type',
-  'brokerage_value',
-  'stt_rate',
-  'transaction_charge_rate',
-  'sebi_charge_rate',
-  'stamp_duty_rate',
-  'gst_rate',
-  'dp_charges',
-  'auto_calculate_charges',
-  'default_stock_account_id',
-  'default_mf_account_id',
-  'default_salary_account_id',
-  'stocks_visible',
-  'mutual_funds_visible',
-  'fno_visible',
-  'ledger_visible',
-  'income_visible',
-  'expenses_visible',
-  'goals_visible',
-  'family_visible',
-  'bonds_enabled',
-  'forex_enabled',
-].join(',');
+const SETTINGS_SELECT_FIELDS =
+  'user_id,display_name,brokerage_type,brokerage_value,stt_rate,transaction_charge_rate,sebi_charge_rate,stamp_duty_rate,gst_rate,dp_charges,auto_calculate_charges,default_stock_account_id,default_mf_account_id,default_salary_account_id,stocks_visible,mutual_funds_visible,fno_visible,ledger_visible,income_visible,expenses_visible,goals_visible,family_visible,bonds_enabled,forex_enabled';
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
