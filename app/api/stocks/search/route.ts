@@ -6,8 +6,17 @@ import {
   fetchWithTimeout,
   withErrorHandling,
   applyRateLimit,
+  getCachedOrFetch,
 } from '@/lib/services/api';
 import { logError } from '@/lib/utils/logger';
+
+interface StockSearchResult {
+  symbol: string;
+  fullSymbol: string;
+  companyName: string;
+  exchange: string;
+  type: string;
+}
 
 /**
  * Stock search API endpoint with security enhancements
@@ -36,46 +45,51 @@ async function handleStockSearch(request: Request): Promise<NextResponse> {
   }
 
   try {
-    // Sanitize and encode query
     const sanitizedQuery = query.trim().toUpperCase();
-    const encodedQuery = encodeURIComponent(sanitizedQuery);
+    const cacheKey = `stock_search_${sanitizedQuery}`;
+    const results = await getCachedOrFetch<StockSearchResult[]>(
+      cacheKey,
+      async () => {
+        const encodedQuery = encodeURIComponent(sanitizedQuery);
+        const response = await fetchWithTimeout(
+          `https://query1.finance.yahoo.com/v1/finance/search?q=${encodedQuery}&quotesCount=10&newsCount=0`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0',
+            },
+          },
+          5000
+        );
 
-    // Fetch from Yahoo Finance API with timeout
-    const response = await fetchWithTimeout(
-      `https://query1.finance.yahoo.com/v1/finance/search?q=${encodedQuery}&quotesCount=10&newsCount=0`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-        },
+        if (!response.ok) {
+          throw new Error(`Yahoo Finance API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        interface YahooQuote {
+          symbol: string;
+          shortname?: string;
+          longname?: string;
+          exchange?: string;
+          quoteType?: string;
+        }
+
+        return (data.quotes || [])
+          .filter(
+            (quote: YahooQuote) => quote.symbol.endsWith('.NS') || quote.symbol.endsWith('.BO')
+          )
+          .map((quote: YahooQuote) => ({
+            symbol: quote.symbol.split('.')[0],
+            fullSymbol: quote.symbol,
+            companyName: quote.longname || quote.shortname || quote.symbol,
+            exchange: quote.exchange || 'NSE',
+            type: quote.quoteType || 'EQUITY',
+          }))
+          .slice(0, 10);
       },
-      5000 // 5 second timeout
+      5 * 60 * 1000
     );
-
-    if (!response.ok) {
-      throw new Error(`Yahoo Finance API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // Filter for Indian stocks and sanitize response
-    interface YahooQuote {
-      symbol: string;
-      shortname?: string;
-      longname?: string;
-      exchange?: string;
-      quoteType?: string;
-    }
-
-    const results = (data.quotes || [])
-      .filter((quote: YahooQuote) => quote.symbol.endsWith('.NS') || quote.symbol.endsWith('.BO'))
-      .map((quote: YahooQuote) => ({
-        symbol: quote.symbol.split('.')[0],
-        fullSymbol: quote.symbol,
-        companyName: quote.longname || quote.shortname || quote.symbol,
-        exchange: quote.exchange || 'NSE',
-        type: quote.quoteType || 'EQUITY',
-      }))
-      .slice(0, 10); // Limit to 10 results
 
     return createSuccessResponse(results);
   } catch (error) {

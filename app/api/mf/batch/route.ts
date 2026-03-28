@@ -4,8 +4,7 @@ import {
   createSuccessResponse,
   withErrorHandling,
   applyRateLimit,
-  getCache,
-  setCache,
+  getCachedOrFetch,
   parseCommaSeparatedParam,
 } from '@/lib/services/api';
 import { getMutualFundQuotes } from '@/lib/services/mutual-funds';
@@ -32,19 +31,18 @@ async function handleMFBatchQuote(request: Request): Promise<NextResponse> {
   if (parsed.error) return parsed.error;
   const codes = parsed.items;
 
-  const cacheKey = `mf_batch_${codes.sort().join(',')}`;
-  const cached = getCache<Record<string, MFQuoteData>>(cacheKey);
-  if (cached) return createSuccessResponse(cached);
+  const normalizedCodes = [...codes].sort();
+  const cacheKey = `mf_batch_${normalizedCodes.join(',')}`;
 
   try {
-    const results = (await getMutualFundQuotes(codes)) as Record<string, MFQuoteData>;
-    for (const [code, quote] of Object.entries(results)) {
-      setCache(`mf_quote_${code}`, quote, 300000);
-    }
-    setCache(cacheKey, results, 60000); // 1 minute cache for batch request
+    const results = await getCachedOrFetch<Record<string, MFQuoteData>>(
+      cacheKey,
+      async () => (await getMutualFundQuotes(normalizedCodes)) as Record<string, MFQuoteData>,
+      60000
+    );
     return createSuccessResponse(results);
   } catch (error) {
-    logError('Batch MF quote fetch failed', error, { codes: codes.join(',') });
+    logError('Batch MF quote fetch failed', error, { codes: normalizedCodes.join(',') });
     return createErrorResponse('Failed to fetch batch MF quotes', 500);
   }
 }

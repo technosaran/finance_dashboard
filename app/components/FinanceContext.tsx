@@ -100,6 +100,25 @@ const BOND_TRANSACTION_SELECT_FIELDS =
 const SETTINGS_SELECT_FIELDS =
   'user_id,display_name,brokerage_type,brokerage_value,stt_rate,transaction_charge_rate,sebi_charge_rate,stamp_duty_rate,gst_rate,dp_charges,auto_calculate_charges,default_stock_account_id,default_mf_account_id,default_salary_account_id,stocks_visible,mutual_funds_visible,fno_visible,ledger_visible,income_visible,expenses_visible,goals_visible,family_visible,bonds_enabled,forex_enabled';
 
+type SupabaseLoadResult<T> = PromiseSettledResult<{
+  data: T | null;
+  error: unknown;
+}>;
+
+const getSettledQueryData = <T,>(result: SupabaseLoadResult<T>, label: string): T | null => {
+  if (result.status === 'rejected') {
+    logError(`Failed to load ${label}:`, result.reason);
+    return null;
+  }
+
+  if (result.value.error) {
+    logError(`Failed to load ${label}:`, result.value.error);
+    return null;
+  }
+
+  return result.value.data;
+};
+
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -196,24 +215,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         supabase.from('bonds').select(BOND_SELECT_FIELDS),
       ]);
 
-      if (stockResult.status === 'fulfilled' && stockResult.value.data)
-        setStocks(stockResult.value.data.map(dbStockToStock));
-      else if (stockResult.status === 'rejected')
-        logError('Error refreshing stocks:', stockResult.reason);
+      const stockData = getSettledQueryData(stockResult, 'stocks');
+      if (stockData) setStocks(stockData.map(dbStockToStock));
 
-      if (mfResult.status === 'fulfilled' && mfResult.value.data)
-        setMutualFunds(mfResult.value.data.map(dbMutualFundToMutualFund));
-      else if (mfResult.status === 'rejected')
-        logError('Error refreshing mutual funds:', mfResult.reason);
+      const mutualFundData = getSettledQueryData(mfResult, 'mutual funds');
+      if (mutualFundData) setMutualFunds(mutualFundData.map(dbMutualFundToMutualFund));
 
-      if (fnoResult.status === 'fulfilled' && fnoResult.value.data)
-        setFnoTrades(fnoResult.value.data.map(dbFnoTradeToFnoTrade));
-      else if (fnoResult.status === 'rejected') logError('Error refreshing F&O:', fnoResult.reason);
+      const fnoData = getSettledQueryData(fnoResult, 'F&O');
+      if (fnoData) setFnoTrades(fnoData.map(dbFnoTradeToFnoTrade));
 
-      if (bondResult.status === 'fulfilled' && bondResult.value.data)
-        setBonds(bondResult.value.data.map(dbBondToBond));
-      else if (bondResult.status === 'rejected')
-        logError('Error refreshing bonds:', bondResult.reason);
+      const bondData = getSettledQueryData(bondResult, 'bonds');
+      if (bondData) setBonds(bondData.map(dbBondToBond));
 
       logInfo('Portfolio refreshed successfully');
     } catch (err) {
@@ -245,7 +257,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           amount: transactionData.amount,
           account_id: transactionData.accountId || null,
         })
-        .select()
+        .select(TRANSACTION_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -310,7 +322,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         balance: account.balance,
         currency: account.currency,
       })
-      .select()
+      .select(ACCOUNT_SELECT_FIELDS)
       .single();
 
     if (error) {
@@ -365,7 +377,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           type: 'Income',
           date: new Date().toISOString().split('T')[0],
         })
-        .select()
+        .select(TRANSACTION_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -467,7 +479,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           pnl: stock.pnl,
           pnl_percentage: stock.pnlPercentage,
         })
-        .select()
+        .select(STOCK_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -536,7 +548,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           notes: tx.notes,
           account_id: tx.accountId,
         })
-        .select()
+        .select(STOCK_TRANSACTION_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -586,7 +598,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           isin: mf.isin,
           folio_number: mf.folioNumber,
         })
-        .select()
+        .select(MUTUAL_FUND_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -654,7 +666,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           account_id: tx.accountId,
           notes: tx.notes,
         })
-        .select()
+        .select(MUTUAL_FUND_TRANSACTION_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -706,7 +718,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           notes: trade.notes,
           account_id: trade.accountId,
         })
-        .select()
+        .select(FNO_TRADE_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -779,7 +791,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           category: goal.category,
           description: goal.description,
         })
-        .select()
+        .select(GOAL_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -836,7 +848,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           notes: transfer.notes,
           account_id: transfer.accountId,
         })
-        .select()
+        .select(FAMILY_TRANSFER_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -915,7 +927,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           pnl_percentage: bond.pnlPercentage,
           yield_to_maturity: bond.yieldToMaturity,
         })
-        .select()
+        .select(BOND_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -984,7 +996,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           notes: tx.notes,
           account_id: tx.accountId,
         })
-        .select()
+        .select(BOND_TRANSACTION_SELECT_FIELDS)
         .single();
 
       if (error) {
@@ -1201,67 +1213,50 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         // Apply each result independently â€” partial failures are tolerated
-        if (accResult.status === 'fulfilled' && accResult.value.data)
-          setAccounts(accResult.value.data.map(dbAccountToAccount));
-        else if (accResult.status === 'rejected')
-          logError('Failed to load accounts:', accResult.reason);
+        const accountData = getSettledQueryData(accResult, 'accounts');
+        if (accountData) setAccounts(accountData.map(dbAccountToAccount));
 
-        if (txResult.status === 'fulfilled' && txResult.value.data)
-          setTransactions(txResult.value.data.map(dbTransactionToTransaction));
-        else if (txResult.status === 'rejected')
-          logError('Failed to load transactions:', txResult.reason);
+        const transactionData = getSettledQueryData(txResult, 'transactions');
+        if (transactionData) setTransactions(transactionData.map(dbTransactionToTransaction));
 
-        if (settingsResult.status === 'fulfilled' && settingsResult.value.data)
-          setSettings(dbSettingsToSettings(settingsResult.value.data as AppSettingsRow));
-        else if (settingsResult.status === 'rejected')
-          logError('Failed to load settings:', settingsResult.reason);
+        const settingsData = getSettledQueryData(settingsResult, 'settings');
+        if (settingsData) setSettings(dbSettingsToSettings(settingsData as AppSettingsRow));
 
-        if (stockResult.status === 'fulfilled' && stockResult.value.data)
-          setStocks(stockResult.value.data.map(dbStockToStock));
-        else if (stockResult.status === 'rejected')
-          logError('Failed to load stocks:', stockResult.reason);
+        const stockData = getSettledQueryData(stockResult, 'stocks');
+        if (stockData) setStocks(stockData.map(dbStockToStock));
 
-        if (mfResult.status === 'fulfilled' && mfResult.value.data)
-          setMutualFunds(mfResult.value.data.map(dbMutualFundToMutualFund));
-        else if (mfResult.status === 'rejected')
-          logError('Failed to load mutual funds:', mfResult.reason);
+        const mutualFundData = getSettledQueryData(mfResult, 'mutual funds');
+        if (mutualFundData) setMutualFunds(mutualFundData.map(dbMutualFundToMutualFund));
 
-        if (goalResult.status === 'fulfilled' && goalResult.value.data)
-          setGoals(goalResult.value.data.map(dbGoalToGoal));
-        else if (goalResult.status === 'rejected')
-          logError('Failed to load goals:', goalResult.reason);
+        const goalData = getSettledQueryData(goalResult, 'goals');
+        if (goalData) setGoals(goalData.map(dbGoalToGoal));
 
-        if (familyResult.status === 'fulfilled' && familyResult.value.data)
-          setFamilyTransfers(familyResult.value.data.map(dbFamilyTransferToFamilyTransfer));
-        else if (familyResult.status === 'rejected')
-          logError('Failed to load family transfers:', familyResult.reason);
+        const familyTransferData = getSettledQueryData(familyResult, 'family transfers');
+        if (familyTransferData)
+          setFamilyTransfers(familyTransferData.map(dbFamilyTransferToFamilyTransfer));
 
-        if (fnoResult.status === 'fulfilled' && fnoResult.value.data)
-          setFnoTrades(fnoResult.value.data.map(dbFnoTradeToFnoTrade));
-        else if (fnoResult.status === 'rejected')
-          logError('Failed to load F&O trades:', fnoResult.reason);
+        const fnoData = getSettledQueryData(fnoResult, 'F&O trades');
+        if (fnoData) setFnoTrades(fnoData.map(dbFnoTradeToFnoTrade));
 
-        if (bondResult.status === 'fulfilled' && bondResult.value.data)
-          setBonds(bondResult.value.data.map(dbBondToBond));
-        else if (bondResult.status === 'rejected')
-          logError('Failed to load bonds:', bondResult.reason);
+        const bondData = getSettledQueryData(bondResult, 'bonds');
+        if (bondData) setBonds(bondData.map(dbBondToBond));
 
-        if (bondTxResult.status === 'fulfilled' && bondTxResult.value.data)
-          setBondTransactions(bondTxResult.value.data.map(dbBondTransactionToBondTransaction));
-        else if (bondTxResult.status === 'rejected')
-          logError('Failed to load bond transactions:', bondTxResult.reason);
+        const bondTransactionData = getSettledQueryData(bondTxResult, 'bond transactions');
+        if (bondTransactionData)
+          setBondTransactions(bondTransactionData.map(dbBondTransactionToBondTransaction));
 
-        if (stockTxResult.status === 'fulfilled' && stockTxResult.value.data)
-          setStockTransactions(stockTxResult.value.data.map(dbStockTransactionToStockTransaction));
-        else if (stockTxResult.status === 'rejected')
-          logError('Failed to load stock transactions:', stockTxResult.reason);
+        const stockTransactionData = getSettledQueryData(stockTxResult, 'stock transactions');
+        if (stockTransactionData)
+          setStockTransactions(stockTransactionData.map(dbStockTransactionToStockTransaction));
 
-        if (mfTxResult.status === 'fulfilled' && mfTxResult.value.data)
+        const mutualFundTransactionData = getSettledQueryData(
+          mfTxResult,
+          'mutual fund transactions'
+        );
+        if (mutualFundTransactionData)
           setMutualFundTransactions(
-            mfTxResult.value.data.map(dbMutualFundTransactionToMutualFundTransaction)
+            mutualFundTransactionData.map(dbMutualFundTransactionToMutualFundTransaction)
           );
-        else if (mfTxResult.status === 'rejected')
-          logError('Failed to load MF transactions:', mfTxResult.reason);
 
         didFinish = true;
         setLoading(false);

@@ -5,8 +5,7 @@ import {
   createSuccessResponse,
   withErrorHandling,
   applyRateLimit,
-  getCache,
-  setCache,
+  getCachedOrFetch,
 } from '@/lib/services/api';
 import { getMutualFundQuote } from '@/lib/services/mutual-funds';
 import { logError } from '@/lib/utils/logger';
@@ -33,23 +32,22 @@ async function handleMFQuote(request: Request): Promise<NextResponse> {
   }
 
   const cacheKey = `mf_quote_${code.trim()}`;
-  const cached = getCache<{
-    schemeCode: string;
-    schemeName: string;
-    category: string;
-    currentNav: number;
-    previousNav: number;
-    date: string;
-  }>(cacheKey);
-  if (cached) return createSuccessResponse(cached);
 
   try {
-    const quoteData = await getMutualFundQuote(code.trim());
-    if (!quoteData) return createErrorResponse('Mutual fund not found', 404);
-
-    setCache(cacheKey, quoteData, 300000);
+    const quoteData = await getCachedOrFetch(
+      cacheKey,
+      async () => {
+        const result = await getMutualFundQuote(code.trim());
+        if (!result) throw new Error('MF_NOT_FOUND');
+        return result;
+      },
+      300000
+    );
     return createSuccessResponse(quoteData);
   } catch (error) {
+    if (error instanceof Error && error.message === 'MF_NOT_FOUND') {
+      return createErrorResponse('Mutual fund not found', 404);
+    }
     logError('MF quote fetch failed', error, { code });
 
     if (error instanceof Error) {

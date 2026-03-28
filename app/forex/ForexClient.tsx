@@ -17,6 +17,9 @@ export interface ForexTrade {
   transaction_date: string | null;
 }
 
+const FOREX_TRANSACTION_SELECT_FIELDS =
+  'id,transaction_type,notes,amount,account_id,transaction_date';
+
 export default function ForexClient() {
   const { user } = useAuth();
   const { showNotification, confirm: customConfirm } = useNotifications();
@@ -37,7 +40,7 @@ export default function ForexClient() {
     try {
       const { data, error } = await supabase
         .from('forex_transactions')
-        .select('*')
+        .select(FOREX_TRANSACTION_SELECT_FIELDS)
         .order('created_at', { ascending: false });
       if (error) throw error;
       setTrades(data as ForexTrade[]);

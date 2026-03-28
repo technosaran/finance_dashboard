@@ -219,6 +219,7 @@ export async function applyRateLimit(request: Request): Promise<NextResponse | n
  * Simple in-memory cache for API responses
  */
 const apiCache = new Map<string, { data: unknown; expire: number }>();
+const pendingCacheLoads = new Map<string, Promise<unknown>>();
 const API_CACHE_CLEANUP_THRESHOLD = 500;
 const API_CACHE_MAX_SIZE = 1000;
 
@@ -276,10 +277,44 @@ export function setCache<T>(key: string, data: T, ttlMs: number = 300000): void 
 }
 
 /**
+ * Return a cached value when available, otherwise deduplicate the async loader
+ * so concurrent callers don't fan out the same upstream request.
+ */
+export async function getCachedOrFetch<T>(
+  key: string,
+  loader: () => Promise<T>,
+  ttlMs: number = 300000
+): Promise<T> {
+  const cached = getCache<T>(key);
+  if (cached !== null) {
+    return cached;
+  }
+
+  const pending = pendingCacheLoads.get(key);
+  if (pending) {
+    return pending as Promise<T>;
+  }
+
+  const loadPromise = (async () => {
+    try {
+      const data = await loader();
+      setCache(key, data, ttlMs);
+      return data;
+    } finally {
+      pendingCacheLoads.delete(key);
+    }
+  })();
+
+  pendingCacheLoads.set(key, loadPromise);
+  return loadPromise;
+}
+
+/**
  * Clear all cached data (useful for testing or manual refresh)
  */
 export function clearCache(): void {
   apiCache.clear();
+  pendingCacheLoads.clear();
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   createSuccessResponse,
   withErrorHandling,
   applyRateLimit,
+  getCachedOrFetch,
 } from '@/lib/services/api';
 import { searchMutualFunds } from '@/lib/services/mutual-funds';
 import { logError } from '@/lib/utils/logger';
@@ -31,7 +32,13 @@ async function handleMFSearch(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const results = await searchMutualFunds(query.trim());
+    const sanitizedQuery = query.trim();
+    const cacheKey = `mf_search_${sanitizedQuery.toUpperCase()}`;
+    const results = await getCachedOrFetch(
+      cacheKey,
+      () => searchMutualFunds(sanitizedQuery),
+      5 * 60 * 1000
+    );
     return createSuccessResponse(results);
   } catch (error) {
     logError('MF search failed', error, { query });

@@ -1,4 +1,4 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -70,15 +70,7 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'accounts_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
-        ];
+        Relationships: [];
       };
       app_settings: {
         Row: {
@@ -187,13 +179,6 @@ export type Database = {
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
           },
-          {
-            foreignKeyName: 'app_settings_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: true;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
         ];
       };
       bond_transactions: {
@@ -250,13 +235,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'bonds';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'bond_transactions_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -333,15 +311,7 @@ export type Database = {
           user_id?: string;
           yield_to_maturity?: number | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'bonds_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
-        ];
+        Relationships: [];
       };
       dividends: {
         Row: {
@@ -396,13 +366,6 @@ export type Database = {
             referencedRelation: 'stocks';
             referencedColumns: ['id'];
           },
-          {
-            foreignKeyName: 'dividends_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
         ];
       };
       family_transfers: {
@@ -452,13 +415,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'family_transfers_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -525,13 +481,6 @@ export type Database = {
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
           },
-          {
-            foreignKeyName: 'fno_trades_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
         ];
       };
       forex_transactions: {
@@ -572,13 +521,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'forex_transactions_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -629,13 +571,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'goals_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -696,13 +631,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'mutual_funds';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'mutual_fund_transactions_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -767,15 +695,7 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'mutual_funds_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
-        ];
+        Relationships: [];
       };
       portfolio_snapshots: {
         Row: {
@@ -811,15 +731,7 @@ export type Database = {
           total_net_worth?: number;
           user_id?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'portfolio_snapshots_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
-        ];
+        Relationships: [];
       };
       recurring_schedules: {
         Row: {
@@ -874,13 +786,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'recurring_schedules_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -948,13 +853,6 @@ export type Database = {
             referencedRelation: 'stocks';
             referencedColumns: ['id'];
           },
-          {
-            foreignKeyName: 'stock_transactions_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
         ];
       };
       stocks: {
@@ -1015,15 +913,7 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'stocks_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
-        ];
+        Relationships: [];
       };
       transactions: {
         Row: {
@@ -1073,76 +963,46 @@ export type Database = {
             referencedRelation: 'accounts';
             referencedColumns: ['id'];
           },
-          {
-            foreignKeyName: 'transactions_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
-        ];
-      };
-      watchlist: {
-        Row: {
-          company_name: string;
-          created_at: string | null;
-          current_price: number | null;
-          id: number;
-          notes: string | null;
-          symbol: string;
-          target_price: number | null;
-          updated_at: string | null;
-          user_id: string | null;
-        };
-        Insert: {
-          company_name: string;
-          created_at?: string | null;
-          current_price?: number | null;
-          id?: number;
-          notes?: string | null;
-          symbol: string;
-          target_price?: number | null;
-          updated_at?: string | null;
-          user_id?: string | null;
-        };
-        Update: {
-          company_name?: string;
-          created_at?: string | null;
-          current_price?: number | null;
-          id?: number;
-          notes?: string | null;
-          symbol?: string;
-          target_price?: number | null;
-          updated_at?: string | null;
-          user_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'watchlist_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'user_net_worth_overview';
-            referencedColumns: ['user_id'];
-          },
         ];
       };
     };
     Views: {
-      user_net_worth_overview: {
-        Row: {
-          net_worth: number | null;
-          total_bonds: number | null;
-          total_cash: number | null;
-          total_mfs: number | null;
-          total_stocks: number | null;
-          user_id: string | null;
-        };
-        Relationships: [];
-      };
+      [_ in never]: never;
     };
     Functions: {
       capture_daily_snapshot: {
         Args: { target_user_id: string };
+        Returns: undefined;
+      };
+      delete_ledger_entries_for_source: {
+        Args: { p_source_id: number; p_source_table: string };
+        Returns: undefined;
+      };
+      insert_ledger_transaction: {
+        Args: {
+          p_account_id: number;
+          p_amount: number;
+          p_category: string;
+          p_date: string;
+          p_description: string;
+          p_entry_kind?: string;
+          p_source_id: number;
+          p_source_table: string;
+          p_type: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
+      recalculate_bond_holding: {
+        Args: { target_bond_id: number };
+        Returns: undefined;
+      };
+      recalculate_mutual_fund_holding: {
+        Args: { target_mutual_fund_id: number };
+        Returns: undefined;
+      };
+      recalculate_stock_holding: {
+        Args: { target_stock_id: number };
         Returns: undefined;
       };
     };

@@ -1,4 +1,4 @@
-import { fetchWithTimeout, getCache, setCache } from '@/lib/services/api';
+import { fetchWithTimeout, getCachedOrFetch } from '@/lib/services/api';
 
 const AMFI_CURRENT_FEED_URL = 'https://portal.amfiindia.com/spages/NAVAll.txt';
 const AMFI_HISTORY_FEED_URL = 'https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx';
@@ -180,59 +180,64 @@ const parseHistoryFeed = (rawFeed: string, codes: Set<string>) => {
 };
 
 const fetchCurrentFeed = async (): Promise<ParsedSchemeRow[]> => {
-  const cached = getCache<ParsedSchemeRow[]>(CURRENT_FEED_CACHE_KEY);
-  if (cached) return cached;
+  return getCachedOrFetch(
+    CURRENT_FEED_CACHE_KEY,
+    async () => {
+      const response = await fetchWithTimeout(
+        AMFI_CURRENT_FEED_URL,
+        {
+          headers: {
+            Accept: 'text/plain, text/html;q=0.9,*/*;q=0.8',
+          },
+        },
+        12000
+      );
 
-  const response = await fetchWithTimeout(
-    AMFI_CURRENT_FEED_URL,
-    {
-      headers: {
-        Accept: 'text/plain, text/html;q=0.9,*/*;q=0.8',
-      },
+      if (!response.ok) {
+        throw new Error(`AMFI current feed failed with status ${response.status}`);
+      }
+
+      return parseCurrentFeed(await response.text());
     },
-    12000
+    CURRENT_FEED_TTL_MS
   );
-
-  if (!response.ok) {
-    throw new Error(`AMFI current feed failed with status ${response.status}`);
-  }
-
-  const rows = parseCurrentFeed(await response.text());
-  setCache(CURRENT_FEED_CACHE_KEY, rows, CURRENT_FEED_TTL_MS);
-  return rows;
 };
 
 const fetchHistoryFeed = async (codes: string[]): Promise<Map<string, NavEntry[]>> => {
   const uniqueCodes = [...new Set(codes.map((code) => code.trim()).filter(Boolean))].sort();
   const cacheKey = `amfi_history_v1_${uniqueCodes.join(',')}`;
-  const cached = getCache<Array<[string, NavEntry[]]>>(cacheKey);
-  if (cached) return new Map(cached);
+  const cachedEntries = await getCachedOrFetch(
+    cacheKey,
+    async () => {
+      const fromDate = new Date();
+      fromDate.setUTCDate(fromDate.getUTCDate() - HISTORY_LOOKBACK_DAYS);
+      const toDate = new Date();
 
-  const fromDate = new Date();
-  fromDate.setUTCDate(fromDate.getUTCDate() - HISTORY_LOOKBACK_DAYS);
-  const toDate = new Date();
+      const historyUrl = `${AMFI_HISTORY_FEED_URL}?frmdt=${encodeURIComponent(
+        formatAmfiDate(fromDate)
+      )}&todt=${encodeURIComponent(formatAmfiDate(toDate))}`;
 
-  const historyUrl = `${AMFI_HISTORY_FEED_URL}?frmdt=${encodeURIComponent(
-    formatAmfiDate(fromDate)
-  )}&todt=${encodeURIComponent(formatAmfiDate(toDate))}`;
+      const response = await fetchWithTimeout(
+        historyUrl,
+        {
+          headers: {
+            Accept: 'text/plain, text/html;q=0.9,*/*;q=0.8',
+          },
+        },
+        15000
+      );
 
-  const response = await fetchWithTimeout(
-    historyUrl,
-    {
-      headers: {
-        Accept: 'text/plain, text/html;q=0.9,*/*;q=0.8',
-      },
+      if (!response.ok) {
+        throw new Error(`AMFI history feed failed with status ${response.status}`);
+      }
+
+      const parsed = parseHistoryFeed(await response.text(), new Set(uniqueCodes));
+      return Array.from(parsed.entries());
     },
-    15000
+    HISTORY_FEED_TTL_MS
   );
 
-  if (!response.ok) {
-    throw new Error(`AMFI history feed failed with status ${response.status}`);
-  }
-
-  const parsed = parseHistoryFeed(await response.text(), new Set(uniqueCodes));
-  setCache(cacheKey, Array.from(parsed.entries()), HISTORY_FEED_TTL_MS);
-  return parsed;
+  return new Map(cachedEntries);
 };
 
 const buildSearchScore = (item: ParsedSchemeRow, query: string) => {

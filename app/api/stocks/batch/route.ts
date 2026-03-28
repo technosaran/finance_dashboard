@@ -4,8 +4,7 @@ import {
   createSuccessResponse,
   withErrorHandling,
   applyRateLimit,
-  getCache,
-  setCache,
+  getCachedOrFetch,
   parseCommaSeparatedParam,
 } from '@/lib/services/api';
 import { logError } from '@/lib/utils/logger';
@@ -16,7 +15,7 @@ interface StockBatchQuote {
   previousClose: number;
   currency: string;
   exchange: string;
-  displayName: string;
+  displayName?: string;
 }
 
 /**
@@ -33,18 +32,21 @@ async function handleBatchQuote(request: Request): Promise<NextResponse> {
   if (parsed.error) return parsed.error;
   const symbols = parsed.items;
 
-  const cacheKey = `batch_stocks_${symbols.sort().join(',')}`;
-  const cached = getCache<Record<string, StockBatchQuote>>(cacheKey);
-  if (cached) return createSuccessResponse(cached);
+  const normalizedSymbols = [...symbols].sort();
+  const cacheKey = `batch_stocks_${normalizedSymbols.join(',')}`;
 
   try {
-    const { fetchBatchStockQuotes } = await import('@/lib/services/stock-fetcher');
-    const result = await fetchBatchStockQuotes(symbols);
-
-    setCache(cacheKey, result, 30000); // 30 seconds local cache
+    const result = await getCachedOrFetch<Record<string, StockBatchQuote>>(
+      cacheKey,
+      async () => {
+        const { fetchBatchStockQuotes } = await import('@/lib/services/stock-fetcher');
+        return fetchBatchStockQuotes(normalizedSymbols);
+      },
+      30000
+    );
     return createSuccessResponse(result);
   } catch (error) {
-    logError('Batch stock quote service failed', error, { symbols: symbols.join(',') });
+    logError('Batch stock quote service failed', error, { symbols: normalizedSymbols.join(',') });
     return createErrorResponse('Failed to fetch batch quotes. Please try again.', 500);
   }
 }

@@ -5,8 +5,7 @@ import {
   createSuccessResponse,
   withErrorHandling,
   applyRateLimit,
-  getCache,
-  setCache,
+  getCachedOrFetch,
 } from '@/lib/services/api';
 import { logError } from '@/lib/utils/logger';
 
@@ -32,27 +31,25 @@ async function handleStockQuote(request: Request): Promise<NextResponse> {
   }
 
   const cacheKey = `stock_quote_${symbol.trim().toUpperCase()}`;
-  const cached = getCache<{
-    symbol: string;
-    currentPrice: number;
-    previousClose: number;
-    currency: string;
-    exchange: string;
-  }>(cacheKey);
-  if (cached) return createSuccessResponse(cached);
 
   try {
     const sanitizedSymbol = symbol.trim().toUpperCase();
-    const { fetchStockQuote } = await import('@/lib/services/stock-fetcher');
-    const quoteData = await fetchStockQuote(sanitizedSymbol);
+    const quoteData = await getCachedOrFetch(
+      cacheKey,
+      async () => {
+        const { fetchStockQuote } = await import('@/lib/services/stock-fetcher');
+        const result = await fetchStockQuote(sanitizedSymbol);
+        if (!result) throw new Error('QUOTE_NOT_FOUND');
+        return result;
+      },
+      60000
+    );
 
-    if (quoteData) {
-      setCache(cacheKey, quoteData, 60000); // 1 minute cache
-      return createSuccessResponse(quoteData);
-    }
-
-    return createErrorResponse('Symbol not found in any of our providers', 404);
+    return createSuccessResponse(quoteData);
   } catch (error) {
+    if (error instanceof Error && error.message === 'QUOTE_NOT_FOUND') {
+      return createErrorResponse('Symbol not found in any of our providers', 404);
+    }
     logError('Stock quote service failed', error, { symbol });
     return createErrorResponse('Failed to fetch stock quote. Please try again.', 500);
   }
