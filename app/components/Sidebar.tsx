@@ -157,13 +157,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         aside {
           width: 230px;
           min-width: 230px;
-          background: rgba(4, 4, 14, 0.82);
-          backdrop-filter: blur(40px) saturate(180%);
-          -webkit-backdrop-filter: blur(40px) saturate(180%);
-          border-right: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(4, 4, 14, 0.72);
+          backdrop-filter: blur(var(--lg-blur-heavy)) saturate(200%);
+          -webkit-backdrop-filter: blur(var(--lg-blur-heavy)) saturate(200%);
+          border-right: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow:
-            4px 0 32px rgba(0, 0, 0, 0.55),
-            inset -1px 0 0 rgba(255, 255, 255, 0.06);
+            4px 0 40px rgba(0, 0, 0, 0.5),
+            inset -1px 0 0 rgba(255, 255, 255, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -175,6 +176,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
           overflow: hidden;
         }
+        aside::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.04) 0%,
+            rgba(167, 139, 250, 0.025) 40%,
+            rgba(34, 211, 238, 0.02) 80%,
+            transparent 100%
+          );
+          pointer-events: none;
+          z-index: 0;
+        }
         aside::after {
           content: '';
           position: absolute;
@@ -184,8 +199,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           height: 100%;
           background: linear-gradient(
             to bottom,
-            rgba(255, 255, 255, 0.1),
-            rgba(255, 255, 255, 0.04),
+            rgba(255, 255, 255, 0.14),
+            rgba(255, 255, 255, 0.06),
             transparent
           );
         }
@@ -229,19 +244,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{
               minWidth: '40px',
               height: '40px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '8px',
+              background: 'rgba(99, 102, 241, 0.12)',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
+              color: '#818cf8',
               fontWeight: '950',
               fontSize: '1.2rem',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
               flexShrink: 0,
               position: 'relative',
-              backdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(16px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
             }}
           >
             <Command size={20} />
