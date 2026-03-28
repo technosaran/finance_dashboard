@@ -1,39 +1,74 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useNotifications } from '../components/NotificationContext';
+import { useMemo, useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { useLedger } from '../components/FinanceContext';
-import { Transaction } from '@/lib/types';
 import { exportTransactionsToCSV } from '../../lib/utils/export';
+import { useLedger } from '../components/FinanceContext';
+import { useNotifications } from '../components/NotificationContext';
+import { EmptyTransactionsVisual } from '../components/Visuals';
+import { Transaction } from '@/lib/types';
 import {
-  Book,
-  Plus,
-  X,
-  Calendar as CalendarIcon,
-  ArrowUpRight,
   ArrowDownRight,
+  ArrowUpRight,
+  Book,
+  Calendar as CalendarIcon,
+  Clock,
   Download,
   Edit3,
-  Trash2,
-  ArrowRight,
-  Wallet,
-  Tag,
   History,
-  TrendingUp,
-  TrendingDown,
   Layers,
-  Clock,
+  Plus,
+  RotateCcw,
+  Search,
+  Tag,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+  X,
 } from 'lucide-react';
-import { EmptyTransactionsVisual } from '../components/Visuals';
+
+function formatCurrency(value: number): string {
+  return `Rs ${value.toLocaleString('en-IN')}`;
+}
+
+function toLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatCompactDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function formatGroupLabel(date: string): string {
+  const today = new Date();
+  const groupDate = new Date(`${date}T00:00:00`);
+  const isToday =
+    groupDate.getDate() === today.getDate() &&
+    groupDate.getMonth() === today.getMonth() &&
+    groupDate.getFullYear() === today.getFullYear();
+
+  if (isToday) return 'Today';
+
+  return groupDate.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
 
 export default function LedgerClient() {
   const { transactions, accounts, addTransaction, updateTransaction, deleteTransaction, loading } =
     useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
-  // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -42,16 +77,160 @@ export default function LedgerClient() {
   const [filterAccount, setFilterAccount] = useState<number | 'All'>('All');
   const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense'>('All');
 
-  // Form State
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(toLocalDateKey(new Date()));
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'Income' | 'Expense'>('Expense');
   const [accountId, setAccountId] = useState<string>('');
 
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const categories = [
+    'All',
+    ...new Set(transactions.map((transaction) => transaction.category)),
+  ].sort() as string[];
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      const matchesSearch =
+        transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (typeof transaction.category === 'string' &&
+          transaction.category.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategory = filterCategory === 'All' || transaction.category === filterCategory;
+      const matchesAccount = filterAccount === 'All' || transaction.accountId === filterAccount;
+      const matchesType = filterType === 'All' || transaction.type === filterType;
+      const matchesDate = !selectedDate || transaction.date === toLocalDateKey(selectedDate);
+
+      return matchesSearch && matchesCategory && matchesAccount && matchesType && matchesDate;
+    });
+  }, [transactions, searchQuery, filterCategory, filterAccount, filterType, selectedDate]);
+
+  const groupedTransactions = useMemo(() => {
+    const grouped: Record<string, Transaction[]> = {};
+
+    filteredTransactions.forEach((transaction) => {
+      if (!grouped[transaction.date]) {
+        grouped[transaction.date] = [];
+      }
+
+      grouped[transaction.date].push(transaction);
+    });
+
+    return Object.entries(grouped)
+      .sort((first, second) => second[0].localeCompare(first[0]))
+      .map(([groupDate, groupItems]) => ({
+        date: groupDate,
+        items: groupItems.sort((first, second) => second.id - first.id),
+      }));
+  }, [filteredTransactions]);
+
+  const stats = useMemo(() => {
+    const income = filteredTransactions
+      .filter((transaction) => transaction.type === 'Income')
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+    const expense = filteredTransactions
+      .filter((transaction) => transaction.type === 'Expense')
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+    const movement = income + expense;
+    const averageMovement =
+      filteredTransactions.length > 0 ? movement / filteredTransactions.length : 0;
+    const activeDays = new Set(filteredTransactions.map((transaction) => transaction.date)).size;
+    const linkedAccounts = new Set(
+      filteredTransactions
+        .map((transaction) => transaction.accountId)
+        .filter((value): value is number => typeof value === 'number')
+    ).size;
+    const largestMovement = filteredTransactions.reduce<Transaction | null>(
+      (largest, transaction) => {
+        if (!largest) return transaction;
+        return transaction.amount > largest.amount ? transaction : largest;
+      },
+      null
+    );
+
+    return {
+      income,
+      expense,
+      net: income - expense,
+      count: filteredTransactions.length,
+      averageMovement,
+      activeDays,
+      linkedAccounts,
+      largestMovement,
+    };
+  }, [filteredTransactions]);
+
+  const hasActiveFilters =
+    selectedDate !== null ||
+    searchQuery.length > 0 ||
+    filterCategory !== 'All' ||
+    filterAccount !== 'All' ||
+    filterType !== 'All';
+
+  const filterSummary = [
+    selectedDate
+      ? {
+          label: `Date ${selectedDate.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+          })}`,
+        }
+      : null,
+    filterType !== 'All' ? { label: `Type ${filterType}` } : null,
+    filterCategory !== 'All' ? { label: `Category ${filterCategory}` } : null,
+    filterAccount !== 'All'
+      ? {
+          label: `Account ${
+            accounts.find((account) => account.id === filterAccount)?.name ?? 'Custom'
+          }`,
+        }
+      : null,
+    searchQuery.trim() ? { label: `Search "${searchQuery.trim()}"` } : null,
+  ].filter((item): item is { label: string } => Boolean(item));
+
+  const getAccountName = (id?: number) => {
+    if (!id) return 'No account linked';
+
+    const account = accounts.find((item) => item.id === id);
+    return account ? account.name : 'Unknown account';
+  };
+
+  const resetForm = () => {
+    setDescription('');
+    setCategory('');
+    setAmount('');
+    setType('Expense');
+    setDate(toLocalDateKey(new Date()));
+    setAccountId('');
+    setEditId(null);
+  };
+
+  const resetFilters = () => {
+    setSelectedDate(null);
+    setSearchQuery('');
+    setFilterCategory('All');
+    setFilterAccount('All');
+    setFilterType('All');
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditId(transaction.id);
+    setDescription(transaction.description);
+    setCategory(transaction.category as string);
+    setAmount(transaction.amount.toString());
+    setType(transaction.type);
+    setDate(transaction.date);
+    setAccountId(transaction.accountId ? transaction.accountId.toString() : '');
+    setIsModalOpen(true);
+  };
+
+  const handleAddTransaction = async (event: React.FormEvent) => {
+    event.preventDefault();
+
     if (!description || !amount || !category) return;
 
     const transactionData = {
@@ -60,7 +239,7 @@ export default function LedgerClient() {
       category,
       type,
       amount: parseFloat(amount),
-      accountId: accountId ? parseInt(accountId) : undefined,
+      accountId: accountId ? parseInt(accountId, 10) : undefined,
     };
 
     try {
@@ -71,1304 +250,655 @@ export default function LedgerClient() {
         await addTransaction(transactionData);
         showNotification('success', 'Transaction recorded successfully');
       }
+
       resetForm();
       setIsModalOpen(false);
-    } catch (_err) {
+    } catch {
       showNotification('error', 'Failed to save transaction');
     }
   };
 
-  const resetForm = () => {
-    setDescription('');
-    setCategory('');
-    setAmount('');
-    setType('Expense');
-    setDate(new Date().toISOString().split('T')[0]);
-    setAccountId('');
-    setEditId(null);
-  };
-
-  const handleEdit = (tx: Transaction) => {
-    setEditId(tx.id);
-    setDescription(tx.description);
-    setCategory(tx.category as string);
-    setAmount(tx.amount.toString());
-    setType(tx.type);
-    setDate(tx.date);
-    setAccountId(tx.accountId ? tx.accountId.toString() : '');
-    setIsModalOpen(true);
-  };
-
-  const getAccountName = (id?: number) => {
-    if (!id) return null;
-    const account = accounts.find((a) => a.id === id);
-    return account ? account.name : null;
-  };
-
-  const categories = ['All', ...new Set(transactions.map((t) => t.category))].sort() as string[];
-
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      const matchesSearch =
-        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (typeof t.category === 'string' &&
-          t.category.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesCategory = filterCategory === 'All' || t.category === filterCategory;
-      const matchesAccount = filterAccount === 'All' || t.accountId === filterAccount;
-      const matchesType = filterType === 'All' || t.type === filterType;
-      const matchesDate = !selectedDate || t.date === selectedDate.toISOString().split('T')[0];
-
-      return matchesSearch && matchesCategory && matchesAccount && matchesType && matchesDate;
-    });
-  }, [transactions, searchQuery, filterCategory, filterAccount, filterType, selectedDate]);
-
-  // Grouping by date
-  const groupedTransactions = useMemo(() => {
-    const groups: { [key: string]: Transaction[] } = {};
-    filteredTransactions.forEach((t) => {
-      if (!groups[t.date]) groups[t.date] = [];
-      groups[t.date].push(t);
-    });
-    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [filteredTransactions]);
-
-  const stats = useMemo(() => {
-    const income = filteredTransactions
-      .filter((t) => t.type === 'Income')
-      .reduce((s, t) => s + t.amount, 0);
-    const expense = filteredTransactions
-      .filter((t) => t.type === 'Expense')
-      .reduce((s, t) => s + t.amount, 0);
-    return { income, expense, balance: income - expense };
-  }, [filteredTransactions]);
-
   if (loading) {
     return (
       <div
-        className="main-content"
-        style={{
-          backgroundColor: 'var(--ui-page-bg)',
-          minHeight: '100vh',
-          color: '#ffffff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className="dashboard-page dashboard-page--wide"
+        style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div className="premium-card" style={{ minWidth: 'min(92vw, 320px)', textAlign: 'center' }}>
           <div
-            className="loader"
             style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid rgba(99, 102, 241, 0.1)',
-              borderTopColor: '#6366f1',
+              width: '44px',
+              height: '44px',
+              border: '3px solid rgba(255, 255, 255, 0.12)',
+              borderTopColor: '#84d8ff',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
-              margin: '0 auto 20px',
+              margin: '0 auto 16px',
             }}
-          ></div>
-          <div style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: '500' }}>
-            Loading transactions...
+          />
+          <div style={{ color: '#ffffff', fontWeight: '800' }}>Loading ledger activity...</div>
+          <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.86rem' }}>
+            Preparing records, balances, and filters.
           </div>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
-    <div
-      className="dashboard-page dashboard-page--wide"
-      style={{
-        minHeight: '100vh',
-      }}
-    >
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Header Section */}
-        <div
-          className="page-header"
-          style={{
-            alignItems: 'flex-start',
-            gap: '24px',
-          }}
-        >
-          <div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
-            >
-              <div
-                style={{
-                  background: 'rgba(99, 102, 241, 0.1)',
-                  padding: '10px',
-                  borderRadius: '12px',
-                  color: '#6366f1',
-                }}
-              >
-                <Book size={24} strokeWidth={2.5} />
-              </div>
-              <h1
-                className="page-title"
-                style={{
-                  background:
-                    'linear-gradient(to bottom, var(--text-primary), var(--text-secondary))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                Ledger
-              </h1>
-            </div>
-            <p
-              className="page-subtitle"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <History size={16} /> History of all your transactions
-            </p>
+    <div className="dashboard-page dashboard-page--wide">
+      <div className="page-header">
+        <div>
+          <div className="page-kicker">
+            <Book size={14} />
+            Finance operations ledger
           </div>
-
-          <div className="dashboard-toolbar__actions">
-            <button
-              onClick={() => {
-                exportTransactionsToCSV(transactions);
-                showNotification('success', 'Ledger exported to CSV');
-              }}
-              className="toolbar-btn-secondary"
-              style={{
-                background: 'rgba(0, 0, 0, 0.6)',
-                color: '#94a3b8',
-                fontWeight: '700',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <Download size={18} /> Export
-            </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="header-add-btn"
-              style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)',
-              }}
-            >
-              <Plus size={20} strokeWidth={3} /> Record Entry
-            </button>
-          </div>
+          <h1 className="page-title" style={{ marginTop: '14px' }}>
+            Ledger
+          </h1>
+          <p className="page-subtitle" style={{ marginTop: '10px' }}>
+            Review inflows and outflows with a cleaner operations dashboard, tighter filters, and a
+            more readable activity feed.
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '20px',
-            marginBottom: '32px',
-          }}
-        >
-          <div
-            className="stat-card stat-card--green"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%)',
+        <div className="dashboard-toolbar__actions">
+          <button
+            type="button"
+            className="toolbar-btn-secondary"
+            onClick={() => {
+              exportTransactionsToCSV(transactions);
+              showNotification('success', 'Ledger exported to CSV');
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                right: '-20px',
-                top: '-20px',
-                color: 'rgba(16, 185, 129, 0.05)',
-              }}
-            >
-              <TrendingUp size={120} />
-            </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-            >
-              <div
-                style={{
-                  background: '#10b981',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              >
-                <ArrowUpRight size={16} strokeWidth={3} />
-              </div>
-              <span
-                style={{
-                  color: '#34d399',
-                  fontWeight: '800',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Total Inflow
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              ₹{stats.income.toLocaleString()}
-            </div>
-          </div>
-
-          <div
-            className="stat-card stat-card--red"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.02) 100%)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                right: '-20px',
-                top: '-20px',
-                color: 'rgba(244, 63, 94, 0.05)',
-              }}
-            >
-              <TrendingDown size={120} />
-            </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-            >
-              <div
-                style={{
-                  background: '#f43f5e',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              >
-                <ArrowDownRight size={16} strokeWidth={3} />
-              </div>
-              <span
-                style={{
-                  color: '#f87171',
-                  fontWeight: '800',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Total Outflow
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              ₹{stats.expense.toLocaleString()}
-            </div>
-          </div>
-
-          <div
-            className="stat-card stat-card--indigo"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(10, 10, 10, 0.4) 100%)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                right: '-20px',
-                top: '-10px',
-                color: 'rgba(99, 102, 241, 0.05)',
-              }}
-            >
-              <Wallet size={120} />
-            </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-            >
-              <div
-                style={{
-                  background: '#6366f1',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              >
-                <Layers size={16} />
-              </div>
-              <span
-                style={{
-                  color: '#a5b4fc',
-                  fontWeight: '800',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Net Movement
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              ₹{stats.balance.toLocaleString()}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Area */}
-        <div
-          className="flex-col-mobile"
-          style={{
-            display: 'flex',
-            gap: '32px',
-            alignItems: 'start',
-          }}
-        >
-          {/* Left Sidebar: Calendar + Filters */}
-          <div
-            style={{
-              flex: '0 0 300px',
-              width: '300px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              position: 'sticky',
-              top: '24px',
-            }}
-          >
-            {/* Calendar Component */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                padding: '20px',
-                borderRadius: '20px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '16px',
-                  color: '#818cf8',
-                }}
-              >
-                <CalendarIcon size={14} strokeWidth={2.5} />
-                <span
-                  style={{
-                    fontWeight: '900',
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Date Filter
-                </span>
-                {selectedDate && (
-                  <span
-                    style={{
-                      marginLeft: 'auto',
-                      fontSize: '0.65rem',
-                      fontWeight: '800',
-                      color: '#6366f1',
-                      background: 'rgba(99, 102, 241, 0.15)',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(99, 102, 241, 0.25)',
-                    }}
-                  >
-                    {selectedDate.toLocaleDateString(undefined, {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </span>
-                )}
-              </div>
-              <style>{`
-                .custom-calendar {
-                  width: 100% !important;
-                  background: transparent !important;
-                  border: none !important;
-                  color: var(--text-primary) !important;
-                  font-family: inherit !important;
-                  font-size: 0.78rem !important;
-                }
-                .custom-calendar .react-calendar__tile {
-                  padding: 10px 4px !important;
-                  font-size: 0.72rem !important;
-                  font-weight: 700 !important;
-                  border-radius: 8px !important;
-                  color: var(--text-secondary) !important;
-                  transition: all 0.2s;
-                }
-                .custom-calendar .react-calendar__tile:hover {
-                  background: rgba(99, 102, 241, 0.12) !important;
-                  color: #c7d2fe !important;
-                }
-                .custom-calendar .react-calendar__month-view__days__day--weekend {
-                  color: var(--text-secondary) !important;
-                }
-                .custom-calendar .react-calendar__tile--now {
-                  background: rgba(99, 102, 241, 0.15) !important;
-                  color: #818cf8 !important;
-                  font-weight: 900 !important;
-                  border: 1px solid rgba(99, 102, 241, 0.3) !important;
-                }
-                .custom-calendar .react-calendar__tile--active {
-                  background: #6366f1 !important;
-                  color: white !important;
-                  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
-                }
-                .custom-calendar .react-calendar__tile--active:hover {
-                  background: #4f46e5 !important;
-                  color: white !important;
-                }
-                .custom-calendar .react-calendar__navigation {
-                  margin-bottom: 12px !important;
-                  display: flex;
-                  gap: 4px;
-                  align-items: center;
-                }
-                .custom-calendar .react-calendar__navigation button {
-                  color: var(--text-primary) !important;
-                  font-weight: 800 !important;
-                  border-radius: 8px;
-                  font-size: 0.78rem;
-                  min-width: 32px !important;
-                  padding: 6px 4px !important;
-                  background: rgba(255,255,255,0.04);
-                  transition: background 0.2s;
-                }
-                .custom-calendar .react-calendar__navigation button:hover {
-                  background: rgba(99, 102, 241, 0.12) !important;
-                  color: #c7d2fe !important;
-                }
-                .custom-calendar .react-calendar__navigation__label {
-                  flex-grow: 1 !important;
-                  font-weight: 900 !important;
-                  font-size: 0.8rem !important;
-                  color: var(--text-primary) !important;
-                }
-                .custom-calendar .react-calendar__month-view__weekdays {
-                  margin-bottom: 4px;
-                }
-                .custom-calendar .react-calendar__month-view__weekdays__weekday abbr {
-                  text-decoration: none !important;
-                  color: #475569 !important;
-                  font-weight: 900 !important;
-                  font-size: 0.65rem;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                }
-                .custom-calendar .react-calendar__month-view__days {
-                  gap: 2px;
-                }
-                .custom-calendar .react-calendar__tile:disabled {
-                  color: #1e293b !important;
-                }
-              `}</style>
-              <Calendar
-                onChange={(val) => setSelectedDate(val as Date)}
-                value={selectedDate}
-                className="custom-calendar"
-              />
-              {selectedDate && (
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  style={{
-                    width: '100%',
-                    marginTop: '16px',
-                    background: 'rgba(244, 63, 94, 0.08)',
-                    color: '#f43f5e',
-                    border: '1px solid rgba(244, 63, 94, 0.2)',
-                    padding: '10px',
-                    borderRadius: '12px',
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    transition: 'background 0.2s',
-                    letterSpacing: '0.5px',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.15)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.08)')
-                  }
-                >
-                  <X size={13} /> CLEAR DATE
-                </button>
-              )}
-            </div>
-
-            {/* Search */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                padding: '16px 20px',
-                borderRadius: '20px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '12px',
-                  color: '#818cf8',
-                }}
-              >
-                <Tag size={13} strokeWidth={2.5} />
-                <span
-                  style={{
-                    fontWeight: '900',
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Search
-                </span>
-              </div>
-              <input
-                className="form-input"
-                type="text"
-                placeholder="Description or category…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ fontSize: '0.82rem' }}
-              />
-            </div>
-
-            {/* Type Filter */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                padding: '16px 20px',
-                borderRadius: '20px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '12px',
-                  color: '#818cf8',
-                }}
-              >
-                <Layers size={13} strokeWidth={2.5} />
-                <span
-                  style={{
-                    fontWeight: '900',
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Type
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {(['All', 'Income', 'Expense'] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setFilterType(t)}
-                    style={{
-                      flex: 1,
-                      padding: '9px 4px',
-                      borderRadius: '10px',
-                      border: '1px solid',
-                      borderColor:
-                        filterType === t
-                          ? t === 'Income'
-                            ? 'rgba(16, 185, 129, 0.4)'
-                            : t === 'Expense'
-                              ? 'rgba(244, 63, 94, 0.4)'
-                              : 'rgba(99, 102, 241, 0.4)'
-                          : 'rgba(255, 255, 255, 0.12)',
-                      background:
-                        filterType === t
-                          ? t === 'Income'
-                            ? 'rgba(16, 185, 129, 0.12)'
-                            : t === 'Expense'
-                              ? 'rgba(244, 63, 94, 0.12)'
-                              : 'rgba(99, 102, 241, 0.12)'
-                          : 'transparent',
-                      color:
-                        filterType === t
-                          ? t === 'Income'
-                            ? '#34d399'
-                            : t === 'Expense'
-                              ? '#fb7185'
-                              : '#a5b4fc'
-                          : '#475569',
-                      fontSize: '0.65rem',
-                      fontWeight: '900',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {t.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            {categories.length > 2 && (
-              <div
-                style={{
-                  background: 'var(--surface)',
-                  padding: '16px 20px',
-                  borderRadius: '20px',
-                  border: '1px solid var(--surface-border)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px',
-                    color: '#818cf8',
-                  }}
-                >
-                  <Tag size={13} strokeWidth={2.5} />
-                  <span
-                    style={{
-                      fontWeight: '900',
-                      fontSize: '0.7rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                    }}
-                  >
-                    Category
-                  </span>
-                </div>
-                <select
-                  className="form-input"
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  style={{ fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Account Filter */}
-            {accounts.length > 0 && (
-              <div
-                style={{
-                  background: 'var(--surface)',
-                  padding: '16px 20px',
-                  borderRadius: '20px',
-                  border: '1px solid var(--surface-border)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px',
-                    color: '#818cf8',
-                  }}
-                >
-                  <Wallet size={13} strokeWidth={2.5} />
-                  <span
-                    style={{
-                      fontWeight: '900',
-                      fontSize: '0.7rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                    }}
-                  >
-                    Account
-                  </span>
-                </div>
-                <select
-                  className="form-input"
-                  value={filterAccount}
-                  onChange={(e) =>
-                    setFilterAccount(
-                      e.target.value === 'All' ? 'All' : parseInt(e.target.value, 10)
-                    )
-                  }
-                  style={{ fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  <option value="All">All Accounts</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Right Side: Timeline of Transactions */}
-          <div style={{ flex: '1 1 500px', minWidth: 0 }}>
-            {/* Results bar */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '24px',
-                padding: '12px 20px',
-                background: 'var(--surface)',
-                borderRadius: '16px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: '900',
-                    color: '#475569',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  Showing
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.82rem',
-                    fontWeight: '900',
-                    color: '#fff',
-                  }}
-                >
-                  {filteredTransactions.length}
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    color: '#475569',
-                  }}
-                >
-                  of {transactions.length} entries
-                </span>
-                {(searchQuery ||
-                  filterCategory !== 'All' ||
-                  filterType !== 'All' ||
-                  filterAccount !== 'All' ||
-                  selectedDate) && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setFilterCategory('All');
-                      setFilterAccount('All');
-                      setFilterType('All');
-                      setSelectedDate(null);
-                    }}
-                    style={{
-                      fontSize: '0.68rem',
-                      fontWeight: '800',
-                      color: '#f43f5e',
-                      background: 'rgba(244, 63, 94, 0.08)',
-                      border: '1px solid rgba(244, 63, 94, 0.2)',
-                      padding: '3px 10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      letterSpacing: '0.3px',
-                    }}
-                  >
-                    CLEAR ALL
-                  </button>
-                )}
-              </div>
-              <div
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#475569',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Clock size={12} />
-                {groupedTransactions.length} {groupedTransactions.length === 1 ? 'DAY' : 'DAYS'}
-              </div>
-            </div>
-            {groupedTransactions.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                {groupedTransactions.map(([dateString, group]) => {
-                  const dateObj = new Date(dateString);
-                  const isToday = new Date().toISOString().split('T')[0] === dateString;
-
-                  return (
-                    <div key={dateString}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '16px',
-                          marginBottom: '20px',
-                          position: 'sticky',
-                          top: '0',
-                          zIndex: 10,
-                          background: 'rgba(0, 0, 0, 0.8)',
-                          backdropFilter: 'blur(12px)',
-                          padding: '10px 0',
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: isToday ? '#6366f1' : 'rgba(255, 255, 255, 0.12)',
-                            color: '#fff',
-                            padding: '6px 16px',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
-                            fontWeight: '900',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
-                          }}
-                        >
-                          {isToday
-                            ? 'Today'
-                            : dateObj.toLocaleDateString(undefined, {
-                                day: 'numeric',
-                                month: 'short',
-                              })}
-                        </div>
-                        <div
-                          style={{
-                            height: '1px',
-                            flex: 1,
-                            background:
-                              'linear-gradient(to right, rgba(255, 255, 255, 0.08), transparent)',
-                          }}
-                        ></div>
-                        <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569' }}>
-                          {group.length} {group.length === 1 ? 'RECORD' : 'RECORDS'}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {group.map((tx) => (
-                          <div
-                            key={tx.id}
-                            onClick={() => handleEdit(tx)}
-                            className="ledger-tx-card"
-                          >
-                            {/* Color side indicator */}
-                            <div
-                              style={{
-                                position: 'absolute',
-                                left: 0,
-                                top: 0,
-                                bottom: 0,
-                                width: '4px',
-                                background: tx.type === 'Income' ? '#10b981' : '#f43f5e',
-                              }}
-                            ></div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                              <div
-                                style={{
-                                  width: '48px',
-                                  height: '48px',
-                                  borderRadius: '14px',
-                                  background:
-                                    tx.type === 'Income'
-                                      ? 'rgba(16, 185, 129, 0.1)'
-                                      : 'rgba(244, 63, 94, 0.1)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: tx.type === 'Income' ? '#10b981' : '#f43f5e',
-                                }}
-                              >
-                                {tx.type === 'Income' ? (
-                                  <ArrowUpRight size={20} strokeWidth={2.5} />
-                                ) : (
-                                  <ArrowDownRight size={20} strokeWidth={2.5} />
-                                )}
-                              </div>
-                              <div>
-                                <div
-                                  style={{
-                                    fontWeight: '800',
-                                    fontSize: '1.05rem',
-                                    color: '#fff',
-                                    marginBottom: '4px',
-                                  }}
-                                >
-                                  {tx.description}
-                                </div>
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    flexWrap: 'wrap',
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      fontSize: '0.65rem',
-                                      fontWeight: '900',
-                                      textTransform: 'uppercase',
-                                      color: '#6366f1',
-                                      background: 'rgba(99, 102, 241, 0.1)',
-                                      padding: '2px 8px',
-                                      borderRadius: '6px',
-                                      letterSpacing: '0.5px',
-                                    }}
-                                  >
-                                    <Tag
-                                      size={10}
-                                      style={{ marginRight: '4px', verticalAlign: 'middle' }}
-                                    />{' '}
-                                    {tx.category}
-                                  </span>
-                                  {getAccountName(tx.accountId) && (
-                                    <span
-                                      style={{
-                                        fontSize: '0.75rem',
-                                        color: '#475569',
-                                        fontWeight: '700',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                      }}
-                                    >
-                                      <Wallet size={12} /> {getAccountName(tx.accountId)}
-                                    </span>
-                                  )}
-                                  {/* Detect Source (Automated entries usually have keywords) */}
-                                  {['Stock', 'MF:', 'FnO'].some((key) =>
-                                    tx.description.includes(key)
-                                  ) && (
-                                    <span
-                                      style={{
-                                        fontSize: '0.65rem',
-                                        fontWeight: '900',
-                                        color: '#f59e0b',
-                                        background: 'rgba(245, 158, 11, 0.1)',
-                                        padding: '2px 8px',
-                                        borderRadius: '6px',
-                                      }}
-                                    >
-                                      SYSTEM LOG
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div
-                              style={{
-                                textAlign: 'right',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '24px',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-end',
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    fontSize: '1.25rem',
-                                    fontWeight: '950',
-                                    color: tx.type === 'Income' ? '#10b981' : '#f43f5e',
-                                  }}
-                                >
-                                  {tx.type === 'Income' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: '0.7rem',
-                                    color: '#475569',
-                                    fontWeight: '600',
-                                    textTransform: 'uppercase',
-                                    marginTop: '2px',
-                                  }}
-                                >
-                                  <Clock
-                                    size={10}
-                                    style={{ marginRight: '4px', verticalAlign: 'baseline' }}
-                                  />{' '}
-                                  Verified
-                                </div>
-                              </div>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button
-                                  className="action-btn action-btn--edit"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEdit(tx);
-                                  }}
-                                >
-                                  <Edit3 size={16} />
-                                </button>
-                                <button
-                                  className="action-btn action-btn--delete"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const isConfirmed = await customConfirm({
-                                      title: 'Purge Record?',
-                                      message:
-                                        'This ledger entry will be permanently erased. Proceed with caution.',
-                                      type: 'error',
-                                      confirmLabel: 'Erase',
-                                    });
-                                    if (isConfirmed) {
-                                      await deleteTransaction(tx.id);
-                                      showNotification('success', 'Entry purged from ledger');
-                                    }
-                                  }}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div
-                style={{
-                  padding: '120px 40px',
-                  textAlign: 'center',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  borderRadius: '32px',
-                  border: '1px dashed rgba(255, 255, 255, 0.18)',
-                }}
-              >
-                <EmptyTransactionsVisual />
-                <h3
-                  style={{
-                    color: '#fff',
-                    margin: '0 0 12px 0',
-                  }}
-                >
-                  Zero Movements Detected
-                </h3>
-                <p
-                  style={{
-                    color: '#64748b',
-                    maxWidth: '300px',
-                    margin: '0 auto 24px',
-                    lineHeight: '1.6',
-                  }}
-                >
-                  No records match your current filter parameters. Try adjusting your search or
-                  matrix view.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setFilterCategory('All');
-                    setFilterAccount('All');
-                    setFilterType('All');
-                    setSelectedDate(null);
-                  }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    border: 'none',
-                    color: '#fff',
-                    padding: '12px 24px',
-                    borderRadius: '12px',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    margin: '0 auto',
-                  }}
-                >
-                  Reset Filters <ArrowRight size={16} />
-                </button>
-              </div>
-            )}
-          </div>
+            <Download size={18} />
+            Export
+          </button>
+          <button type="button" className="header-add-btn" onClick={openCreateModal}>
+            <Plus size={18} />
+            Record Entry
+          </button>
         </div>
       </div>
 
-      {/* Entry Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div
-            className="modal-card"
-            style={{
-              maxWidth: '540px',
-            }}
-          >
+      <section className="dashboard-hero-panel fade-in">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+            gap: '20px',
+            alignItems: 'center',
+          }}
+        >
+          <div>
+            <div className="page-kicker" style={{ marginBottom: '12px' }}>
+              <History size={14} />
+              Live view
+            </div>
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '32px',
+                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                fontWeight: '900',
+                color: '#ffffff',
+                letterSpacing: '-0.05em',
+                lineHeight: 0.96,
               }}
             >
-              <h2
-                style={{
-                  fontSize: 'clamp(1.4rem, 3vw, 1.75rem)',
-                  fontWeight: '950',
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {editId ? 'Edit Entry' : 'New Ledger Record'}
-              </h2>
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
-                <X size={24} />
+              {stats.count} entries
+            </div>
+            <div style={{ marginTop: '10px', color: 'var(--text-secondary)', maxWidth: '620px' }}>
+              {hasActiveFilters
+                ? 'Your activity feed is narrowed by one or more filters.'
+                : 'All recorded cash movement is visible across every account and category.'}
+            </div>
+          </div>
+
+          <div className="dashboard-chip-row" style={{ justifyContent: 'flex-start' }}>
+            <div className="dashboard-chip dashboard-chip--success">
+              <TrendingUp size={14} />
+              Inflow {formatCurrency(stats.income)}
+            </div>
+            <div className="dashboard-chip dashboard-chip--danger">
+              <TrendingDown size={14} />
+              Outflow {formatCurrency(stats.expense)}
+            </div>
+            <div className="dashboard-chip dashboard-chip--accent">
+              <Layers size={14} />
+              Active days {stats.activeDays}
+            </div>
+            {hasActiveFilters && (
+              <button type="button" className="dashboard-chip" onClick={resetFilters}>
+                <RotateCcw size={14} />
+                Clear filters
               </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboard-kpi-grid fade-in">
+        <div className="dashboard-kpi-card">
+          <div className="ios-section-subtitle">Total Inflow</div>
+          <div
+            style={{
+              marginTop: '12px',
+              fontSize: 'clamp(1.5rem, 4vw, 2.25rem)',
+              fontWeight: '900',
+              color: '#8de7ca',
+              letterSpacing: '-0.05em',
+            }}
+          >
+            {formatCurrency(stats.income)}
+          </div>
+          <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+            Money recorded as income in the current view.
+          </div>
+        </div>
+
+        <div className="dashboard-kpi-card">
+          <div className="ios-section-subtitle">Total Outflow</div>
+          <div
+            style={{
+              marginTop: '12px',
+              fontSize: 'clamp(1.5rem, 4vw, 2.25rem)',
+              fontWeight: '900',
+              color: '#fda4af',
+              letterSpacing: '-0.05em',
+            }}
+          >
+            {formatCurrency(stats.expense)}
+          </div>
+          <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+            Recorded expenses and cash exits.
+          </div>
+        </div>
+
+        <div className="dashboard-kpi-card">
+          <div className="ios-section-subtitle">Net Movement</div>
+          <div
+            style={{
+              marginTop: '12px',
+              fontSize: 'clamp(1.5rem, 4vw, 2.25rem)',
+              fontWeight: '900',
+              color: stats.net >= 0 ? '#8de7ca' : '#fda4af',
+              letterSpacing: '-0.05em',
+            }}
+          >
+            {stats.net >= 0 ? '+' : '-'}
+            {formatCurrency(Math.abs(stats.net))}
+          </div>
+          <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+            Balance impact after all filtered entries.
+          </div>
+        </div>
+
+        <div className="dashboard-kpi-card">
+          <div className="ios-section-subtitle">Average Movement</div>
+          <div
+            style={{
+              marginTop: '12px',
+              fontSize: 'clamp(1.5rem, 4vw, 2.25rem)',
+              fontWeight: '900',
+              color: '#ffffff',
+              letterSpacing: '-0.05em',
+            }}
+          >
+            {formatCurrency(stats.averageMovement)}
+          </div>
+          <div style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+            Across {stats.count || 0} visible records.
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboard-split">
+        <aside className="dashboard-side-rail">
+          <div className="dashboard-filter-panel">
+            <div className="page-kicker" style={{ marginBottom: '14px' }}>
+              <CalendarIcon size={14} />
+              Date filter
+            </div>
+            <style>{`
+              .ledger-calendar {
+                width: 100% !important;
+                background: transparent !important;
+                border: none !important;
+                color: var(--text-primary) !important;
+                font-family: inherit !important;
+                font-size: 0.78rem !important;
+              }
+              .ledger-calendar .react-calendar__tile {
+                padding: 10px 4px !important;
+                border-radius: 12px !important;
+                color: var(--text-secondary) !important;
+                font-weight: 700 !important;
+                transition: all 0.2s ease;
+              }
+              .ledger-calendar .react-calendar__tile:hover {
+                background: rgba(132, 216, 255, 0.12) !important;
+                color: #ffffff !important;
+              }
+              .ledger-calendar .react-calendar__tile--now {
+                background: rgba(132, 216, 255, 0.14) !important;
+                color: #bfefff !important;
+                border: 1px solid rgba(132, 216, 255, 0.24) !important;
+              }
+              .ledger-calendar .react-calendar__tile--active {
+                background: #5aa7ff !important;
+                color: #ffffff !important;
+                box-shadow: 0 8px 18px rgba(90, 167, 255, 0.32);
+              }
+              .ledger-calendar .react-calendar__navigation button {
+                color: var(--text-primary) !important;
+                background: rgba(255, 255, 255, 0.06);
+                border-radius: 12px;
+                min-width: 32px !important;
+              }
+              .ledger-calendar .react-calendar__navigation__label {
+                font-weight: 800 !important;
+              }
+              .ledger-calendar .react-calendar__month-view__weekdays__weekday abbr {
+                text-decoration: none !important;
+                color: var(--text-tertiary) !important;
+                font-size: 0.64rem;
+                text-transform: uppercase;
+              }
+            `}</style>
+            <Calendar
+              onChange={(value) => setSelectedDate(value as Date)}
+              value={selectedDate}
+              className="ledger-calendar"
+            />
+            {selectedDate && (
+              <button
+                type="button"
+                className="toolbar-btn-secondary"
+                style={{ width: '100%', marginTop: '14px' }}
+                onClick={() => setSelectedDate(null)}
+              >
+                <RotateCcw size={16} />
+                Clear date
+              </button>
+            )}
+          </div>
+
+          <div className="dashboard-filter-panel">
+            <div className="page-kicker" style={{ marginBottom: '12px' }}>
+              <Search size={14} />
+              Search
+            </div>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Description or category"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+          </div>
+
+          <div className="dashboard-filter-panel">
+            <div className="page-kicker" style={{ marginBottom: '12px' }}>
+              <Layers size={14} />
+              Movement type
+            </div>
+            <div className="dashboard-pill-switch">
+              {(['All', 'Income', 'Expense'] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={
+                    filterType === value
+                      ? 'dashboard-pill-switch__btn dashboard-pill-switch__btn--active'
+                      : 'dashboard-pill-switch__btn'
+                  }
+                  onClick={() => setFilterType(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {categories.length > 1 && (
+            <div className="dashboard-filter-panel">
+              <div className="page-kicker" style={{ marginBottom: '12px' }}>
+                <Tag size={14} />
+                Category
+              </div>
+              <select
+                className="form-input"
+                value={filterCategory}
+                onChange={(event) => setFilterCategory(event.target.value)}
+              >
+                {categories.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {accounts.length > 0 && (
+            <div className="dashboard-filter-panel">
+              <div className="page-kicker" style={{ marginBottom: '12px' }}>
+                <Wallet size={14} />
+                Account
+              </div>
+              <select
+                className="form-input"
+                value={filterAccount}
+                onChange={(event) =>
+                  setFilterAccount(
+                    event.target.value === 'All' ? 'All' : Number(event.target.value)
+                  )
+                }
+              >
+                <option value="All">All accounts</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </aside>
+
+        <div className="dashboard-feed-panel">
+          <div className="content-panel">
+            <div className="ios-section-header">
+              <div className="ios-section-title">
+                <div
+                  className="ios-section-icon"
+                  style={{
+                    color: '#89dbff',
+                    background: 'rgba(137, 219, 255, 0.14)',
+                    borderColor: 'rgba(137, 219, 255, 0.24)',
+                  }}
+                >
+                  <History size={18} />
+                </div>
+                <div>
+                  <div className="ios-section-label">Activity Feed</div>
+                  <div className="ios-section-subtitle">
+                    {stats.count} visible records, {stats.linkedAccounts} linked account
+                    {stats.linkedAccounts === 1 ? '' : 's'}
+                  </div>
+                </div>
+              </div>
+              {stats.largestMovement && (
+                <div className="dashboard-chip">
+                  <Clock size={14} />
+                  Largest {formatCurrency(stats.largestMovement.amount)}
+                </div>
+              )}
+            </div>
+
+            <div className="dashboard-chip-row" style={{ marginBottom: '20px' }}>
+              {filterSummary.length > 0 ? (
+                filterSummary.map((item) => (
+                  <div key={item.label} className="dashboard-chip dashboard-chip--accent">
+                    {item.label}
+                  </div>
+                ))
+              ) : (
+                <div className="dashboard-chip">Showing all ledger records</div>
+              )}
+            </div>
+
+            {groupedTransactions.length > 0 ? (
+              <div className="dashboard-stack">
+                {groupedTransactions.map((group) => (
+                  <section key={group.date} className="dashboard-record-group">
+                    <div className="dashboard-record-group__header">
+                      <div className="dashboard-record-group__label">
+                        <CalendarIcon size={14} />
+                        {formatGroupLabel(group.date)}
+                      </div>
+                      <div className="dashboard-record-group__line" />
+                      <div
+                        style={{
+                          color: 'var(--text-tertiary)',
+                          fontSize: '0.74rem',
+                          fontWeight: '800',
+                        }}
+                      >
+                        {group.items.length} record{group.items.length === 1 ? '' : 's'}
+                      </div>
+                    </div>
+
+                    {group.items.map((transaction) => {
+                      const isIncome = transaction.type === 'Income';
+
+                      return (
+                        <div key={transaction.id} className="dashboard-record-card">
+                          <div className="dashboard-record-card__main">
+                            <div
+                              className="dashboard-record-card__icon"
+                              style={{
+                                background: isIncome
+                                  ? 'rgba(110, 231, 183, 0.14)'
+                                  : 'rgba(253, 164, 175, 0.14)',
+                                color: isIncome ? '#8de7ca' : '#fda4af',
+                              }}
+                            >
+                              {isIncome ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                            </div>
+
+                            <div style={{ minWidth: 0 }}>
+                              <div className="dashboard-record-card__title">
+                                {transaction.description}
+                              </div>
+                              <div className="dashboard-record-card__meta">
+                                <span className="dashboard-chip" style={{ minHeight: '26px' }}>
+                                  <Tag size={12} />
+                                  {transaction.category}
+                                </span>
+                                <span>{formatCompactDate(transaction.date)}</span>
+                                <span>{getAccountName(transaction.accountId)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div
+                              className="dashboard-record-card__amount"
+                              style={{ color: isIncome ? '#8de7ca' : '#fda4af' }}
+                            >
+                              {isIncome ? '+' : '-'}
+                              {formatCurrency(transaction.amount)}
+                            </div>
+
+                            <div className="dashboard-record-card__actions">
+                              <button
+                                type="button"
+                                className="action-btn action-btn--edit"
+                                onClick={() => handleEdit(transaction)}
+                              >
+                                <Edit3 size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                className="action-btn action-btn--delete"
+                                onClick={async () => {
+                                  const confirmed = await customConfirm({
+                                    title: 'Delete ledger entry?',
+                                    message:
+                                      'This transaction will be permanently removed from your ledger.',
+                                    type: 'error',
+                                    confirmLabel: 'Delete',
+                                  });
+
+                                  if (confirmed) {
+                                    await deleteTransaction(transaction.id);
+                                    showNotification('success', 'Entry removed from ledger');
+                                  }
+                                }}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="dashboard-empty">
+                <EmptyTransactionsVisual />
+                <h3 style={{ marginTop: '26px', color: '#ffffff' }}>No records match this view</h3>
+                <p
+                  style={{
+                    color: 'var(--text-secondary)',
+                    maxWidth: '420px',
+                    margin: '10px auto 0',
+                  }}
+                >
+                  Try broadening your filters or record a new cash movement to start building your
+                  ledger history.
+                </p>
+                <div
+                  className="dashboard-chip-row"
+                  style={{ justifyContent: 'center', marginTop: '20px' }}
+                >
+                  <button type="button" className="toolbar-btn-secondary" onClick={resetFilters}>
+                    <RotateCcw size={16} />
+                    Reset filters
+                  </button>
+                  <button type="button" className="header-add-btn" onClick={openCreateModal}>
+                    <Plus size={16} />
+                    Add entry
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {isModalOpen && (
+        <div
+          className="modal-overlay"
+          onClick={(event) => event.target === event.currentTarget && setIsModalOpen(false)}
+        >
+          <div className="modal-card" style={{ maxWidth: '560px' }}>
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <div className="modal-title">
+              {editId ? 'Edit Ledger Entry' : 'Record Ledger Entry'}
+            </div>
+            <div className="modal-subtitle">
+              Keep every inflow and outflow traceable with a structured operations record.
             </div>
 
             <form
               onSubmit={handleAddTransaction}
-              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Operation Type</label>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '4px',
-                      background: 'var(--ui-input-bg)',
-                      padding: '4px',
-                      borderRadius: '12px',
-                      border: 'var(--ui-border)',
-                    }}
+              <div>
+                <label className="form-label">Movement Type</label>
+                <div className="dashboard-pill-switch">
+                  <button
+                    type="button"
+                    className={
+                      type === 'Expense'
+                        ? 'dashboard-pill-switch__btn dashboard-pill-switch__btn--active'
+                        : 'dashboard-pill-switch__btn'
+                    }
+                    onClick={() => setType('Expense')}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setType('Expense')}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        minHeight: '44px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: type === 'Expense' ? '#f43f5e' : 'transparent',
-                        color: type === 'Expense' ? '#fff' : '#475569',
-                        fontWeight: '950',
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      EXPENSE
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setType('Income')}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        minHeight: '44px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: type === 'Income' ? '#10b981' : 'transparent',
-                        color: type === 'Income' ? '#fff' : '#475569',
-                        fontWeight: '950',
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      INCOME
-                    </button>
-                  </div>
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      type === 'Income'
+                        ? 'dashboard-pill-switch__btn dashboard-pill-switch__btn--active'
+                        : 'dashboard-pill-switch__btn'
+                    }
+                    onClick={() => setType('Income')}
+                  >
+                    Income
+                  </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              </div>
+
+              <div className="dashboard-insight-grid">
+                <div>
+                  <label className="form-label">Description</label>
+                  <input
+                    className="form-input"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Monthly rent, salary credit, grocery run"
+                    required
+                  />
+                </div>
+                <div>
                   <label className="form-label">Date</label>
                   <input
                     className="form-input"
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(event) => setDate(event.target.value)}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">Description</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Monthly Rent Payment"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-                  gap: '20px',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="dashboard-insight-grid">
+                <div>
                   <label className="form-label">Category</label>
                   <input
                     className="form-input"
-                    placeholder="Food, Rent, etc."
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(event) => setCategory(event.target.value)}
+                    placeholder="Food, rent, salary, transfer"
                     required
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Amount (₹)</label>
+                <div>
+                  <label className="form-label">Amount</label>
                   <input
                     className="form-input"
                     type="number"
-                    placeholder="0.00"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(event) => setAmount(event.target.value)}
+                    placeholder="0.00"
                     required
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">Source Account</label>
+              <div>
+                <label className="form-label">Linked Account</label>
                 <select
                   className="form-input"
                   value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
-                  style={{ cursor: 'pointer' }}
+                  onChange={(event) => setAccountId(event.target.value)}
                 >
-                  <option value="">No Account Linked</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} (₹{acc.balance.toLocaleString()})
+                  <option value="">No account linked</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name} ({formatCurrency(account.balance)})
                     </option>
                   ))}
                 </select>
               </div>
 
               <button type="submit" className="btn-primary btn-primary--indigo">
-                {editId ? 'Commit Changes' : 'Record Transaction'}
+                {editId ? 'Save Changes' : 'Record Transaction'}
               </button>
             </form>
           </div>
