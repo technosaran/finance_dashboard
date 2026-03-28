@@ -105,7 +105,7 @@ export default function LedgerClient() {
     return account ? account.name : null;
   };
 
-  const _categories = ['All', ...new Set(transactions.map((t) => t.category))].sort() as string[];
+  const categories = ['All', ...new Set(transactions.map((t) => t.category))].sort() as string[];
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
@@ -430,14 +430,14 @@ export default function LedgerClient() {
             alignItems: 'start',
           }}
         >
-          {/* Left Sidebar: Calendar */}
+          {/* Left Sidebar: Calendar + Filters */}
           <div
             style={{
-              flex: '1 1 320px',
-              maxWidth: '100%',
+              flex: '0 0 300px',
+              width: '300px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '24px',
+              gap: '16px',
               position: 'sticky',
               top: '24px',
             }}
@@ -446,10 +446,9 @@ export default function LedgerClient() {
             <div
               style={{
                 background: 'var(--surface)',
-                padding: '12px',
-                borderRadius: '0px',
+                padding: '20px',
+                borderRadius: '20px',
                 border: '1px solid var(--surface-border)',
-                width: '100%',
               }}
             >
               <div
@@ -457,7 +456,7 @@ export default function LedgerClient() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  marginBottom: '10px',
+                  marginBottom: '16px',
                   color: '#818cf8',
                 }}
               >
@@ -470,72 +469,111 @@ export default function LedgerClient() {
                     letterSpacing: '1px',
                   }}
                 >
-                  Calendar
+                  Date Filter
                 </span>
+                {selectedDate && (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      fontSize: '0.65rem',
+                      fontWeight: '800',
+                      color: '#6366f1',
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(99, 102, 241, 0.25)',
+                    }}
+                  >
+                    {selectedDate.toLocaleDateString(undefined, {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </span>
+                )}
               </div>
               <style>{`
-                                .custom-calendar {
-                                    width: 260px !important;
-                                    margin: 0 auto;
-                                    background: transparent !important;
-                                    border: none !important;
-                                    color: var(--text-primary) !important;
-                                    font-family: inherit !important;
-                                    font-size: 0.75rem !important;
-                                    aspect-ratio: 1 / 1;
-                                }
-                                .custom-calendar .react-calendar__tile { 
-                                    padding: 8px 0 !important; 
-                                    font-size: 0.7rem !important;
-                                    font-weight: 700 !important;
-                                    border-radius: 4px !important;
-                                    color: var(--text-secondary) !important;
-                                    transition: all 0.2s;
-                                }
-                                .custom-calendar .react-calendar__tile:hover {
-                                    background: rgba(99, 102, 241, 0.1) !important;
-                                    color: #fff !important;
-                                }
-                                /* Remove red color for weekends */
-                                .custom-calendar .react-calendar__month-view__days__day--weekend {
-                                    color: var(--text-secondary) !important;
-                                }
-                                .custom-calendar .react-calendar__tile--now { 
-                                    background: rgba(99, 102, 241, 0.15) !important; 
-                                    color: #6366f1 !important; 
-                                    font-weight: 900 !important;
-                                    border: 1px solid rgba(99, 102, 241, 0.3) !important;
-                                }
-                                .custom-calendar .react-calendar__tile--active { 
-                                    background: #6366f1 !important; 
-                                    color: white !important; 
-                                    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-                                }
-                                .custom-calendar .react-calendar__navigation { 
-                                    margin-bottom: 8px !important;
-                                    display: flex;
-                                    gap: 4px;
-                                }
-                                .custom-calendar .react-calendar__navigation button { 
-                                    color: var(--text-primary) !important; 
-                                    font-weight: 800 !important;
-                                    border-radius: 4px;
-                                    font-size: 0.75rem;
-                                    min-width: 32px !important;
-                                    padding: 4px !important;
-                                    background: rgba(255,255,255,0.03);
-                                }
-                                .custom-calendar .react-calendar__navigation button:hover {
-                                    background: rgba(255, 255, 255, 0.08) !important;
-                                }
-                                .custom-calendar .react-calendar__month-view__weekdays__weekday abbr {
-                                    text-decoration: none !important;
-                                    color: #475569 !important;
-                                    font-weight: 900 !important;
-                                    font-size: 0.65rem;
-                                    text-transform: uppercase;
-                                }
-                            `}</style>
+                .custom-calendar {
+                  width: 100% !important;
+                  background: transparent !important;
+                  border: none !important;
+                  color: var(--text-primary) !important;
+                  font-family: inherit !important;
+                  font-size: 0.78rem !important;
+                }
+                .custom-calendar .react-calendar__tile {
+                  padding: 10px 4px !important;
+                  font-size: 0.72rem !important;
+                  font-weight: 700 !important;
+                  border-radius: 8px !important;
+                  color: var(--text-secondary) !important;
+                  transition: all 0.2s;
+                }
+                .custom-calendar .react-calendar__tile:hover {
+                  background: rgba(99, 102, 241, 0.12) !important;
+                  color: #c7d2fe !important;
+                }
+                .custom-calendar .react-calendar__month-view__days__day--weekend {
+                  color: var(--text-secondary) !important;
+                }
+                .custom-calendar .react-calendar__tile--now {
+                  background: rgba(99, 102, 241, 0.15) !important;
+                  color: #818cf8 !important;
+                  font-weight: 900 !important;
+                  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+                }
+                .custom-calendar .react-calendar__tile--active {
+                  background: #6366f1 !important;
+                  color: white !important;
+                  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
+                }
+                .custom-calendar .react-calendar__tile--active:hover {
+                  background: #4f46e5 !important;
+                  color: white !important;
+                }
+                .custom-calendar .react-calendar__navigation {
+                  margin-bottom: 12px !important;
+                  display: flex;
+                  gap: 4px;
+                  align-items: center;
+                }
+                .custom-calendar .react-calendar__navigation button {
+                  color: var(--text-primary) !important;
+                  font-weight: 800 !important;
+                  border-radius: 8px;
+                  font-size: 0.78rem;
+                  min-width: 32px !important;
+                  padding: 6px 4px !important;
+                  background: rgba(255,255,255,0.04);
+                  transition: background 0.2s;
+                }
+                .custom-calendar .react-calendar__navigation button:hover {
+                  background: rgba(99, 102, 241, 0.12) !important;
+                  color: #c7d2fe !important;
+                }
+                .custom-calendar .react-calendar__navigation__label {
+                  flex-grow: 1 !important;
+                  font-weight: 900 !important;
+                  font-size: 0.8rem !important;
+                  color: var(--text-primary) !important;
+                }
+                .custom-calendar .react-calendar__month-view__weekdays {
+                  margin-bottom: 4px;
+                }
+                .custom-calendar .react-calendar__month-view__weekdays__weekday abbr {
+                  text-decoration: none !important;
+                  color: #475569 !important;
+                  font-weight: 900 !important;
+                  font-size: 0.65rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                }
+                .custom-calendar .react-calendar__month-view__days {
+                  gap: 2px;
+                }
+                .custom-calendar .react-calendar__tile:disabled {
+                  color: #1e293b !important;
+                }
+              `}</style>
               <Calendar
                 onChange={(val) => setSelectedDate(val as Date)}
                 value={selectedDate}
@@ -546,36 +584,337 @@ export default function LedgerClient() {
                   onClick={() => setSelectedDate(null)}
                   style={{
                     width: '100%',
-                    marginTop: '20px',
-                    background: 'rgba(244, 63, 94, 0.1)',
+                    marginTop: '16px',
+                    background: 'rgba(244, 63, 94, 0.08)',
                     color: '#f43f5e',
                     border: '1px solid rgba(244, 63, 94, 0.2)',
-                    padding: '12px',
+                    padding: '10px',
                     borderRadius: '12px',
-                    fontSize: '0.75rem',
+                    fontSize: '0.72rem',
                     fontWeight: '800',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
-                    transition: '0.2s',
+                    gap: '6px',
+                    transition: 'background 0.2s',
+                    letterSpacing: '0.5px',
                   }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.15)')
                   }
                   onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)')
+                    (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.08)')
                   }
                 >
-                  <X size={14} /> RESET DATE VIEW
+                  <X size={13} /> CLEAR DATE
                 </button>
               )}
             </div>
+
+            {/* Search */}
+            <div
+              style={{
+                background: 'var(--surface)',
+                padding: '16px 20px',
+                borderRadius: '20px',
+                border: '1px solid var(--surface-border)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '12px',
+                  color: '#818cf8',
+                }}
+              >
+                <Tag size={13} strokeWidth={2.5} />
+                <span
+                  style={{
+                    fontWeight: '900',
+                    fontSize: '0.7rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                  }}
+                >
+                  Search
+                </span>
+              </div>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="Description or category…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ fontSize: '0.82rem' }}
+              />
+            </div>
+
+            {/* Type Filter */}
+            <div
+              style={{
+                background: 'var(--surface)',
+                padding: '16px 20px',
+                borderRadius: '20px',
+                border: '1px solid var(--surface-border)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '12px',
+                  color: '#818cf8',
+                }}
+              >
+                <Layers size={13} strokeWidth={2.5} />
+                <span
+                  style={{
+                    fontWeight: '900',
+                    fontSize: '0.7rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                  }}
+                >
+                  Type
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {(['All', 'Income', 'Expense'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setFilterType(t)}
+                    style={{
+                      flex: 1,
+                      padding: '9px 4px',
+                      borderRadius: '10px',
+                      border: '1px solid',
+                      borderColor:
+                        filterType === t
+                          ? t === 'Income'
+                            ? 'rgba(16, 185, 129, 0.4)'
+                            : t === 'Expense'
+                              ? 'rgba(244, 63, 94, 0.4)'
+                              : 'rgba(99, 102, 241, 0.4)'
+                          : '#1a1a1a',
+                      background:
+                        filterType === t
+                          ? t === 'Income'
+                            ? 'rgba(16, 185, 129, 0.12)'
+                            : t === 'Expense'
+                              ? 'rgba(244, 63, 94, 0.12)'
+                              : 'rgba(99, 102, 241, 0.12)'
+                          : 'transparent',
+                      color:
+                        filterType === t
+                          ? t === 'Income'
+                            ? '#34d399'
+                            : t === 'Expense'
+                              ? '#fb7185'
+                              : '#a5b4fc'
+                          : '#475569',
+                      fontSize: '0.65rem',
+                      fontWeight: '900',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {t.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            {categories.length > 2 && (
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  padding: '16px 20px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--surface-border)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '12px',
+                    color: '#818cf8',
+                  }}
+                >
+                  <Tag size={13} strokeWidth={2.5} />
+                  <span
+                    style={{
+                      fontWeight: '900',
+                      fontSize: '0.7rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    Category
+                  </span>
+                </div>
+                <select
+                  className="form-input"
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  style={{ fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Account Filter */}
+            {accounts.length > 0 && (
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  padding: '16px 20px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--surface-border)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '12px',
+                    color: '#818cf8',
+                  }}
+                >
+                  <Wallet size={13} strokeWidth={2.5} />
+                  <span
+                    style={{
+                      fontWeight: '900',
+                      fontSize: '0.7rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                    }}
+                  >
+                    Account
+                  </span>
+                </div>
+                <select
+                  className="form-input"
+                  value={filterAccount}
+                  onChange={(e) =>
+                    setFilterAccount(
+                      e.target.value === 'All' ? 'All' : parseInt(e.target.value, 10)
+                    )
+                  }
+                  style={{ fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  <option value="All">All Accounts</option>
+                  {accounts.map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Right Side: Timeline of Transactions */}
           <div style={{ flex: '1 1 500px', minWidth: 0 }}>
+            {/* Results bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '24px',
+                padding: '12px 20px',
+                background: 'var(--surface)',
+                borderRadius: '16px',
+                border: '1px solid var(--surface-border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '900',
+                    color: '#475569',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  Showing
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.82rem',
+                    fontWeight: '900',
+                    color: '#fff',
+                  }}
+                >
+                  {filteredTransactions.length}
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    color: '#475569',
+                  }}
+                >
+                  of {transactions.length} entries
+                </span>
+                {(searchQuery ||
+                  filterCategory !== 'All' ||
+                  filterType !== 'All' ||
+                  filterAccount !== 'All' ||
+                  selectedDate) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterCategory('All');
+                      setFilterAccount('All');
+                      setFilterType('All');
+                      setSelectedDate(null);
+                    }}
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: '800',
+                      color: '#f43f5e',
+                      background: 'rgba(244, 63, 94, 0.08)',
+                      border: '1px solid rgba(244, 63, 94, 0.2)',
+                      padding: '3px 10px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      letterSpacing: '0.3px',
+                    }}
+                  >
+                    CLEAR ALL
+                  </button>
+                )}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: '800',
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Clock size={12} />
+                {groupedTransactions.length} {groupedTransactions.length === 1 ? 'DAY' : 'DAYS'}
+              </div>
+            </div>
             {groupedTransactions.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
                 {groupedTransactions.map(([dateString, group]) => {
