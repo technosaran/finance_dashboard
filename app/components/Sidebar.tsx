@@ -157,8 +157,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         aside {
           width: 230px;
           min-width: 230px;
-          background: var(--sidebar-bg);
-          border-right: 1px solid rgba(255, 255, 255, 0.05);
+          background: rgba(4, 4, 14, 0.82);
+          backdrop-filter: blur(40px) saturate(180%);
+          -webkit-backdrop-filter: blur(40px) saturate(180%);
+          border-right: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow:
+            4px 0 32px rgba(0, 0, 0, 0.55),
+            inset -1px 0 0 rgba(255, 255, 255, 0.06);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -177,7 +182,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           right: 0;
           width: 1px;
           height: 100%;
-          background: transparent;
+          background: linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.1),
+            rgba(255, 255, 255, 0.04),
+            transparent
+          );
         }
         @media (min-width: 768px) {
           aside {
@@ -219,8 +229,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             style={{
               minWidth: '40px',
               height: '40px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
@@ -228,9 +238,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               color: '#ffffff',
               fontWeight: '950',
               fontSize: '1.2rem',
-              boxShadow: '0 0 20px rgba(0, 0, 0, 1)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
               flexShrink: 0,
               position: 'relative',
+              backdropFilter: 'blur(12px)',
             }}
           >
             <Command size={20} />
@@ -319,17 +330,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       position: 'relative',
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isActive
-                        ? 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)'
+                        ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(67, 56, 202, 0.3) 100%)'
                         : isHovered
                           ? 'rgba(255, 255, 255, 0.05)'
                           : 'transparent',
+                      backdropFilter: isActive ? 'blur(16px) saturate(150%)' : 'none',
+                      WebkitBackdropFilter: isActive ? 'blur(16px) saturate(150%)' : 'none',
                       color: isActive ? '#ffffff' : isHovered ? 'var(--text-primary)' : '#64748b',
                       border: isActive
-                        ? '1px solid rgba(255, 255, 255, 0.3)'
+                        ? '1px solid rgba(99, 102, 241, 0.4)'
                         : isHovered
                           ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid transparent',
-                      boxShadow: 'none',
+                      boxShadow: isActive
+                        ? '0 4px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
+                        : 'none',
                     }}
                     aria-current={isActive ? 'page' : undefined}
                     onClick={onClose}
@@ -404,7 +419,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             display: 'flex',
             flexDirection: 'column',
             gap: '4px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.02))',
             position: 'relative',
           }}
         >

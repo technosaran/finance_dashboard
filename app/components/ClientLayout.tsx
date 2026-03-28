@@ -134,8 +134,10 @@ function AuthConsumer({
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.13)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
                   color: '#fff',
                   cursor: 'pointer',
                   padding: '8px',
@@ -143,9 +145,10 @@ function AuthConsumer({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'background 0.2s',
+                  transition: 'all 0.2s ease',
                   minWidth: '44px',
                   minHeight: '44px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
                 }}
                 aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                 aria-expanded={isSidebarOpen}
