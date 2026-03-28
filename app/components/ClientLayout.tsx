@@ -56,27 +56,38 @@ function AuthConsumer({
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#000000',
+          background:
+            'radial-gradient(circle at top left, rgba(132, 216, 255, 0.12), transparent 32%), linear-gradient(180deg, #0b1629 0%, #071120 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#64748b',
+          color: 'var(--text-secondary)',
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div
+          className="premium-card"
+          style={{
+            textAlign: 'center',
+            minWidth: 'min(90vw, 320px)',
+            padding: '28px',
+          }}
+        >
           <div
             style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid rgba(99, 102, 241, 0.1)',
-              borderTopColor: '#6366f1',
+              width: '46px',
+              height: '46px',
+              border: '3px solid rgba(255, 255, 255, 0.12)',
+              borderTopColor: '#84d8ff',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px',
             }}
           />
-          <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+          <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#ffffff' }}>
             Initializing Secure Session...
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            Preparing your dashboard surfaces and account data.
           </div>
         </div>
         <style jsx>{`
@@ -121,36 +132,25 @@ function AuthConsumer({
         Skip to main content
       </a>
       <div
-        style={{
-          display: 'flex',
-          height: '100dvh',
-          backgroundColor: '#000000',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+        className="app-shell"
+        style={{ display: 'flex', height: '100dvh', flexDirection: 'column', overflow: 'hidden' }}
       >
         {!isAuthPage && (
-          <header className="mobile-header">
+          <header className="mobile-header liquid-glass-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="liquid-glass-btn"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.13)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
                   color: '#fff',
                   cursor: 'pointer',
-                  padding: '8px',
-                  borderRadius: '10px',
+                  padding: '0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'all 0.2s ease',
                   minWidth: '44px',
                   minHeight: '44px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)',
                 }}
                 aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                 aria-expanded={isSidebarOpen}
@@ -164,13 +164,15 @@ function AuthConsumer({
                   style={{
                     width: '32px',
                     height: '32px',
-                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-                    borderRadius: '8px',
+                    background:
+                      'linear-gradient(180deg, rgba(255,255,255,0.36), rgba(255,255,255,0.08)), linear-gradient(135deg, rgba(123, 213, 255, 0.95), rgba(128, 132, 255, 0.92))',
+                    borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                    boxShadow:
+                      '0 10px 22px rgba(60, 144, 219, 0.28), inset 0 1px 0 rgba(255,255,255,0.38)',
                   }}
                   aria-hidden="true"
                 >
@@ -202,8 +204,9 @@ function AuthConsumer({
                 style={{
                   position: 'fixed',
                   inset: 0,
-                  background: 'rgba(0,0,0,0.6)',
-                  backdropFilter: 'blur(4px)',
+                  background:
+                    'radial-gradient(circle at top, rgba(132, 216, 255, 0.1), transparent 28%), rgba(4, 10, 18, 0.58)',
+                  backdropFilter: 'blur(12px)',
                   zIndex: 99,
                   opacity: isSidebarOpen ? 1 : 0,
                   pointerEvents: isSidebarOpen ? 'auto' : 'none',
@@ -216,7 +219,7 @@ function AuthConsumer({
           <main
             id="main-content"
             className="main-content"
-            style={{ flex: 1, overflowY: 'auto' }}
+            style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}
             role="main"
             aria-label="Main content"
           >

@@ -1,74 +1,66 @@
 'use client';
 
 import { useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Layers3, Shield, Target, Wallet } from 'lucide-react';
 import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useAuth } from '@/app/components/AuthContext';
 import { MutualFundTransaction } from '@/lib/types';
 import { SkeletonCard } from './SkeletonLoader';
 import { EmptyPortfolioVisual } from './Visuals';
-
-// Dashboard sub-components (extracted for maintainability)
 import { QuickStatsRow } from './dashboard/QuickStatsRow';
 import { NetWorthCard } from './dashboard/NetWorthCard';
 import { TopHoldings } from './dashboard/TopHoldings';
 import { RecentActivity } from './dashboard/RecentActivity';
 import { GoalsProgress } from './dashboard/GoalsProgress';
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-
-/**
- * Get dynamic, time-based greeting with inspiring messages.
- * Memoised at module level — pure function with no external dependencies.
- */
-function getGreeting(): { text: string; subtext: string; emoji: string } {
+function getGreeting(): { text: string; subtext: string; label: string } {
   const hour = new Date().getHours();
-  const greetings = {
-    morning: {
-      text: 'Good Morning',
-      subtext: 'Time to conquer your financial goals!',
-      emoji: '✨',
-    },
-    afternoon: {
-      text: 'Good Afternoon',
-      subtext: "Let's check in on your empire.",
-      emoji: '☀️',
-    },
-    evening: {
-      text: 'Good Evening',
-      subtext: 'Review the day\u2019s market moves.',
-      emoji: '🌇',
-    },
-    night: {
-      text: 'Good Night',
-      subtext: 'Rest easy, your wealth is working.',
-      emoji: '🌙',
-    },
-  };
 
-  if (hour >= 5 && hour < 12) return greetings.morning;
-  if (hour >= 12 && hour < 17) return greetings.afternoon;
-  if (hour >= 17 && hour < 21) return greetings.evening;
-  return greetings.night;
+  if (hour >= 5 && hour < 12) {
+    return {
+      text: 'Good morning',
+      subtext: 'Your portfolio is ready with a cleaner, calmer glass overview.',
+      label: 'Morning pulse',
+    };
+  }
+
+  if (hour >= 12 && hour < 17) {
+    return {
+      text: 'Good afternoon',
+      subtext: "Check today's movement and keep your capital aligned.",
+      label: 'Midday snapshot',
+    };
+  }
+
+  if (hour >= 17 && hour < 21) {
+    return {
+      text: 'Good evening',
+      subtext: 'A smooth end-of-day view for balances, holdings, and progress.',
+      label: 'Closing overview',
+    };
+  }
+
+  return {
+    text: 'Good night',
+    subtext: 'Your dashboard is set for a quiet review before tomorrow opens.',
+    label: 'Night session',
+  };
 }
 
-/** Extract first name from Supabase user email or metadata */
 function getUserDisplayName(
   user: { email?: string; user_metadata?: Record<string, unknown> } | null | undefined
 ): string {
   if (!user) return 'there';
 
-  // 1. Try metadata first (Full Name or Name)
   const metadataName =
     user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name;
+
   if (metadataName) {
     return (metadataName as string).split(' ')[0];
   }
 
-  // 2. Fallback to email local part
   if (user.email) {
     const localPart = user.email.split('@')[0];
-    // Capitalize first letter, handle dots/underscores/dashes
     const name = localPart.split(/[._-]/)[0];
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
@@ -76,7 +68,13 @@ function getUserDisplayName(
   return 'User';
 }
 
-// ─── COMPONENT ────────────────────────────────────────────────────────────────
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 export default function Dashboard() {
   const { accounts, goals, transactions, loading, error } = useLedger();
@@ -91,84 +89,84 @@ export default function Dashboard() {
     [settings?.displayName, user]
   );
 
-  // ── Computed financial metrics ──────────────────────────────────────────────
   const financialMetrics = useMemo(() => {
     const liquidityINR = accounts
-      .filter((a) => a.currency === 'INR')
-      .reduce((sum, acc) => sum + acc.balance, 0);
+      .filter((account) => account.currency === 'INR')
+      .reduce((sum, account) => sum + account.balance, 0);
 
     const stocksValue = stocks
-      .filter((s) => s.quantity > 0)
-      .reduce((sum, s) => sum + s.currentValue, 0);
+      .filter((stock) => stock.quantity > 0)
+      .reduce((sum, stock) => sum + stock.currentValue, 0);
 
-    const mfValue = mutualFunds.reduce((sum, m) => sum + m.currentValue, 0);
-    const bondsValue = bonds.reduce((sum, b) => sum + b.currentValue, 0);
+    const mfValue = mutualFunds.reduce((sum, fund) => sum + fund.currentValue, 0);
+    const bondsValue = bonds.reduce((sum, bond) => sum + bond.currentValue, 0);
 
     const totalNetWorth = liquidityINR + stocksValue + mfValue + bondsValue;
 
     const stockInvestment = stocks
-      .filter((s) => s.quantity > 0)
-      .reduce((sum, s) => sum + s.investmentAmount, 0);
-    const mfInvestment = mutualFunds.reduce((sum, m) => sum + m.investmentAmount, 0);
-    const bondsInvestment = bonds.reduce((sum, b) => sum + b.investmentAmount, 0);
+      .filter((stock) => stock.quantity > 0)
+      .reduce((sum, stock) => sum + stock.investmentAmount, 0);
+    const mfInvestment = mutualFunds.reduce((sum, fund) => sum + fund.investmentAmount, 0);
+    const bondsInvestment = bonds.reduce((sum, bond) => sum + bond.investmentAmount, 0);
     const totalInvestment = stockInvestment + mfInvestment + bondsInvestment;
 
-    // Lifetime wealth (realised + unrealised across all instruments)
     const stockBuys = stockTransactions
-      .filter((t) => t.transactionType === 'BUY')
-      .reduce((sum, t) => sum + t.totalAmount, 0);
+      .filter((transaction) => transaction.transactionType === 'BUY')
+      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
     const stockSells = stockTransactions
-      .filter((t) => t.transactionType === 'SELL')
-      .reduce((sum, t) => sum + t.totalAmount, 0);
+      .filter((transaction) => transaction.transactionType === 'SELL')
+      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
     const stockCharges = stockTransactions.reduce(
-      (sum, t) => sum + (t.brokerage || 0) + (t.taxes || 0),
+      (sum, transaction) => sum + (transaction.brokerage || 0) + (transaction.taxes || 0),
       0
     );
     const stockLifetime = stockSells + stocksValue - (stockBuys + stockCharges);
 
-    // Standard MF charges (Stamp Duty in India is 0.005%)
     const MF_STAMP_DUTY_RATE = 0.00005;
 
     const mfBuys = mutualFundTransactions
       .filter(
-        (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
+        (transaction: MutualFundTransaction) =>
+          transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
       )
-      .reduce((sum, t) => sum + t.totalAmount, 0);
+      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
     const mfSells = mutualFundTransactions
-      .filter((t: MutualFundTransaction) => t.transactionType === 'SELL')
-      .reduce((sum, t) => sum + t.totalAmount, 0);
+      .filter((transaction: MutualFundTransaction) => transaction.transactionType === 'SELL')
+      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
     const mfCharges = mutualFundTransactions
       .filter(
-        (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
+        (transaction: MutualFundTransaction) =>
+          transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
       )
-      .reduce((sum, t) => sum + t.totalAmount * MF_STAMP_DUTY_RATE, 0);
+      .reduce((sum, transaction) => sum + transaction.totalAmount * MF_STAMP_DUTY_RATE, 0);
     const mfLifetime = mfSells + mfValue - (mfBuys + mfCharges);
 
     const fnoLifetime = fnoTrades
-      .filter((t) => t.status === 'CLOSED')
-      .reduce((sum, t) => sum + t.pnl, 0);
+      .filter((trade) => trade.status === 'CLOSED')
+      .reduce((sum, trade) => sum + trade.pnl, 0);
 
-    const bondLifetime = bonds.reduce((sum, b) => sum + b.pnl, 0);
-
+    const bondLifetime = bonds.reduce((sum, bond) => sum + bond.pnl, 0);
     const globalLifetimeWealth = stockLifetime + mfLifetime + fnoLifetime + bondLifetime;
 
-    const stockPnl = stocks.filter((s) => s.quantity > 0).reduce((sum, s) => sum + s.pnl, 0);
+    const stockPnl = stocks
+      .filter((stock) => stock.quantity > 0)
+      .reduce((sum, stock) => sum + stock.pnl, 0);
     const mfPnl = mfValue - mfInvestment;
     const bondPnl = bondsValue - bondsInvestment;
     const totalUnrealizedPnl = stockPnl + mfPnl + bondPnl;
 
     const stockDayChange = stocks
-      .filter((s) => s.quantity > 0)
+      .filter((stock) => stock.quantity > 0)
       .reduce((sum, stock) => {
         const dayChange =
           (stock.currentPrice - (stock.previousPrice ?? stock.currentPrice)) * stock.quantity;
         return sum + dayChange;
       }, 0);
-    const mfDayChange = mutualFunds.reduce((sum, mf) => {
-      const dayChange = (mf.currentNav - (mf.previousNav ?? mf.currentNav)) * mf.units;
+
+    const mfDayChange = mutualFunds.reduce((sum, fund) => {
+      const dayChange = (fund.currentNav - (fund.previousNav ?? fund.currentNav)) * fund.units;
       return sum + dayChange;
     }, 0);
-    const totalDayChange = stockDayChange + mfDayChange;
 
     return {
       liquidityINR,
@@ -179,19 +177,18 @@ export default function Dashboard() {
       totalInvestment,
       globalLifetimeWealth,
       totalUnrealizedPnl,
-      stockDayChange: totalDayChange,
+      stockDayChange: stockDayChange + mfDayChange,
     };
   }, [accounts, stocks, mutualFunds, bonds, stockTransactions, mutualFundTransactions, fnoTrades]);
 
-  // ── Derived lists for sub-components ───────────────────────────────────────
   const allocationData = useMemo(
     () =>
       [
-        { name: 'Cash', value: financialMetrics.liquidityINR, color: '#818cf8' },
-        { name: 'Stocks', value: financialMetrics.stocksValue, color: '#10b981' },
-        { name: 'Mutual Funds', value: financialMetrics.mfValue, color: '#f59e0b' },
-        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#ec4899' },
-      ].filter((a) => a.value > 0),
+        { name: 'Cash', value: financialMetrics.liquidityINR, color: '#89dbff' },
+        { name: 'Stocks', value: financialMetrics.stocksValue, color: '#6ee7b7' },
+        { name: 'Mutual Funds', value: financialMetrics.mfValue, color: '#fbbf24' },
+        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#f9a8d4' },
+      ].filter((item) => item.value > 0),
     [financialMetrics]
   );
 
@@ -199,7 +196,7 @@ export default function Dashboard() {
     () =>
       transactions
         .slice()
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((first, second) => new Date(second.date).getTime() - new Date(first.date).getTime())
         .slice(0, 5),
     [transactions]
   );
@@ -207,13 +204,15 @@ export default function Dashboard() {
   const goalsProgress = useMemo(
     () =>
       goals
-        .map((g) => ({
-          name: g.name,
-          target: g.targetAmount,
-          current: g.currentAmount,
+        .map((goal) => ({
+          name: goal.name,
+          target: goal.targetAmount,
+          current: goal.currentAmount,
           percentage:
-            g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0,
-          deadline: g.deadline,
+            goal.targetAmount > 0
+              ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100)
+              : 0,
+          deadline: goal.deadline,
         }))
         .slice(0, 3),
     [goals]
@@ -222,81 +221,71 @@ export default function Dashboard() {
   const topHoldings = useMemo(
     () =>
       [...stocks]
-        .filter((s) => s.quantity > 0)
-        .sort((a, b) => b.currentValue - a.currentValue)
+        .filter((stock) => stock.quantity > 0)
+        .sort((first, second) => second.currentValue - first.currentValue)
         .slice(0, 5),
     [stocks]
   );
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  const totalTrackedHoldings =
+    stocks.filter((stock) => stock.quantity > 0).length + mutualFunds.length + bonds.length;
+
   if (loading) {
     return (
-      <div className="page-container">
-        <div className="bg-mesh" />
-        <div style={{ marginBottom: '32px' }}>
-          <div
-            className="skeleton"
-            style={{ height: '48px', width: 'min(100%, 350px)', marginBottom: '12px' }}
-          />
-          <div className="skeleton" style={{ height: '24px', width: 'min(100%, 450px)' }} />
-        </div>
-        <div style={{ marginBottom: '32px' }}>
-          <SkeletonCard />
-        </div>
+      <div className="page-container ios-dashboard">
+        <section className="premium-card ios-hero">
+          <div className="ios-hero-copy">
+            <div className="ios-eyebrow">Loading dashboard</div>
+            <div
+              className="skeleton"
+              style={{ height: '58px', width: 'min(100%, 380px)', borderRadius: '24px' }}
+            />
+            <div
+              className="skeleton"
+              style={{ height: '24px', width: 'min(100%, 520px)', borderRadius: '16px' }}
+            />
+          </div>
+          <div className="ios-hero-aside">
+            <SkeletonCard />
+          </div>
+        </section>
       </div>
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="page-container">
-        <div className="bg-mesh" />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '48px 24px',
-            textAlign: 'center',
-            gap: '16px',
-          }}
-        >
+      <div className="page-container ios-dashboard">
+        <section className="premium-card ios-empty-state">
           <div
             style={{
-              width: '64px',
-              height: '64px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              borderRadius: '50%',
+              width: '72px',
+              height: '72px',
+              margin: '0 auto 18px',
+              borderRadius: '24px',
+              display: 'grid',
+              placeItems: 'center',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(248, 113, 113, 0.22)',
             }}
           >
-            <AlertTriangle size={32} color="#ef4444" />
+            <AlertTriangle size={34} color="#f87171" />
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff', margin: 0 }}>
-            Unable to Load Dashboard
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '10px', color: '#ffffff' }}>
+            Unable to load your dashboard
           </h2>
-          <p style={{ fontSize: '0.9rem', color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6' }}>
+          <p style={{ maxWidth: '480px', margin: '0 auto', color: 'var(--text-secondary)' }}>
             {error}
           </p>
           <button
             type="button"
+            className="liquid-glass-btn"
             onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 24px',
-              background: '#6366f1',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              marginTop: '8px',
-            }}
+            style={{ marginTop: '20px' }}
           >
-            Retry
+            Reload
           </button>
-        </div>
+        </section>
       </div>
     );
   }
@@ -304,62 +293,65 @@ export default function Dashboard() {
   const hasAnyData =
     topHoldings.length > 0 || recentTransactions.length > 0 || goalsProgress.length > 0;
 
-  // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="page-container">
-      <div className="bg-mesh" />
+    <div className="page-container ios-dashboard">
+      <section className="premium-card ios-hero fade-in">
+        <div className="ios-hero-copy">
+          <div className="ios-eyebrow">
+            <Shield size={14} />
+            {greeting.label}
+          </div>
 
-      {/* ── Header ── */}
-      <header className="dashboard-header" style={{ marginBottom: '40px' }}>
-        <div
-          className="fade-in"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: '24px',
-            width: '100%',
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
-            >
-              <span style={{ fontSize: '2rem' }}>{greeting.emoji}</span>
-              <h1
-                style={{
-                  color: 'var(--foreground)',
-                  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                  fontWeight: '800',
-                  letterSpacing: '-0.02em',
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '10px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                {greeting.text}, <span className="gradient-text">{displayName}!</span>
-              </h1>
-            </div>
-            <p
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: '1.1rem',
-                fontWeight: '500',
-                marginTop: '8px',
-                maxWidth: '600px',
-                lineHeight: 1.6,
-              }}
-            >
+          <div>
+            <h1 className="ios-hero-title">
+              {greeting.text}, <span className="gradient-text">{displayName}</span>
+            </h1>
+            <p className="ios-hero-subtitle" style={{ marginTop: '14px' }}>
               {greeting.subtext}
             </p>
           </div>
-        </div>
-      </header>
 
-      {/* ── Quick Stats Row ── */}
+          <div className="ios-hero-meta">
+            <div className="ios-pill">
+              <Wallet size={15} />
+              Net worth <strong>{formatCurrency(financialMetrics.totalNetWorth)}</strong>
+            </div>
+            <div className="ios-pill">
+              <Layers3 size={15} />
+              Holdings <strong>{totalTrackedHoldings}</strong>
+            </div>
+            <div className="ios-pill">
+              <Target size={15} />
+              Active goals <strong>{goals.length}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="ios-hero-aside">
+          <div className="ios-hero-kpi">
+            <div className="ios-hero-kpi__label">Today&apos;s move</div>
+            <div
+              className="ios-hero-kpi__value"
+              style={{ color: financialMetrics.stockDayChange >= 0 ? '#8df0c6' : '#fda4af' }}
+            >
+              {financialMetrics.stockDayChange >= 0 ? '+' : ''}
+              {formatCurrency(financialMetrics.stockDayChange)}
+            </div>
+            <div className="ios-hero-kpi__subvalue">Combined listed equity and fund movement</div>
+          </div>
+
+          <div className="ios-hero-kpi">
+            <div className="ios-hero-kpi__label">Liquidity balance</div>
+            <div className="ios-hero-kpi__value">
+              {formatCurrency(financialMetrics.liquidityINR)}
+            </div>
+            <div className="ios-hero-kpi__subvalue">
+              {accounts.length} accounts currently tracked
+            </div>
+          </div>
+        </div>
+      </section>
+
       <QuickStatsRow
         liquidityINR={financialMetrics.liquidityINR}
         totalInvestment={financialMetrics.totalInvestment}
@@ -372,7 +364,6 @@ export default function Dashboard() {
         }
       />
 
-      {/* ── Net Worth & Allocation Card ── */}
       <NetWorthCard
         totalNetWorth={financialMetrics.totalNetWorth}
         globalLifetimeWealth={financialMetrics.globalLifetimeWealth}
@@ -381,11 +372,10 @@ export default function Dashboard() {
         allocationData={allocationData}
       />
 
-      {/* ── Bottom Row: Holdings / Activity / Goals ── */}
       <section
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
           gap: '20px',
         }}
       >
@@ -393,41 +383,30 @@ export default function Dashboard() {
         <RecentActivity transactions={recentTransactions} />
         <GoalsProgress goals={goalsProgress} />
 
-        {/* ── Empty state ── */}
         {!hasAnyData && (
-          <div
-            className="fade-in"
-            style={{
-              background: '#000000',
-              borderRadius: '8px',
-              border: '1px dashed rgba(255, 255, 255, 0.1)',
-              padding: '64px 32px',
-              textAlign: 'center',
-              gridColumn: '1 / -1',
-            }}
-          >
+          <div className="fade-in ios-empty-state" style={{ gridColumn: '1 / -1' }}>
             <EmptyPortfolioVisual />
             <div
               style={{
-                fontSize: '1.25rem',
+                fontSize: '1.3rem',
                 fontWeight: '800',
-                color: '#fff',
-                marginTop: '32px',
-                marginBottom: '12px',
+                color: '#ffffff',
+                marginTop: '28px',
+                marginBottom: '10px',
               }}
             >
-              Welcome to your Financial Hub
+              Your glass dashboard is ready for data
             </div>
             <div
               style={{
-                fontSize: '0.95rem',
-                color: '#64748b',
-                maxWidth: '400px',
+                fontSize: '0.96rem',
+                color: 'var(--text-secondary)',
+                maxWidth: '480px',
                 margin: '0 auto',
               }}
             >
-              Your financial empire is waiting to be built. Start by adding accounts, stocks, or
-              goals to see your insights come to life.
+              Add accounts, investments, or goals and this surface will start filling with live
+              balances, activity, and progress.
             </div>
           </div>
         )}

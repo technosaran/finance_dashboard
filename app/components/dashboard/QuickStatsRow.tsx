@@ -1,6 +1,6 @@
 'use client';
 
-import { Wallet, BarChart3, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, BarChart3, TrendingUp, Wallet } from 'lucide-react';
 
 interface QuickStatsRowProps {
   liquidityINR: number;
@@ -13,26 +13,25 @@ interface QuickStatsRowProps {
 interface StatCard {
   label: string;
   value: string;
-  subValue?: string;
+  subValue: string;
   icon: React.ReactNode;
   color: string;
-  bgGrad: string;
-  trend?: 'up' | 'down' | 'neutral';
+  trend: 'up' | 'down' | 'neutral';
 }
 
-/** Named thresholds for Indian numbering system */
 const CRORE = 10_000_000;
 const LAKH = 100_000;
 const THOUSAND = 1_000;
 
-/** Format large numbers with K/L/Cr suffixes for readability */
 function formatAmount(value: number): string {
-  const abs = Math.abs(value);
+  const absolute = Math.abs(value);
   const sign = value < 0 ? '-' : '';
-  if (abs >= CRORE) return `${sign}₹${(abs / CRORE).toFixed(2)}Cr`;
-  if (abs >= LAKH) return `${sign}₹${(abs / LAKH).toFixed(2)}L`;
-  if (abs >= THOUSAND) return `${sign}₹${(abs / THOUSAND).toFixed(1)}K`;
-  return `${sign}₹${abs.toLocaleString()}`;
+
+  if (absolute >= CRORE) return `${sign}Rs ${(absolute / CRORE).toFixed(2)}Cr`;
+  if (absolute >= LAKH) return `${sign}Rs ${(absolute / LAKH).toFixed(2)}L`;
+  if (absolute >= THOUSAND) return `${sign}Rs ${(absolute / THOUSAND).toFixed(1)}K`;
+
+  return `${sign}Rs ${absolute.toLocaleString('en-IN')}`;
 }
 
 export function QuickStatsRow({
@@ -48,17 +47,15 @@ export function QuickStatsRow({
       value: formatAmount(liquidityINR),
       subValue: 'Available balance',
       icon: <Wallet size={18} />,
-      color: '#818cf8',
-      bgGrad: 'linear-gradient(135deg, rgba(129, 140, 248, 0.08), rgba(129, 140, 248, 0.02))',
+      color: '#89dbff',
       trend: 'neutral',
     },
     {
       label: 'Investments',
       value: formatAmount(totalInvestment),
-      subValue: 'Total deployed',
+      subValue: 'Capital deployed',
       icon: <BarChart3 size={18} />,
-      color: '#10b981',
-      bgGrad: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
+      color: '#6ee7b7',
       trend: 'neutral',
     },
     {
@@ -66,130 +63,55 @@ export function QuickStatsRow({
       value: `${totalUnrealizedPnl >= 0 ? '+' : ''}${formatAmount(totalUnrealizedPnl)}`,
       subValue: `${investmentPnlPercent >= 0 ? '+' : ''}${investmentPnlPercent.toFixed(2)}% overall`,
       icon: totalUnrealizedPnl >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />,
-      color: totalUnrealizedPnl >= 0 ? '#34d399' : '#f87171',
-      bgGrad:
-        totalUnrealizedPnl >= 0
-          ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(52, 211, 153, 0.02))'
-          : 'linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(248, 113, 113, 0.02))',
+      color: totalUnrealizedPnl >= 0 ? '#8df0c6' : '#fda4af',
       trend: totalUnrealizedPnl >= 0 ? 'up' : 'down',
     },
     {
-      label: "Day's Change",
+      label: 'Day Change',
       value: `${stockDayChange >= 0 ? '+' : ''}${formatAmount(stockDayChange)}`,
-      subValue: "Today's movement",
+      subValue: 'Current market move',
       icon: <TrendingUp size={18} />,
-      color: stockDayChange >= 0 ? '#10b981' : '#ef4444',
-      bgGrad:
-        stockDayChange >= 0
-          ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))'
-          : 'linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.02))',
+      color: stockDayChange >= 0 ? '#8de7ca' : '#fda4af',
       trend: stockDayChange >= 0 ? 'up' : 'down',
     },
   ];
 
-  const animationDelays = ['0s', '0.07s', '0.14s', '0.21s'];
-
   return (
-    <section
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-        gap: '12px',
-        marginBottom: '24px',
-      }}
-    >
-      {stats.map((stat, idx) => (
-        <div
-          key={idx}
-          className="fade-in"
-          style={{
-            animationDelay: animationDelays[idx] ?? '0s',
-            background: '#000000',
-            borderRadius: '4px',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            padding: '24px',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: `0 4px 20px -5px ${stat.color}05`,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.background = '#0a0a0a';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.9)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.background = '#000000';
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-          }}
-        >
-          {/* Top accent bar */}
-          <div
-            style={{
-              display: 'none',
-            }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+    <section className="ios-stat-grid">
+      {stats.map((stat) => (
+        <div key={stat.label} className="ios-stat-card fade-in">
+          <div className="ios-stat-card__top">
             <div
+              className="ios-stat-card__icon"
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                background: `${stat.color}15`,
                 color: stat.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                background: `${stat.color}22`,
+                borderColor: `${stat.color}33`,
               }}
             >
               {stat.icon}
             </div>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {stat.label}
-            </span>
+            <span className="ios-stat-card__label">{stat.label}</span>
           </div>
-          <div
-            className="stat-value"
-            style={{
-              fontSize: 'clamp(1.1rem, 3.5vw, 1.4rem)',
-              fontWeight: '900',
-              color: stat.trend !== 'neutral' ? stat.color : '#fff',
-              letterSpacing: '-0.02em',
-              position: 'relative',
-              background: stat.trend !== 'neutral' ? 'none' : undefined,
-              WebkitTextFillColor: stat.trend !== 'neutral' ? 'currentColor' : undefined,
-            }}
-          >
-            {stat.value}
-          </div>
-          {stat.subValue && (
+
+          <div>
             <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: '700',
-                color: stat.trend !== 'neutral' ? stat.color : '#64748b',
-                marginTop: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
+              className="ios-stat-card__value"
+              style={{ color: stat.trend === 'neutral' ? '#ffffff' : stat.color }}
             >
-              {stat.trend === 'up' && <span style={{ fontSize: '0.65rem' }}>▲</span>}
-              {stat.trend === 'down' && <span style={{ fontSize: '0.65rem' }}>▼</span>}
+              {stat.value}
+            </div>
+            <div
+              className="ios-stat-card__subvalue"
+              style={{ color: stat.trend === 'neutral' ? 'var(--text-secondary)' : stat.color }}
+            >
+              {stat.trend === 'up' && <ArrowUpRight size={14} />}
+              {stat.trend === 'down' && <ArrowDownRight size={14} />}
               {stat.subValue}
             </div>
-          )}
+          </div>
+
+          <div className="ios-stat-card__glow" style={{ background: stat.color }} />
         </div>
       ))}
     </section>
