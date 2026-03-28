@@ -197,10 +197,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -222,10 +222,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -249,10 +249,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -276,10 +276,10 @@ export default function ForexClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -315,7 +315,10 @@ export default function ForexClient() {
           >
             <thead>
               <tr
-                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #111111' }}
+                style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
               >
                 <th
                   style={{
@@ -465,7 +468,7 @@ export default function ForexClient() {
             style={{
               width: '100%',
               maxWidth: '500px',
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               padding: '32px',
               borderRadius: '24px',
             }}
@@ -498,7 +501,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -529,7 +532,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -557,7 +560,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -584,7 +587,7 @@ export default function ForexClient() {
                       width: '100%',
                       padding: '12px',
                       background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                       borderRadius: '12px',
                       color: '#fff',
                     }}
@@ -599,7 +602,7 @@ export default function ForexClient() {
                     flex: 1,
                     padding: '14px',
                     background: 'transparent',
-                    border: '1px solid #111111',
+                    border: 'var(--ui-border)',
                     color: '#94a3b8',
                     borderRadius: '12px',
                     fontWeight: '700',

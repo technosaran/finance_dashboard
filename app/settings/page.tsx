@@ -160,49 +160,24 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="page-container">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
+    <div className="dashboard-page dashboard-page--narrow">
+      <div className="page-header" style={{ marginBottom: '8px' }}>
         <div>
-          <h1
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          <div className="page-kicker">Workspace preferences</div>
+          <h1 className="page-title" style={{ marginTop: '14px' }}>
             Settings
           </h1>
-          <p
-            style={{
-              color: '#94a3b8',
-              fontSize: 'clamp(0.875rem, 2vw, 1rem)',
-              marginTop: '8px',
-            }}
-          >
-            Manage your preferences and application defaults
+          <p className="page-subtitle" style={{ marginTop: '10px' }}>
+            Configure defaults, visibility, and product behavior across the whole dashboard.
           </p>
         </div>
       </div>
 
       <div
+        className="dashboard-tabs"
         style={{
-          display: 'flex',
           gap: '12px',
           overflowX: 'auto',
-          paddingBottom: '16px',
           marginBottom: '24px',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -216,22 +191,16 @@ export default function SettingsPage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
+              className={isActive ? 'dashboard-tab dashboard-tab--active' : 'dashboard-tab'}
               style={{
-                display: 'flex',
-                alignItems: 'center',
                 gap: '8px',
-                padding: '12px 20px',
-                borderRadius: '12px',
-                border: 'none',
                 background: isActive
-                  ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
-                  : 'rgba(10, 10, 10, 0.5)',
+                  ? 'linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.08)), rgba(93, 165, 255, 0.16)'
+                  : 'transparent',
                 color: isActive ? '#fff' : '#94a3b8',
                 fontWeight: '600',
                 fontSize: '0.9rem',
-                cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.2s',
                 boxShadow: isActive ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none',
                 flexShrink: 0,
               }}
@@ -484,7 +453,7 @@ function SectionCard({
   style?: CSSProperties;
 }) {
   return (
-    <div className="premium-card" style={style}>
+    <div className="content-panel" style={style}>
       <div
         style={{
           display: 'flex',
@@ -549,8 +518,8 @@ function AccountSelect({
           onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
           style={{
             width: '100%',
-            background: '#000000',
-            border: '1px solid #1a1a1a',
+            background: 'var(--ui-input-bg)',
+            border: 'var(--ui-border)',
             padding: '12px 16px',
             borderRadius: '12px',
             color: '#fff',
@@ -657,7 +626,7 @@ function ToggleCard({
         style={{
           width: '44px',
           height: '24px',
-          background: isActive ? color : '#1a1a1a',
+          background: isActive ? color : 'rgba(255, 255, 255, 0.18)',
           borderRadius: '100px',
           position: 'relative',
           transition: 'background 0.3s',
@@ -683,8 +652,8 @@ function ToggleCard({
 }
 
 const textInputStyle: CSSProperties = {
-  background: '#000000',
-  border: '2px solid #111111',
+  background: 'var(--ui-input-bg)',
+  border: '1px solid rgba(255, 255, 255, 0.14)',
   padding: '14px 16px',
   borderRadius: '14px',
   color: '#fff',

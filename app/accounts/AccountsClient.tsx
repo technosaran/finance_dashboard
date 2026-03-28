@@ -177,45 +177,22 @@ export default function AccountsClient() {
   }
 
   return (
-    <div className="page-container">
-      <div
-        className="flex-col-mobile"
-        style={{
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px',
-          gap: '20px',
-        }}
-      >
+    <div className="dashboard-page dashboard-page--wide">
+      <div className="page-header" style={{ marginBottom: '8px' }}>
         <div style={{ flex: 1 }}>
-          <h1
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          <div className="page-kicker">Cash and account operations</div>
+          <h1 className="page-title" style={{ marginTop: '14px' }}>
             Accounts
           </h1>
-          <p
-            style={{ color: '#94a3b8', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', marginTop: '8px' }}
-          >
-            Securely manage your assets and financial entities
+          <p className="page-subtitle" style={{ marginTop: '10px' }}>
+            Manage banks, cash balances, and internal transfers from one shared control surface.
           </p>
         </div>
 
         <div
-          className="hide-scrollbar"
+          className="dashboard-toolbar__actions hide-scrollbar"
           style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '10px',
             overflowX: 'auto',
-            width: 'auto',
             paddingBottom: '4px',
             WebkitOverflowScrolling: 'touch',
           }}
@@ -225,23 +202,13 @@ export default function AccountsClient() {
               exportAccountsToCSV(accounts);
               showNotification('success', 'Accounts exported successfully!');
             }}
+            className="toolbar-btn-secondary"
             style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              background: '#050505',
               color: '#fff',
-              border: '1px solid #111111',
               fontWeight: '700',
               fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: '0.2s',
               flexShrink: 0,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#111111')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#050505')}
             aria-label="Export accounts to CSV"
           >
             <Download size={16} color="#10b981" aria-hidden="true" />{' '}
@@ -249,23 +216,13 @@ export default function AccountsClient() {
           </button>
           <button
             onClick={() => setIsTransferModalOpen(true)}
+            className="toolbar-btn-secondary"
             style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              background: '#050505',
               color: '#fff',
-              border: '1px solid #111111',
               fontWeight: '700',
               fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: '0.2s',
               flexShrink: 0,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#111111')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#050505')}
             aria-label="Transfer funds between accounts"
           >
             <ArrowRightLeft size={16} color="#818cf8" aria-hidden="true" /> Transfer
@@ -275,24 +232,13 @@ export default function AccountsClient() {
               resetAccountForm();
               setIsModalOpen(true);
             }}
+            className="header-add-btn"
             style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
               color: 'white',
-              border: 'none',
               fontWeight: '800',
               fontSize: '0.8rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
-              transition: '0.2s',
               flexShrink: 0,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
             aria-label="Add new account"
           >
             <Plus size={16} strokeWidth={3} aria-hidden="true" /> New Entity
@@ -306,10 +252,10 @@ export default function AccountsClient() {
         <div
           className="premium-card"
           style={{
-            background: 'linear-gradient(135deg, #111111 0%, #050505 100%)',
+            background: 'var(--ui-panel-gradient)',
             padding: 'clamp(20px, 5vw, 32px)',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
             position: 'relative',
             overflow: 'hidden',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
@@ -475,8 +421,8 @@ export default function AccountsClient() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: '#000000',
-                      border: '1px solid #1a1a1a',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       borderRadius: '12px',
                       padding: '12px',
                       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
@@ -548,10 +494,11 @@ export default function AccountsClient() {
           {accounts.map((account, idx) => (
             <div
               key={account.id}
+              className="premium-card"
               style={{
-                background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+                background: 'var(--ui-panel-gradient-soft)',
                 borderRadius: '16px',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
                 padding: '24px',
                 position: 'relative',
                 overflow: 'hidden',
@@ -569,7 +516,7 @@ export default function AccountsClient() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = '#111111';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
               onClick={() => handleEditClick(account)}
@@ -813,8 +760,8 @@ export default function AccountsClient() {
                   disabled={accountName.toLowerCase() === 'physical cash'}
                   placeholder="e.g. Primary Savings"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: accountName.toLowerCase() === 'physical cash' ? '#64748b' : '#fff',
@@ -845,8 +792,8 @@ export default function AccountsClient() {
                   disabled={accountName.toLowerCase() === 'physical cash'}
                   placeholder="e.g. HDFC Bank"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: accountName.toLowerCase() === 'physical cash' ? '#64748b' : '#fff',
@@ -881,8 +828,8 @@ export default function AccountsClient() {
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as 'INR' | 'USD')}
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '16px',
                       borderRadius: '16px',
                       color: '#fff',
@@ -914,8 +861,8 @@ export default function AccountsClient() {
                     onChange={(e) => setAccountType(e.target.value as AccountType)}
                     disabled={accountName.toLowerCase() === 'physical cash'}
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '16px',
                       borderRadius: '16px',
                       color: accountName.toLowerCase() === 'physical cash' ? '#64748b' : '#fff',
@@ -952,8 +899,8 @@ export default function AccountsClient() {
                   onChange={(e) => setBalance(e.target.value)}
                   placeholder="0.00"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1061,8 +1008,8 @@ export default function AccountsClient() {
                   value={sourceAccountId}
                   onChange={(e) => setSourceAccountId(Number(e.target.value))}
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1100,8 +1047,8 @@ export default function AccountsClient() {
                   value={targetAccountId}
                   onChange={(e) => setTargetAccountId(Number(e.target.value))}
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1141,8 +1088,8 @@ export default function AccountsClient() {
                   onChange={(e) => setTransferAmount(e.target.value)}
                   placeholder="0.00"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1251,8 +1198,8 @@ export default function AccountsClient() {
                   onChange={(e) => setAddFundsAmount(e.target.value)}
                   placeholder="0.00"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1282,8 +1229,8 @@ export default function AccountsClient() {
                   onChange={(e) => setAddFundsDescription(e.target.value)}
                   placeholder="e.g. Dividend Payment"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1309,8 +1256,8 @@ export default function AccountsClient() {
                   value={addFundsCategory}
                   onChange={(e) => setAddFundsCategory(e.target.value)}
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px',
                     borderRadius: '16px',
                     color: '#fff',

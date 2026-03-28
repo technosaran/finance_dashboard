@@ -143,7 +143,7 @@ export default function ExpensesClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--ui-page-bg)',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -163,7 +163,7 @@ export default function ExpensesClient() {
   return (
     <div
       className="main-content"
-      style={{ backgroundColor: '#000000', minHeight: '100vh', color: '#f8fafc' }}
+      style={{ backgroundColor: 'var(--ui-page-bg)', minHeight: '100vh', color: '#f8fafc' }}
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Section */}
@@ -185,10 +185,10 @@ export default function ExpensesClient() {
             <div
               style={{
                 display: 'flex',
-                background: '#050505',
+                background: 'var(--ui-surface-soft)',
                 padding: '6px',
                 borderRadius: '14px',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
               }}
             >
               {['This Year', 'All Time'].map((tab) => (
@@ -200,10 +200,7 @@ export default function ExpensesClient() {
                     padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
                     borderRadius: '10px',
                     border: 'none',
-                    background:
-                      activeTab === tab
-                        ? 'linear-gradient(135deg, #1a1a1a 0%, #111111 100%)'
-                        : 'transparent',
+                    background: activeTab === tab ? 'var(--ui-panel-gradient-soft)' : 'transparent',
                     color: activeTab === tab ? '#fff' : '#64748b',
                     fontWeight: '700',
                     cursor: 'pointer',
@@ -438,9 +435,9 @@ export default function ExpensesClient() {
                   style={{
                     padding: '80px 24px',
                     textAlign: 'center',
-                    background: '#050505',
+                    background: 'var(--ui-surface-soft)',
                     borderRadius: '24px',
-                    border: '1px dashed #111111',
+                    border: '1px dashed rgba(255, 255, 255, 0.18)',
                     color: '#94a3b8',
                   }}
                 >
@@ -478,9 +475,9 @@ export default function ExpensesClient() {
             </h3>
             <div
               style={{
-                background: '#050505',
+                background: 'var(--ui-surface-soft)',
                 borderRadius: '28px',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
                 padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',

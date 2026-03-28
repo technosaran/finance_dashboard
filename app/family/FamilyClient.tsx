@@ -184,7 +184,7 @@ export default function FamilyClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--ui-page-bg)',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -205,7 +205,7 @@ export default function FamilyClient() {
     <div
       className="main-content"
       style={{
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--ui-page-bg)',
         minHeight: '100vh',
         color: '#f8fafc',
         padding: 'clamp(12px, 4vw, 24px)',
@@ -389,7 +389,7 @@ export default function FamilyClient() {
                     <div
                       key={member.name}
                       style={{
-                        background: '#050505',
+                        background: 'var(--ui-surface-soft)',
                         borderRadius: 'clamp(20px, 4vw, 28px)',
                         border: `1px solid ${colorScheme.border}`,
                         padding: 'clamp(16px, 4vw, 24px)',
@@ -621,7 +621,7 @@ export default function FamilyClient() {
                   style={{
                     background: 'rgba(255,255,255,0.02)',
                     borderRadius: 'clamp(20px, 4vw, 28px)',
-                    border: '2px dashed #111111',
+                    border: '1px dashed rgba(255, 255, 255, 0.18)',
                     padding: 'clamp(24px, 5vw, 40px)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -640,7 +640,8 @@ export default function FamilyClient() {
                       'rgba(236, 72, 153, 0.03)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#111111';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor =
+                      'rgba(255, 255, 255, 0.12)';
                     (e.currentTarget as HTMLButtonElement).style.color = '#475569';
                     (e.currentTarget as HTMLButtonElement).style.background =
                       'rgba(255,255,255,0.02)';
@@ -672,7 +673,7 @@ export default function FamilyClient() {
                   textAlign: 'center',
                   background: 'rgba(0, 0, 0, 0.3)',
                   borderRadius: 'clamp(24px, 5vw, 32px)',
-                  border: '2px dashed #111111',
+                  border: '1px dashed rgba(255, 255, 255, 0.18)',
                 }}
               >
                 <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
@@ -734,9 +735,9 @@ export default function FamilyClient() {
           <div className="section-fade-in">
             <div
               style={{
-                background: '#050505',
+                background: 'var(--ui-surface-soft)',
                 borderRadius: 'clamp(20px, 4vw, 28px)',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
                 padding: 'clamp(16px, 4vw, 28px)',
               }}
             >

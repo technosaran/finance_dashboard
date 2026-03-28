@@ -442,8 +442,6 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       <div
         className="modal-card"
         style={{
-          background: '#050505',
-          border: '1px solid #1a1a1a',
           width: '100%',
           maxWidth: '560px',
         }}
@@ -509,14 +507,11 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
         {/* Instrument Type Selector */}
         <div
+          className="dashboard-tabs"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
             gap: '6px',
-            padding: '4px',
-            background: '#000000',
-            borderRadius: '14px',
-            border: '1px solid #111111',
             marginBottom: '16px',
           }}
         >
@@ -602,8 +597,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 }
                 style={{
                   width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
+                  background: 'var(--ui-input-bg)',
+                  border: 'var(--ui-border)',
                   padding: '12px 12px 12px 48px',
                   borderRadius: '14px',
                   color: '#fff',
@@ -633,8 +628,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                   top: '100%',
                   left: 0,
                   right: 0,
-                  background: '#050505',
-                  border: '1px solid #111111',
+                  background: 'var(--ui-surface-soft)',
+                  border: 'var(--ui-border)',
                   borderRadius: '16px',
                   marginTop: '8px',
                   zIndex: 2100,
@@ -650,7 +645,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                     style={{
                       padding: '14px 16px',
                       cursor: 'pointer',
-                      borderBottom: '1px solid #111111',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                     }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
@@ -727,8 +722,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 onChange={(e) => setSubType(e.target.value as 'BUY' | 'SELL' | 'SIP')}
                 style={{
                   width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
+                  background: 'var(--ui-input-bg)',
+                  border: 'var(--ui-border)',
                   padding: '12px',
                   borderRadius: '14px',
                   color: '#fff',
@@ -758,8 +753,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 onChange={(e) => setDate(e.target.value)}
                 style={{
                   width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
+                  background: 'var(--ui-input-bg)',
+                  border: 'var(--ui-border)',
                   padding: '12px',
                   borderRadius: '14px',
                   color: '#fff',
@@ -796,8 +791,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 placeholder="0"
                 style={{
                   width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
+                  background: 'var(--ui-input-bg)',
+                  border: 'var(--ui-border)',
                   padding: '12px',
                   borderRadius: '14px',
                   color: '#fff',
@@ -825,8 +820,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 placeholder="0.00"
                 style={{
                   width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
+                  background: 'var(--ui-input-bg)',
+                  border: 'var(--ui-border)',
                   padding: '12px',
                   borderRadius: '14px',
                   color: '#fff',
@@ -862,8 +857,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                     onChange={(e) => setFnoProduct(e.target.value as 'NRML' | 'MIS')}
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '14px',
                       borderRadius: '14px',
                       color: '#fff',
@@ -891,8 +886,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                     onChange={(e) => setFnoStatus(e.target.value as 'OPEN' | 'CLOSED')}
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '14px',
                       borderRadius: '14px',
                       color: '#fff',
@@ -932,8 +927,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                       placeholder="0.00"
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -959,8 +954,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                       onChange={(e) => setExitDate(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -1161,8 +1156,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : '')}
               style={{
                 width: '100%',
-                background: '#000000',
-                border: '1px solid #111111',
+                background: 'var(--ui-input-bg)',
+                border: 'var(--ui-border)',
                 padding: '12px',
                 borderRadius: '14px',
                 color: '#fff',
@@ -1180,22 +1175,14 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
           <button
             type="submit"
             disabled={isFetchingQuote || (!selectedItem && type !== 'FNO')}
+            className="btn-primary"
             style={{
               marginTop: '8px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
               color: '#fff',
-              padding: '14px',
-              borderRadius: '16px',
-              border: 'none',
               fontWeight: '800',
               fontSize: '1rem',
               cursor:
                 isFetchingQuote || (!selectedItem && type !== 'FNO') ? 'not-allowed' : 'pointer',
-              transition: '0.3s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
               boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)',
             }}
           >

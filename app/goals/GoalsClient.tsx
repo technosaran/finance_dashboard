@@ -79,7 +79,7 @@ export default function GoalsClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--ui-page-bg)',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -97,75 +97,31 @@ export default function GoalsClient() {
   }
 
   return (
-    <div
-      className="main-content"
-      style={{
-        backgroundColor: '#000000',
-        minHeight: '100vh',
-        color: '#f8fafc',
-        padding: 'clamp(16px, 4vw, 24px)',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="dashboard-page dashboard-page--narrow" style={{ color: '#f8fafc' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         {/* Header Section */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '24px',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}
-        >
+        <div className="page-header">
           <div>
-            <h1
-              style={{
-                fontSize: 'clamp(1.5rem, 3.5vw, 2rem)',
-                fontWeight: '900',
-                margin: 0,
-                letterSpacing: '-0.02em',
-              }}
-            >
+            <div className="page-kicker">Goal planning</div>
+            <h1 className="page-title" style={{ marginTop: '14px' }}>
               Target Milestones
             </h1>
-            <p
-              style={{
-                color: '#94a3b8',
-                fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)',
-                marginTop: '6px',
-              }}
-            >
-              Engineered for ambitious wealth accumulation
+            <p className="page-subtitle" style={{ marginTop: '10px' }}>
+              Plan wealth targets with progress, deadlines, and a cleaner long-term view.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="dashboard-toolbar__actions">
             <button
               onClick={() => {
                 exportGoalsToCSV(goals);
                 showNotification('success', 'Goals exported successfully!');
               }}
               aria-label="Export goals to CSV"
+              className="toolbar-btn-secondary"
               style={{
-                padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
-                minHeight: '44px',
-                borderRadius: '14px',
-                background: '#050505',
                 color: '#fff',
-                border: '1px solid #111111',
-                cursor: 'pointer',
                 fontWeight: '700',
                 fontSize: '0.85rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: '0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#111111';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#050505';
               }}
             >
               <Download size={16} color="#10b981" /> Export CSV
@@ -176,25 +132,13 @@ export default function GoalsClient() {
                 setIsModalOpen(true);
               }}
               aria-label="Create new goal"
+              className="header-add-btn"
               style={{
-                padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
-                minHeight: '44px',
-                borderRadius: '14px',
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                 color: 'white',
-                border: 'none',
-                cursor: 'pointer',
                 fontWeight: '800',
                 fontSize: '0.85rem',
-                boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
             >
               <Plus size={16} strokeWidth={3} /> New Directive
             </button>
@@ -203,11 +147,12 @@ export default function GoalsClient() {
 
         {/* Achievement Statistics */}
         <div
+          className="dashboard-hero-panel"
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+            background: 'var(--ui-panel-gradient)',
             padding: '28px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
             marginBottom: '24px',
             position: 'relative',
             overflow: 'hidden',
@@ -383,10 +328,11 @@ export default function GoalsClient() {
               return (
                 <div
                   key={goal.id}
+                  className="premium-card"
                   style={{
-                    background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+                    background: 'var(--ui-panel-gradient-soft)',
                     borderRadius: '24px',
-                    border: '1px solid #111111',
+                    border: 'var(--ui-border)',
                     padding: '24px',
                     transition: 'all 0.3s',
                     display: 'flex',
@@ -397,12 +343,12 @@ export default function GoalsClient() {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-6px)';
-                    e.currentTarget.style.borderColor = '#1a1a1a';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.16)';
                     e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(0, 0, 0, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = '#111111';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
@@ -532,7 +478,7 @@ export default function GoalsClient() {
                       style={{
                         width: '100%',
                         height: '10px',
-                        background: '#000000',
+                        background: 'var(--ui-input-bg)',
                         borderRadius: '100px',
                         overflow: 'hidden',
                       }}
@@ -663,7 +609,7 @@ export default function GoalsClient() {
                 textAlign: 'center',
                 background: 'rgba(0, 0, 0, 0.2)',
                 borderRadius: '40px',
-                border: '2px dashed #111111',
+                border: '1px dashed rgba(255, 255, 255, 0.18)',
                 color: '#64748b',
               }}
             >
@@ -708,10 +654,10 @@ export default function GoalsClient() {
         >
           <div
             style={{
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               padding: 'clamp(24px, 5vw, 40px)',
               borderRadius: '32px',
-              border: '1px solid #1a1a1a',
+              border: 'var(--ui-border)',
               width: '100%',
               maxWidth: '550px',
               maxHeight: '95vh',
@@ -775,8 +721,8 @@ export default function GoalsClient() {
                   required
                   aria-label="Goal name"
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '18px',
                     borderRadius: '18px',
                     color: '#fff',
@@ -813,8 +759,8 @@ export default function GoalsClient() {
                     required
                     aria-label="Target amount"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -842,8 +788,8 @@ export default function GoalsClient() {
                     placeholder="0.00"
                     aria-label="Current amount"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -878,8 +824,8 @@ export default function GoalsClient() {
                     onChange={(e) => setDeadline(e.target.value)}
                     aria-label="Deadline"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -905,8 +851,8 @@ export default function GoalsClient() {
                     onChange={(e) => setCategory(e.target.value)}
                     aria-label="Goal category"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',
@@ -941,8 +887,8 @@ export default function GoalsClient() {
                     onChange={(e) => setSelectedAccountId(Number(e.target.value))}
                     aria-label="Select bank account"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '18px',
                       borderRadius: '18px',
                       color: '#fff',

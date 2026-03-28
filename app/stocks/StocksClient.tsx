@@ -516,7 +516,7 @@ export default function StocksClient() {
         className="main-content"
         style={{
           padding: 'clamp(20px, 4vw, 60px)',
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--ui-page-bg)',
           minHeight: '100vh',
           color: '#f8fafc',
           display: 'flex',
@@ -537,10 +537,10 @@ export default function StocksClient() {
   }
 
   return (
-    <div className="page-container">
+    <div className="dashboard-page dashboard-page--wide">
       {/* Header Section */}
       <div
-        className="mobile-page-header"
+        className="page-header mobile-page-header"
         style={{
           marginBottom: '24px',
           gap: '16px',
@@ -548,43 +548,29 @@ export default function StocksClient() {
         }}
       >
         <div style={{ flexShrink: 0 }}>
-          <h1
-            style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          <div className="page-kicker">Listed equity tracking</div>
+          <h1 className="page-title" style={{ marginTop: '14px' }}>
             Stock Portfolio
           </h1>
+          <p className="page-subtitle" style={{ marginTop: '10px' }}>
+            Monitor holdings, allocation, lifetime activity, and day movement in one production
+            dashboard.
+          </p>
         </div>
         <div
-          className="mobile-page-header__actions"
+          className="mobile-page-header__actions dashboard-toolbar__actions"
           style={{
-            display: 'flex',
             gap: '8px',
-            alignItems: 'center',
             justifyContent: 'flex-end',
           }}
         >
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
+            className="toolbar-btn-secondary"
             style={{
-              padding: '12px',
-              borderRadius: '14px',
-              background: '#050505',
               color: isRefreshing ? '#64748b' : '#818cf8',
-              border: '1px solid #111111',
               cursor: isRefreshing ? 'wait' : 'pointer',
-              transition: '0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               flexShrink: 0,
             }}
             title="Refresh Markets"
@@ -597,20 +583,11 @@ export default function StocksClient() {
           </button>
           <button
             onClick={() => openModal('stock')}
+            className="header-add-btn"
             style={{
-              padding: '10px 16px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
               color: 'white',
-              border: 'none',
               fontWeight: '800',
               fontSize: '0.85rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
-              transition: '0.2s',
               flexShrink: 0,
             }}
           >
@@ -623,11 +600,12 @@ export default function StocksClient() {
       {/* Portfolio Summary Cards */}
       <div className="grid-responsive-4" style={{ marginBottom: '32px' }}>
         <div
+          className="stat-card"
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+            background: 'var(--ui-panel-gradient)',
             padding: '24px',
             borderRadius: '20px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -652,11 +630,12 @@ export default function StocksClient() {
           </div>
         </div>
         <div
+          className="stat-card"
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+            background: 'var(--ui-panel-gradient)',
             padding: '24px',
             borderRadius: '20px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -681,11 +660,12 @@ export default function StocksClient() {
           </div>
         </div>
         <div
+          className="stat-card"
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+            background: 'var(--ui-panel-gradient)',
             padding: '24px',
             borderRadius: '20px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -727,11 +707,12 @@ export default function StocksClient() {
           </div>
         </div>
         <div
+          className="stat-card"
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+            background: 'var(--ui-panel-gradient)',
             padding: '24px',
             borderRadius: '20px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -766,10 +747,10 @@ export default function StocksClient() {
         className="mobile-tab-scroll"
         style={{
           display: 'flex',
-          background: '#050505',
+          background: 'var(--ui-surface-soft)',
           padding: '6px',
           borderRadius: '16px',
-          border: '1px solid #111111',
+          border: 'var(--ui-border)',
           marginBottom: '24px',
           maxWidth: '100%',
           overflowX: 'auto',
@@ -822,7 +803,7 @@ export default function StocksClient() {
                   className="premium-card"
                   style={{
                     padding: '16px',
-                    background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+                    background: 'var(--ui-panel-gradient-soft)',
                     borderLeft: `4px solid ${COLORS[idx % COLORS.length]}`,
                   }}
                   onClick={() => handleEditStock(stock)}
@@ -1031,7 +1012,7 @@ export default function StocksClient() {
                 <tr
                   style={{
                     background: 'rgba(255,255,255,0.02)',
-                    borderBottom: '1px solid #111111',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
                   <th
@@ -1385,7 +1366,10 @@ export default function StocksClient() {
               </tbody>
               {stocks.length > 0 && (
                 <tfoot
-                  style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid #111111' }}
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  }}
                 >
                   <tr>
                     <td style={{ padding: '20px 24px', fontWeight: '800', color: '#64748b' }}>
@@ -1454,10 +1438,10 @@ export default function StocksClient() {
         <div className="grid-responsive-2" style={{ gap: '32px' }}>
           <div
             style={{
-              background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+              background: 'var(--ui-panel-gradient-soft)',
               padding: 'clamp(20px, 4vw, 40px)',
               borderRadius: 'clamp(20px, 3vw, 32px)',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
             }}
           >
             <div
@@ -1531,8 +1515,8 @@ export default function StocksClient() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: '#000000',
-                      border: '1px solid #1a1a1a',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       borderRadius: '16px',
                       boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
                       padding: '12px',
@@ -1584,9 +1568,9 @@ export default function StocksClient() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div
               style={{
-                background: '#050505',
+                background: 'var(--ui-surface-soft)',
                 borderRadius: 'clamp(20px, 3vw, 32px)',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
                 padding: 'clamp(20px, 4vw, 40px)',
               }}
             >
@@ -1620,7 +1604,7 @@ export default function StocksClient() {
                         style={{
                           width: '100%',
                           height: '8px',
-                          background: '#000000',
+                          background: 'var(--ui-input-bg)',
                           borderRadius: '100px',
                           overflow: 'hidden',
                         }}
@@ -1655,10 +1639,10 @@ export default function StocksClient() {
                   key={transaction.id}
                   className="tx-history-card"
                   style={{
-                    background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+                    background: 'var(--ui-panel-gradient)',
                     padding: '16px',
                     borderRadius: '16px',
-                    border: '1px solid #111111',
+                    border: 'var(--ui-border)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -1822,7 +1806,7 @@ export default function StocksClient() {
                 padding: 'clamp(24px, 4vw, 60px)',
                 textAlign: 'center',
                 color: '#475569',
-                border: '2px dashed #111111',
+                border: '1px dashed rgba(255, 255, 255, 0.18)',
                 borderRadius: '20px',
               }}
             >
@@ -1843,9 +1827,9 @@ export default function StocksClient() {
           <div
             className="lifetime-report-card"
             style={{
-              background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+              background: 'var(--ui-panel-gradient)',
               borderRadius: 'clamp(20px, 3vw, 32px)',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
               padding: 'clamp(20px, 4vw, 40px)',
             }}
           >
@@ -1980,8 +1964,8 @@ export default function StocksClient() {
           <div
             className="modal-card"
             style={{
-              background: '#050505',
-              border: '1px solid #1a1a1a',
+              background: 'var(--ui-surface-soft)',
+              border: 'var(--ui-border)',
               width: '100%',
               maxWidth: '500px',
             }}
@@ -2070,8 +2054,8 @@ export default function StocksClient() {
                       placeholder="Search by name or symbol..."
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px 12px 12px 40px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2101,8 +2085,8 @@ export default function StocksClient() {
                         top: '100%',
                         left: 0,
                         right: 0,
-                        background: '#050505',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-surface-soft)',
+                        border: 'var(--ui-border)',
                         borderRadius: '12px',
                         marginTop: '8px',
                         zIndex: 1100,
@@ -2118,7 +2102,7 @@ export default function StocksClient() {
                           style={{
                             padding: '12px 16px',
                             cursor: 'pointer',
-                            borderBottom: '1px solid #111111',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                           }}
                           onMouseEnter={(e) =>
                             (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
@@ -2162,7 +2146,7 @@ export default function StocksClient() {
                       style={{
                         width: '100%',
                         background: 'rgba(0, 0, 0, 0.5)',
-                        border: '1px solid #111111',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#94a3b8',
@@ -2188,8 +2172,8 @@ export default function StocksClient() {
                       onChange={(e) => setExchange(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2226,8 +2210,8 @@ export default function StocksClient() {
                       onChange={(e) => setQuantity(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2254,8 +2238,8 @@ export default function StocksClient() {
                       onChange={(e) => setAvgPrice(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2282,8 +2266,8 @@ export default function StocksClient() {
                       onChange={(e) => setCurrentPrice(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2374,8 +2358,8 @@ export default function StocksClient() {
                       }
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2431,8 +2415,8 @@ export default function StocksClient() {
                     onChange={(e) => setSelectedStockId(Number(e.target.value))}
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '12px',
                       borderRadius: '12px',
                       color: '#fff',
@@ -2474,8 +2458,10 @@ export default function StocksClient() {
                       disabled={isTypeLocked}
                       style={{
                         width: '100%',
-                        background: isTypeLocked ? 'rgba(0, 0, 0, 0.5)' : '#000000',
-                        border: '1px solid #111111',
+                        background: isTypeLocked
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: isTypeLocked ? '#64748b' : '#fff',
@@ -2505,8 +2491,8 @@ export default function StocksClient() {
                       onChange={(e) => setTransactionQuantity(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2541,8 +2527,8 @@ export default function StocksClient() {
                       onChange={(e) => setTransactionPrice(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2568,8 +2554,8 @@ export default function StocksClient() {
                       onChange={(e) => setTransactionDate(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2609,8 +2595,8 @@ export default function StocksClient() {
                       placeholder="Calculated automatically"
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2640,8 +2626,8 @@ export default function StocksClient() {
                       placeholder="Calculated automatically"
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '12px',
                         borderRadius: '12px',
                         color: '#fff',
@@ -2748,8 +2734,8 @@ export default function StocksClient() {
                     required
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '12px',
                       borderRadius: '12px',
                       color: '#fff',
@@ -2797,8 +2783,8 @@ export default function StocksClient() {
           <div
             className="modal-card"
             style={{
-              background: '#050505',
-              border: '1px solid #1a1a1a',
+              background: 'var(--ui-surface-soft)',
+              border: 'var(--ui-border)',
               width: '100%',
               maxWidth: '450px',
             }}
@@ -2955,7 +2941,7 @@ export default function StocksClient() {
                         style={{
                           marginTop: '20px',
                           paddingTop: '20px',
-                          borderTop: '1px solid #111111',
+                          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
@@ -2985,7 +2971,7 @@ export default function StocksClient() {
               onClick={() => setViewingCharges(null)}
               style={{
                 width: '100%',
-                background: '#111111',
+                background: 'rgba(255, 255, 255, 0.12)',
                 color: '#fff',
                 padding: '14px',
                 borderRadius: '16px',

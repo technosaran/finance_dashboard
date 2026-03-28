@@ -172,7 +172,7 @@ export default function FnOClient() {
       <div
         className="main-content"
         style={{
-          background: '#000000',
+          background: 'var(--ui-input-bg)',
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -249,10 +249,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -280,10 +280,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -307,10 +307,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -332,10 +332,10 @@ export default function FnOClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -362,7 +362,7 @@ export default function FnOClient() {
           display: 'flex',
           gap: '12px',
           marginBottom: '32px',
-          borderBottom: '1px solid #111111',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           paddingBottom: '16px',
         }}
       >
@@ -440,7 +440,7 @@ export default function FnOClient() {
                   className="premium-card"
                   style={{
                     padding: '16px',
-                    background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+                    background: 'var(--ui-panel-gradient-soft)',
                     borderLeft: `4px solid ${trade.tradeType === 'BUY' ? '#10b981' : '#f43f5e'}`,
                   }}
                   onClick={() => handleEdit(trade)}
@@ -627,7 +627,7 @@ export default function FnOClient() {
                 <tr
                   style={{
                     background: 'rgba(255,255,255,0.02)',
-                    borderBottom: '1px solid #111111',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
                   <th
@@ -893,7 +893,10 @@ export default function FnOClient() {
                 )}
               </tbody>
               <tfoot
-                style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid #111111' }}
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
               >
                 <tr>
                   <td style={{ padding: '20px 24px', fontWeight: '800', color: '#64748b' }}>
@@ -921,9 +924,9 @@ export default function FnOClient() {
       {activeTab === 'history' && (
         <div
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             borderRadius: '32px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
             overflow: 'hidden',
           }}
         >
@@ -1049,9 +1052,9 @@ export default function FnOClient() {
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: '32px' }}>
           <div
             style={{
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               borderRadius: '32px',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
               padding: '32px',
             }}
           >
@@ -1091,8 +1094,8 @@ export default function FnOClient() {
                   />
                   <RechartsTooltip
                     contentStyle={{
-                      background: '#000000',
-                      border: '1px solid #1a1a1a',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       borderRadius: '16px',
                     }}
                     itemStyle={{ color: '#e7edf4' }}
@@ -1112,9 +1115,9 @@ export default function FnOClient() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div
               style={{
-                background: '#050505',
+                background: 'var(--ui-surface-soft)',
                 borderRadius: '32px',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
                 padding: '32px',
               }}
             >
@@ -1200,11 +1203,11 @@ export default function FnOClient() {
         >
           <div
             style={{
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               width: '100%',
               maxWidth: '560px',
               borderRadius: '40px',
-              border: '1px solid #1a1a1a',
+              border: 'var(--ui-border)',
               padding: 'clamp(24px, 5vw, 48px)',
               position: 'relative',
               maxHeight: '95vh',
@@ -1268,8 +1271,8 @@ export default function FnOClient() {
                   placeholder="e.g. NIFTY 22FEB 21500 CE"
                   required
                   style={{
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px 20px',
                     borderRadius: '16px',
                     color: '#fff',
@@ -1303,9 +1306,9 @@ export default function FnOClient() {
                       display: 'flex',
                       gap: '8px',
                       padding: '4px',
-                      background: '#000000',
+                      background: 'var(--ui-input-bg)',
                       borderRadius: '12px',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                     }}
                   >
                     <button
@@ -1361,9 +1364,9 @@ export default function FnOClient() {
                       display: 'flex',
                       gap: '8px',
                       padding: '4px',
-                      background: '#000000',
+                      background: 'var(--ui-input-bg)',
                       borderRadius: '12px',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                     }}
                   >
                     <button
@@ -1430,8 +1433,8 @@ export default function FnOClient() {
                     placeholder="0"
                     required
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '16px 20px',
                       borderRadius: '16px',
                       color: '#fff',
@@ -1459,8 +1462,8 @@ export default function FnOClient() {
                     placeholder="0.00"
                     required
                     style={{
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '16px 20px',
                       borderRadius: '16px',
                       color: '#fff',
@@ -1488,9 +1491,9 @@ export default function FnOClient() {
                     display: 'flex',
                     gap: '8px',
                     padding: '4px',
-                    background: '#000000',
+                    background: 'var(--ui-input-bg)',
                     borderRadius: '12px',
-                    border: '1px solid #111111',
+                    border: 'var(--ui-border)',
                   }}
                 >
                   <button
@@ -1557,8 +1560,8 @@ export default function FnOClient() {
                       onChange={(e) => setExitPrice(e.target.value)}
                       placeholder="0.00"
                       style={{
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '16px 20px',
                         borderRadius: '16px',
                         color: '#fff',
@@ -1584,8 +1587,8 @@ export default function FnOClient() {
                       value={exitDate}
                       onChange={(e) => setExitDate(e.target.value)}
                       style={{
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '16px 20px',
                         borderRadius: '16px',
                         color: '#fff',
@@ -1707,8 +1710,8 @@ export default function FnOClient() {
                   onChange={(e) => setAccountId(e.target.value)}
                   style={{
                     width: '100%',
-                    background: '#000000',
-                    border: '1px solid #111111',
+                    background: 'var(--ui-input-bg)',
+                    border: 'var(--ui-border)',
                     padding: '16px 20px',
                     borderRadius: '16px',
                     color: '#fff',

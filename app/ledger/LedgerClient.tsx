@@ -147,7 +147,7 @@ export default function LedgerClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#000000',
+          backgroundColor: 'var(--ui-page-bg)',
           minHeight: '100vh',
           color: '#ffffff',
           display: 'flex',
@@ -179,10 +179,9 @@ export default function LedgerClient() {
 
   return (
     <div
-      className="page-container"
+      className="dashboard-page dashboard-page--wide"
       style={{
         minHeight: '100vh',
-        padding: 'clamp(16px, 4vw, 24px)',
       }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -232,25 +231,17 @@ export default function LedgerClient() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="dashboard-toolbar__actions">
             <button
               onClick={() => {
                 exportTransactionsToCSV(transactions);
                 showNotification('success', 'Ledger exported to CSV');
               }}
+              className="toolbar-btn-secondary"
               style={{
-                padding: 'clamp(12px, 2.5vw, 14px) clamp(16px, 3vw, 20px)',
-                minHeight: '44px',
-                borderRadius: '16px',
                 background: 'rgba(0, 0, 0, 0.6)',
                 color: '#94a3b8',
-                border: '1px solid #111111',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
                 fontWeight: '700',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 backdropFilter: 'blur(8px)',
               }}
             >
@@ -699,7 +690,7 @@ export default function LedgerClient() {
                             : t === 'Expense'
                               ? 'rgba(244, 63, 94, 0.4)'
                               : 'rgba(99, 102, 241, 0.4)'
-                          : '#1a1a1a',
+                          : 'rgba(255, 255, 255, 0.12)',
                       background:
                         filterType === t
                           ? t === 'Income'
@@ -939,7 +930,7 @@ export default function LedgerClient() {
                       >
                         <div
                           style={{
-                            background: isToday ? '#6366f1' : '#111111',
+                            background: isToday ? '#6366f1' : 'rgba(255, 255, 255, 0.12)',
                             color: '#fff',
                             padding: '6px 16px',
                             borderRadius: '12px',
@@ -960,7 +951,8 @@ export default function LedgerClient() {
                           style={{
                             height: '1px',
                             flex: 1,
-                            background: 'linear-gradient(to right, #111111, transparent)',
+                            background:
+                              'linear-gradient(to right, rgba(255, 255, 255, 0.08), transparent)',
                           }}
                         ></div>
                         <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569' }}>
@@ -1166,7 +1158,7 @@ export default function LedgerClient() {
                   textAlign: 'center',
                   background: 'rgba(0, 0, 0, 0.3)',
                   borderRadius: '32px',
-                  border: '1px dashed #111111',
+                  border: '1px dashed rgba(255, 255, 255, 0.18)',
                 }}
               >
                 <EmptyTransactionsVisual />
@@ -1198,7 +1190,7 @@ export default function LedgerClient() {
                     setSelectedDate(null);
                   }}
                   style={{
-                    background: '#111111',
+                    background: 'rgba(255, 255, 255, 0.12)',
                     border: 'none',
                     color: '#fff',
                     padding: '12px 24px',
@@ -1262,10 +1254,10 @@ export default function LedgerClient() {
                     style={{
                       display: 'flex',
                       gap: '4px',
-                      background: '#000000',
+                      background: 'var(--ui-input-bg)',
                       padding: '4px',
                       borderRadius: '12px',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                     }}
                   >
                     <button

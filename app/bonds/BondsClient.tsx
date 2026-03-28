@@ -46,7 +46,7 @@ const fieldStyles = {
     width: '100%',
     padding: '12px',
     background: 'rgba(255,255,255,0.05)',
-    border: '1px solid #111111',
+    border: 'var(--ui-border)',
     borderRadius: '12px',
     color: '#fff',
   },
@@ -70,10 +70,10 @@ function StatCard({
     <div
       className="premium-card"
       style={{
-        background: '#050505',
+        background: 'var(--ui-surface-soft)',
         padding: '20px',
         borderRadius: '24px',
-        border: '1px solid #111111',
+        border: 'var(--ui-border)',
       }}
     >
       <div
@@ -604,10 +604,10 @@ export default function BondsClient() {
         className="mobile-tab-scroll"
         style={{
           display: 'flex',
-          background: '#050505',
+          background: 'var(--ui-surface-soft)',
           padding: '6px',
           borderRadius: '16px',
-          border: '1px solid #111111',
+          border: 'var(--ui-border)',
           marginBottom: '24px',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
@@ -660,7 +660,7 @@ export default function BondsClient() {
                 <tr
                   style={{
                     background: 'rgba(255,255,255,0.02)',
-                    borderBottom: '1px solid #111111',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
                   {['Bond Name', 'Qty / Price', 'Yield', 'Current Value', 'Actions'].map(
@@ -804,9 +804,7 @@ export default function BondsClient() {
                                 padding: '4px',
                                 transition: 'all 0.2s',
                               }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.transform = 'scale(1.2)')
-                              }
+                              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
                               onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                             >
                               <ArrowRight size={16} strokeWidth={3} />
@@ -892,10 +890,10 @@ export default function BondsClient() {
                 <div
                   key={tx.id}
                   style={{
-                    background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+                    background: 'var(--ui-panel-gradient)',
                     padding: '16px',
                     borderRadius: '16px',
-                    border: '1px solid #111111',
+                    border: 'var(--ui-border)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -952,7 +950,14 @@ export default function BondsClient() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      textAlign: 'right',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
                     <div>
                       <div
                         style={{
@@ -961,8 +966,7 @@ export default function BondsClient() {
                           color: tx.transactionType === 'BUY' ? '#f87171' : '#34d399',
                         }}
                       >
-                        {tx.transactionType === 'BUY' ? '-' : '+'}₹
-                        {tx.totalAmount.toLocaleString()}
+                        {tx.transactionType === 'BUY' ? '-' : '+'}₹{tx.totalAmount.toLocaleString()}
                       </div>
                     </div>
                     <button
@@ -1004,7 +1008,7 @@ export default function BondsClient() {
                 padding: 'clamp(24px, 4vw, 60px)',
                 textAlign: 'center',
                 color: '#475569',
-                border: '2px dashed #111111',
+                border: '1px dashed rgba(255, 255, 255, 0.18)',
                 borderRadius: '20px',
               }}
             >
@@ -1025,9 +1029,9 @@ export default function BondsClient() {
         <div className="fade-in">
           <div
             style={{
-              background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+              background: 'var(--ui-panel-gradient)',
               borderRadius: 'clamp(20px, 3vw, 32px)',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
               padding: 'clamp(20px, 4vw, 40px)',
             }}
           >
@@ -1175,8 +1179,8 @@ export default function BondsClient() {
           <div
             className="modal-card"
             style={{
-              background: '#050505',
-              border: '1px solid #1a1a1a',
+              background: 'var(--ui-surface-soft)',
+              border: 'var(--ui-border)',
               width: '100%',
               maxWidth: '560px',
             }}
@@ -1272,8 +1276,8 @@ export default function BondsClient() {
                         left: 0,
                         right: 0,
                         marginTop: '4px',
-                        background: '#111111',
-                        border: '1px solid #1a1a1a',
+                        background: 'rgba(255, 255, 255, 0.12)',
+                        border: 'var(--ui-border)',
                         borderRadius: '12px',
                         overflow: 'hidden',
                         zIndex: 10,
@@ -1288,7 +1292,9 @@ export default function BondsClient() {
                             padding: '12px 16px',
                             cursor: 'pointer',
                             borderBottom:
-                              index < searchResults.length - 1 ? '1px solid #1a1a1a' : 'none',
+                              index < searchResults.length - 1
+                                ? '1px solid rgba(255, 255, 255, 0.08)'
+                                : 'none',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '4px',
@@ -1296,18 +1302,14 @@ export default function BondsClient() {
                           onMouseEnter={(e) =>
                             (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
                           }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = 'transparent')
-                          }
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         >
                           <div style={{ color: '#fff', fontWeight: 'bold' }}>{result.symbol}</div>
                           <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
                             {result.companyName}
                           </div>
                           <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
-                            {result.couponRate
-                              ? `${result.couponRate}% coupon`
-                              : 'Coupon pending'}
+                            {result.couponRate ? `${result.couponRate}% coupon` : 'Coupon pending'}
                             {result.maturityDate ? ` • Matures ${result.maturityDate}` : ''}
                           </div>
                         </div>
@@ -1406,7 +1408,7 @@ export default function BondsClient() {
                       flex: 1,
                       padding: '14px',
                       background: 'transparent',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                       color: '#94a3b8',
                       borderRadius: '12px',
                       fontWeight: '700',
@@ -1555,7 +1557,7 @@ export default function BondsClient() {
                       flex: 1,
                       padding: '14px',
                       background: 'transparent',
-                      border: '1px solid #111111',
+                      border: 'var(--ui-border)',
                       color: '#94a3b8',
                       borderRadius: '12px',
                       fontWeight: '700',

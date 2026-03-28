@@ -487,9 +487,9 @@ export default function MutualFundsClient() {
             style={{
               padding: '12px',
               borderRadius: '14px',
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               color: isRefreshing ? '#64748b' : '#818cf8',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
               cursor: isRefreshing ? 'wait' : 'pointer',
               transition: '0.2s',
               display: 'flex',
@@ -542,10 +542,10 @@ export default function MutualFundsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -571,10 +571,10 @@ export default function MutualFundsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -600,10 +600,10 @@ export default function MutualFundsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -630,10 +630,10 @@ export default function MutualFundsClient() {
         <div
           className="premium-card"
           style={{
-            background: '#050505',
+            background: 'var(--ui-surface-soft)',
             padding: '20px',
             borderRadius: '24px',
-            border: '1px solid #111111',
+            border: 'var(--ui-border)',
           }}
         >
           <div
@@ -677,10 +677,10 @@ export default function MutualFundsClient() {
         className="mobile-tab-scroll"
         style={{
           display: 'flex',
-          background: '#050505',
+          background: 'var(--ui-surface-soft)',
           padding: '6px',
           borderRadius: '20px',
-          border: '1px solid #111111',
+          border: 'var(--ui-border)',
           marginBottom: '32px',
           width: '100%',
           overflowX: 'auto',
@@ -734,7 +734,7 @@ export default function MutualFundsClient() {
                   className="premium-card"
                   style={{
                     padding: '16px',
-                    background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+                    background: 'var(--ui-panel-gradient-soft)',
                     borderLeft: `4px solid ${COLORS[idx % COLORS.length]}`,
                   }}
                   onClick={() => handleEditFund(mf)}
@@ -973,7 +973,7 @@ export default function MutualFundsClient() {
                 <tr
                   style={{
                     background: 'rgba(255,255,255,0.02)',
-                    borderBottom: '1px solid #111111',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
                   <th
@@ -1319,7 +1319,10 @@ export default function MutualFundsClient() {
               </tbody>
               {mutualFunds.length > 0 && (
                 <tfoot
-                  style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid #111111' }}
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  }}
                 >
                   <tr>
                     <td style={{ padding: '20px 24px', fontWeight: '800', color: '#64748b' }}>
@@ -1394,10 +1397,10 @@ export default function MutualFundsClient() {
         >
           <div
             style={{
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               padding: 'clamp(20px, 4vw, 48px)',
               borderRadius: 'clamp(20px, 3vw, 40px)',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
             }}
           >
             <div
@@ -1470,8 +1473,8 @@ export default function MutualFundsClient() {
                   </Pie>
                   <RechartsTooltip
                     contentStyle={{
-                      background: '#000000',
-                      border: '1px solid #1a1a1a',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       borderRadius: '20px',
                       boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
                       padding: '16px',
@@ -1529,10 +1532,10 @@ export default function MutualFundsClient() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div
               style={{
-                background: '#050505',
+                background: 'var(--ui-surface-soft)',
                 padding: 'clamp(20px, 4vw, 40px)',
                 borderRadius: 'clamp(20px, 3vw, 40px)',
-                border: '1px solid #111111',
+                border: 'var(--ui-border)',
               }}
             >
               <h4 style={{ fontSize: '1.25rem', fontWeight: '900', marginBottom: '24px' }}>
@@ -1566,10 +1569,10 @@ export default function MutualFundsClient() {
                         style={{
                           width: '100%',
                           height: '10px',
-                          background: '#000000',
+                          background: 'var(--ui-input-bg)',
                           borderRadius: '100px',
                           overflow: 'hidden',
-                          border: '1px solid #111111',
+                          border: 'var(--ui-border)',
                         }}
                       >
                         <div
@@ -1647,10 +1650,10 @@ export default function MutualFundsClient() {
               <div
                 key={t.id}
                 style={{
-                  background: '#050505',
+                  background: 'var(--ui-surface-soft)',
                   padding: '24px',
                   borderRadius: '24px',
-                  border: '1px solid #111111',
+                  border: 'var(--ui-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -1756,9 +1759,9 @@ export default function MutualFundsClient() {
           <div
             style={{
               gridColumn: '1 / -1',
-              background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
+              background: 'var(--ui-panel-gradient)',
               borderRadius: 'clamp(20px, 3vw, 32px)',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
               padding: 'clamp(20px, 4vw, 48px)',
             }}
           >
@@ -1840,7 +1843,7 @@ export default function MutualFundsClient() {
                   <YAxis hide />
                   <RechartsTooltip
                     cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    contentStyle={{ background: '#000000', border: '1px solid #111111' }}
+                    contentStyle={{ background: 'var(--ui-input-bg)', border: 'var(--ui-border)' }}
                     itemStyle={{ color: '#e8eef4' }}
                   />
                   <Bar dataKey="pnl" radius={[4, 4, 0, 0]}>
@@ -1855,10 +1858,10 @@ export default function MutualFundsClient() {
 
           <div
             style={{
-              background: '#050505',
+              background: 'var(--ui-surface-soft)',
               padding: '32px',
               borderRadius: '32px',
-              border: '1px solid #111111',
+              border: 'var(--ui-border)',
             }}
           >
             <h4 style={{ fontSize: '1.2rem', fontWeight: '900', marginBottom: '24px' }}>
@@ -2029,8 +2032,8 @@ export default function MutualFundsClient() {
                       placeholder="Type name or code (e.g. Parag Parikh)"
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '16px 16px 16px 48px',
                         borderRadius: '16px',
                         color: '#fff',
@@ -2058,8 +2061,8 @@ export default function MutualFundsClient() {
                         top: '100%',
                         left: 0,
                         right: 0,
-                        background: '#050505',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-surface-soft)',
+                        border: 'var(--ui-border)',
                         borderRadius: '16px',
                         marginTop: '12px',
                         zIndex: 1100,
@@ -2075,7 +2078,7 @@ export default function MutualFundsClient() {
                           style={{
                             padding: '16px',
                             cursor: 'pointer',
-                            borderBottom: '1px solid #111111',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                           }}
                           onMouseEnter={(e) =>
                             (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
@@ -2122,8 +2125,8 @@ export default function MutualFundsClient() {
                       placeholder="0.000"
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -2151,8 +2154,8 @@ export default function MutualFundsClient() {
                       placeholder="0.00"
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -2181,8 +2184,8 @@ export default function MutualFundsClient() {
                     onChange={(e) => setCurrentNav(e.target.value)}
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '14px',
                       borderRadius: '14px',
                       color: '#34d399',
@@ -2274,8 +2277,8 @@ export default function MutualFundsClient() {
                       required
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -2332,8 +2335,8 @@ export default function MutualFundsClient() {
                     onChange={(e) => setSelectedFundId(Number(e.target.value))}
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '14px',
                       borderRadius: '14px',
                       color: '#fff',
@@ -2375,8 +2378,10 @@ export default function MutualFundsClient() {
                       disabled={isTypeLocked}
                       style={{
                         width: '100%',
-                        background: isTypeLocked ? 'rgba(0, 0, 0, 0.5)' : '#000000',
-                        border: '1px solid #111111',
+                        background: isTypeLocked
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: isTypeLocked ? '#64748b' : '#fff',
@@ -2408,8 +2413,8 @@ export default function MutualFundsClient() {
                       onChange={(e) => setTxUnits(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -2444,8 +2449,8 @@ export default function MutualFundsClient() {
                       onChange={(e) => setTxNav(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -2471,8 +2476,8 @@ export default function MutualFundsClient() {
                       onChange={(e) => setTxDate(e.target.value)}
                       style={{
                         width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
+                        background: 'var(--ui-input-bg)',
+                        border: 'var(--ui-border)',
                         padding: '14px',
                         borderRadius: '14px',
                         color: '#fff',
@@ -2565,8 +2570,8 @@ export default function MutualFundsClient() {
                     required
                     style={{
                       width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
+                      background: 'var(--ui-input-bg)',
+                      border: 'var(--ui-border)',
                       padding: '14px',
                       borderRadius: '14px',
                       color: '#fff',
@@ -2717,7 +2722,13 @@ export default function MutualFundsClient() {
                     </div>
                     <span style={{ color: '#10b981', fontWeight: '700' }}>Included</span>
                   </div>
-                  <div style={{ height: '1px', background: '#111111', margin: '8px 0' }} />
+                  <div
+                    style={{
+                      height: '1px',
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      margin: '8px 0',
+                    }}
+                  />
                   <div
                     style={{
                       display: 'flex',
