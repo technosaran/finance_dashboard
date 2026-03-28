@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNotifications } from '../components/NotificationContext';
@@ -38,6 +38,7 @@ import { useLedger, usePortfolio, useSettings } from '../components/FinanceConte
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
 import { calculateMfCharges } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
+import { summarizeMutualFundPerformance } from '@/lib/utils/performance';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
@@ -175,29 +176,17 @@ export default function MutualFundsClient() {
   }, 0);
   const totalDayPnLPercentage = totalPrevDayValue > 0 ? (totalDayPnL / totalPrevDayValue) * 100 : 0;
 
-  // Lifetime Metrics Calculation
-  const totalBuys = mutualFundTransactions
-    .filter(
-      (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
-    )
-    .reduce((sum: number, t: MutualFundTransaction) => sum + t.totalAmount, 0);
-  const totalSells = mutualFundTransactions
-    .filter((t: MutualFundTransaction) => t.transactionType === 'SELL')
-    .reduce((sum: number, t: MutualFundTransaction) => sum + t.totalAmount, 0);
-
-  // MF stamp duty: 0.005% on purchase/SIP amounts
-  const totalMfCharges = mutualFundTransactions
-    .filter(
-      (t: MutualFundTransaction) => t.transactionType === 'BUY' || t.transactionType === 'SIP'
-    )
-    .reduce((sum: number, t: MutualFundTransaction) => {
-      const charges = calculateMfCharges(t.transactionType, t.totalAmount);
-      return sum + charges.stampDuty;
-    }, 0);
-
-  // Lifetime Earned = (Total Sells + Current Value) - (Total Buys + Charges)
-  const lifetimeEarned = totalSells + totalCurrentValue - (totalBuys + totalMfCharges);
-  const lifetimeReturnPercentage = totalBuys > 0 ? (lifetimeEarned / totalBuys) * 100 : 0;
+  const mutualFundPerformance = useMemo(
+    () => summarizeMutualFundPerformance(mutualFundTransactions, totalCurrentValue),
+    [mutualFundTransactions, totalCurrentValue]
+  );
+  const totalBuys = mutualFundPerformance.cashIn;
+  const totalSells = mutualFundPerformance.cashOut;
+  const lifetimeEarned = mutualFundPerformance.absoluteProfit;
+  const hasMoneyWeightedReturn = mutualFundPerformance.moneyWeightedReturn !== null;
+  const lifetimeReturnPercentage = hasMoneyWeightedReturn
+    ? mutualFundPerformance.moneyWeightedReturn! * 100
+    : 0;
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -1792,13 +1781,19 @@ export default function MutualFundsClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Cumulative Wealth Created
+                  Tracked Profit
                 </div>
-                <div style={{ fontSize: '3rem', fontWeight: '950', color: '#10b981' }}>
-                  +₹{lifetimeEarned.toLocaleString()}
+                <div
+                  style={{
+                    fontSize: '3rem',
+                    fontWeight: '950',
+                    color: lifetimeEarned >= 0 ? '#10b981' : '#ef4444',
+                  }}
+                >
+                  {lifetimeEarned >= 0 ? '+' : ''}₹{lifetimeEarned.toLocaleString()}
                 </div>
                 <div style={{ color: '#475569', fontSize: '0.9rem', marginTop: '12px' }}>
-                  The total value added to your net worth through mutual funds since inception.
+                  Current value and redemptions minus invested cash and stamp duty.
                 </div>
               </div>
               <div>
@@ -1811,13 +1806,15 @@ export default function MutualFundsClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Lifetime Return Rate
+                  Money-Weighted Return
                 </div>
                 <div style={{ fontSize: '3rem', fontWeight: '950' }}>
-                  {lifetimeReturnPercentage.toFixed(2)}%
+                  {hasMoneyWeightedReturn
+                    ? `${lifetimeReturnPercentage >= 0 ? '+' : ''}${lifetimeReturnPercentage.toFixed(2)}%`
+                    : '--'}
                 </div>
                 <div style={{ color: '#475569', fontSize: '0.9rem', marginTop: '12px' }}>
-                  Absolute lifetime returns across your entire fund portfolio.
+                  XIRR from dated buys, SIPs, sells, and current holding value.
                 </div>
               </div>
             </div>
@@ -1883,7 +1880,7 @@ export default function MutualFundsClient() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Total Inflow
+                  Cash Invested
                 </div>
                 <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>
                   ₹{totalBuys.toLocaleString()}
@@ -1904,7 +1901,7 @@ export default function MutualFundsClient() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Total Redemptions
+                  Cash Returned
                 </div>
                 <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>
                   ₹{totalSells.toLocaleString()}

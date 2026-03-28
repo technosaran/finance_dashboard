@@ -30,6 +30,7 @@ import {
   PieChart as PieChartIcon,
 } from 'lucide-react';
 import { EmptyPortfolioVisual } from '../components/Visuals';
+import { summarizeStockPerformance } from '@/lib/utils/performance';
 
 const COLORS = [
   '#6366f1',
@@ -458,25 +459,18 @@ export default function StocksClient() {
     }, [groupedStocks]);
 
   // Lifetime Metrics Calculation
-  const { totalBuys, totalSells, totalCharges, lifetimeEarned, lifetimeReturnPercentage } =
-    useMemo(() => {
-      let buys = 0,
-        sells = 0,
-        charges = 0;
-      stockTransactions.forEach((t) => {
-        if (t.transactionType === 'BUY') buys += t.totalAmount;
-        else if (t.transactionType === 'SELL') sells += t.totalAmount;
-        charges += (t.brokerage || 0) + (t.taxes || 0);
-      });
-      const earned = sells + totalCurrentValue - (buys + charges);
-      return {
-        totalBuys: buys,
-        totalSells: sells,
-        totalCharges: charges,
-        lifetimeEarned: earned,
-        lifetimeReturnPercentage: buys > 0 ? (earned / buys) * 100 : 0,
-      };
-    }, [stockTransactions, totalCurrentValue]);
+  const stockPerformance = useMemo(
+    () => summarizeStockPerformance(stockTransactions, totalCurrentValue),
+    [stockTransactions, totalCurrentValue]
+  );
+  const totalBuys = stockPerformance.cashIn;
+  const totalSells = stockPerformance.cashOut;
+  const totalCharges = stockPerformance.fees;
+  const lifetimeEarned = stockPerformance.absoluteProfit;
+  const hasMoneyWeightedReturn = stockPerformance.moneyWeightedReturn !== null;
+  const lifetimeReturnPercentage = hasMoneyWeightedReturn
+    ? stockPerformance.moneyWeightedReturn! * 100
+    : 0;
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -1857,13 +1851,13 @@ export default function StocksClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Total Money Inflow
+                  Cash Invested
                 </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff' }}>
                   ₹{totalBuys.toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '8px' }}>
-                  Combined value of all BUY orders
+                  Buy orders plus recorded charges
                 </div>
               </div>
               <div>
@@ -1876,7 +1870,7 @@ export default function StocksClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Total Lifetime Gains
+                  Tracked Profit
                 </div>
                 <div
                   style={{
@@ -1888,7 +1882,7 @@ export default function StocksClient() {
                   {lifetimeEarned >= 0 ? '+' : ''}₹{lifetimeEarned.toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '8px' }}>
-                  Absolute profit after all charges
+                  Current value and exits minus invested cash
                 </div>
               </div>
             </div>
@@ -1911,7 +1905,7 @@ export default function StocksClient() {
                     marginBottom: '8px',
                   }}
                 >
-                  Total Withdrawals
+                  Cash Returned
                 </div>
                 <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>
                   ₹{totalSells.toLocaleString()}
@@ -1927,7 +1921,7 @@ export default function StocksClient() {
                     marginBottom: '8px',
                   }}
                 >
-                  Regulatory Charges
+                  Recorded Charges
                 </div>
                 <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>
                   ₹{totalCharges.toLocaleString()}
@@ -1943,10 +1937,21 @@ export default function StocksClient() {
                     marginBottom: '8px',
                   }}
                 >
-                  XIRR Equivalent
+                  Money-Weighted Return
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#10b981' }}>
-                  {lifetimeReturnPercentage.toFixed(2)}%
+                <div
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: '800',
+                    color:
+                      !hasMoneyWeightedReturn || lifetimeReturnPercentage >= 0
+                        ? '#10b981'
+                        : '#ef4444',
+                  }}
+                >
+                  {hasMoneyWeightedReturn
+                    ? `${lifetimeReturnPercentage >= 0 ? '+' : ''}${lifetimeReturnPercentage.toFixed(2)}%`
+                    : '--'}
                 </div>
               </div>
             </div>

@@ -4,10 +4,10 @@ import { ArrowDownRight, ArrowUpRight, BarChart3, TrendingUp, Wallet } from 'luc
 
 interface QuickStatsRowProps {
   liquidityINR: number;
-  totalInvestment: number;
-  totalUnrealizedPnl: number;
-  stockDayChange: number;
-  investmentPnlPercent?: number;
+  totalTrackedInvestmentValue: number;
+  trackedProfit: number;
+  marketDayChange: number;
+  moneyWeightedReturn: number | null;
 }
 
 interface StatCard {
@@ -36,10 +36,10 @@ function formatAmount(value: number): string {
 
 export function QuickStatsRow({
   liquidityINR,
-  totalInvestment,
-  totalUnrealizedPnl,
-  stockDayChange,
-  investmentPnlPercent = 0,
+  totalTrackedInvestmentValue,
+  trackedProfit,
+  marketDayChange,
+  moneyWeightedReturn,
 }: QuickStatsRowProps) {
   const stats: StatCard[] = [
     {
@@ -52,27 +52,30 @@ export function QuickStatsRow({
     },
     {
       label: 'Investments',
-      value: formatAmount(totalInvestment),
-      subValue: 'Capital deployed',
+      value: formatAmount(totalTrackedInvestmentValue),
+      subValue: 'Current market value',
       icon: <BarChart3 size={18} />,
       color: '#6ee7b7',
       trend: 'neutral',
     },
     {
-      label: 'Unrealized P&L',
-      value: `${totalUnrealizedPnl >= 0 ? '+' : ''}${formatAmount(totalUnrealizedPnl)}`,
-      subValue: `${investmentPnlPercent >= 0 ? '+' : ''}${investmentPnlPercent.toFixed(2)}% overall`,
-      icon: totalUnrealizedPnl >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />,
-      color: totalUnrealizedPnl >= 0 ? '#8df0c6' : '#fda4af',
-      trend: totalUnrealizedPnl >= 0 ? 'up' : 'down',
+      label: 'Tracked Profit',
+      value: `${trackedProfit >= 0 ? '+' : ''}${formatAmount(trackedProfit)}`,
+      subValue:
+        moneyWeightedReturn !== null
+          ? `${moneyWeightedReturn >= 0 ? '+' : ''}${(moneyWeightedReturn * 100).toFixed(2)}% money-weighted`
+          : 'Profit net of recorded fees',
+      icon: trackedProfit >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />,
+      color: trackedProfit >= 0 ? '#8df0c6' : '#fda4af',
+      trend: trackedProfit >= 0 ? 'up' : 'down',
     },
     {
       label: 'Day Change',
-      value: `${stockDayChange >= 0 ? '+' : ''}${formatAmount(stockDayChange)}`,
+      value: `${marketDayChange >= 0 ? '+' : ''}${formatAmount(marketDayChange)}`,
       subValue: 'Current market move',
       icon: <TrendingUp size={18} />,
-      color: stockDayChange >= 0 ? '#8de7ca' : '#fda4af',
-      trend: stockDayChange >= 0 ? 'up' : 'down',
+      color: marketDayChange >= 0 ? '#8de7ca' : '#fda4af',
+      trend: marketDayChange >= 0 ? 'up' : 'down',
     },
   ];
 

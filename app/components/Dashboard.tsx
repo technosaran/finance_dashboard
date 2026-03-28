@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { AlertTriangle, Layers3, Shield, Target, Wallet } from 'lucide-react';
 import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useAuth } from '@/app/components/AuthContext';
-import { MutualFundTransaction } from '@/lib/types';
+import { computeDashboardMetrics } from '@/lib/utils/dashboard-metrics';
 import { SkeletonCard } from './SkeletonLoader';
 import { EmptyPortfolioVisual } from './Visuals';
 import { QuickStatsRow } from './dashboard/QuickStatsRow';
@@ -78,8 +78,14 @@ function formatCurrency(value: number): string {
 
 export default function Dashboard() {
   const { accounts, goals, transactions, loading, error } = useLedger();
-  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades, bonds } =
-    usePortfolio();
+  const {
+    stocks,
+    mutualFunds,
+    stockTransactions,
+    mutualFundTransactions,
+    bonds,
+    bondTransactions,
+  } = usePortfolio();
   const { settings } = useSettings();
   const { user } = useAuth();
 
@@ -90,96 +96,24 @@ export default function Dashboard() {
   );
 
   const financialMetrics = useMemo(() => {
-    const liquidityINR = accounts
-      .filter((account) => account.currency === 'INR')
-      .reduce((sum, account) => sum + account.balance, 0);
-
-    const stocksValue = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.currentValue, 0);
-
-    const mfValue = mutualFunds.reduce((sum, fund) => sum + fund.currentValue, 0);
-    const bondsValue = bonds.reduce((sum, bond) => sum + bond.currentValue, 0);
-
-    const totalNetWorth = liquidityINR + stocksValue + mfValue + bondsValue;
-
-    const stockInvestment = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.investmentAmount, 0);
-    const mfInvestment = mutualFunds.reduce((sum, fund) => sum + fund.investmentAmount, 0);
-    const bondsInvestment = bonds.reduce((sum, bond) => sum + bond.investmentAmount, 0);
-    const totalInvestment = stockInvestment + mfInvestment + bondsInvestment;
-
-    const stockBuys = stockTransactions
-      .filter((transaction) => transaction.transactionType === 'BUY')
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const stockSells = stockTransactions
-      .filter((transaction) => transaction.transactionType === 'SELL')
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const stockCharges = stockTransactions.reduce(
-      (sum, transaction) => sum + (transaction.brokerage || 0) + (transaction.taxes || 0),
-      0
-    );
-    const stockLifetime = stockSells + stocksValue - (stockBuys + stockCharges);
-
-    const MF_STAMP_DUTY_RATE = 0.00005;
-
-    const mfBuys = mutualFundTransactions
-      .filter(
-        (transaction: MutualFundTransaction) =>
-          transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
-      )
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const mfSells = mutualFundTransactions
-      .filter((transaction: MutualFundTransaction) => transaction.transactionType === 'SELL')
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const mfCharges = mutualFundTransactions
-      .filter(
-        (transaction: MutualFundTransaction) =>
-          transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
-      )
-      .reduce((sum, transaction) => sum + transaction.totalAmount * MF_STAMP_DUTY_RATE, 0);
-    const mfLifetime = mfSells + mfValue - (mfBuys + mfCharges);
-
-    const fnoLifetime = fnoTrades
-      .filter((trade) => trade.status === 'CLOSED')
-      .reduce((sum, trade) => sum + trade.pnl, 0);
-
-    const bondLifetime = bonds.reduce((sum, bond) => sum + bond.pnl, 0);
-    const globalLifetimeWealth = stockLifetime + mfLifetime + fnoLifetime + bondLifetime;
-
-    const stockPnl = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.pnl, 0);
-    const mfPnl = mfValue - mfInvestment;
-    const bondPnl = bondsValue - bondsInvestment;
-    const totalUnrealizedPnl = stockPnl + mfPnl + bondPnl;
-
-    const stockDayChange = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => {
-        const dayChange =
-          (stock.currentPrice - (stock.previousPrice ?? stock.currentPrice)) * stock.quantity;
-        return sum + dayChange;
-      }, 0);
-
-    const mfDayChange = mutualFunds.reduce((sum, fund) => {
-      const dayChange = (fund.currentNav - (fund.previousNav ?? fund.currentNav)) * fund.units;
-      return sum + dayChange;
-    }, 0);
-
-    return {
-      liquidityINR,
-      stocksValue,
-      mfValue,
-      bondsValue,
-      totalNetWorth,
-      totalInvestment,
-      globalLifetimeWealth,
-      totalUnrealizedPnl,
-      stockDayChange: stockDayChange + mfDayChange,
-    };
-  }, [accounts, stocks, mutualFunds, bonds, stockTransactions, mutualFundTransactions, fnoTrades]);
+    return computeDashboardMetrics({
+      accounts,
+      stocks,
+      mutualFunds,
+      bonds,
+      stockTransactions,
+      mutualFundTransactions,
+      bondTransactions,
+    });
+  }, [
+    accounts,
+    stocks,
+    mutualFunds,
+    bonds,
+    stockTransactions,
+    mutualFundTransactions,
+    bondTransactions,
+  ]);
 
   const allocationData = useMemo(
     () =>
@@ -332,10 +266,10 @@ export default function Dashboard() {
             <div className="ios-hero-kpi__label">Today&apos;s move</div>
             <div
               className="ios-hero-kpi__value"
-              style={{ color: financialMetrics.stockDayChange >= 0 ? '#8df0c6' : '#fda4af' }}
+              style={{ color: financialMetrics.marketDayChange >= 0 ? '#8df0c6' : '#fda4af' }}
             >
-              {financialMetrics.stockDayChange >= 0 ? '+' : ''}
-              {formatCurrency(financialMetrics.stockDayChange)}
+              {financialMetrics.marketDayChange >= 0 ? '+' : ''}
+              {formatCurrency(financialMetrics.marketDayChange)}
             </div>
             <div className="ios-hero-kpi__subvalue">Combined listed equity and fund movement</div>
           </div>
@@ -354,22 +288,19 @@ export default function Dashboard() {
 
       <QuickStatsRow
         liquidityINR={financialMetrics.liquidityINR}
-        totalInvestment={financialMetrics.totalInvestment}
-        totalUnrealizedPnl={financialMetrics.totalUnrealizedPnl}
-        stockDayChange={financialMetrics.stockDayChange}
-        investmentPnlPercent={
-          financialMetrics.totalInvestment > 0
-            ? (financialMetrics.totalUnrealizedPnl / financialMetrics.totalInvestment) * 100
-            : 0
-        }
+        totalTrackedInvestmentValue={financialMetrics.totalTrackedInvestmentValue}
+        trackedProfit={financialMetrics.trackedProfit}
+        marketDayChange={financialMetrics.marketDayChange}
+        moneyWeightedReturn={financialMetrics.trackedMoneyWeightedReturn}
       />
 
       <NetWorthCard
         totalNetWorth={financialMetrics.totalNetWorth}
-        globalLifetimeWealth={financialMetrics.globalLifetimeWealth}
+        trackedProfit={financialMetrics.trackedProfit}
         liquidityINR={financialMetrics.liquidityINR}
-        investmentsTotal={financialMetrics.stocksValue + financialMetrics.mfValue}
+        investmentsTotal={financialMetrics.totalTrackedInvestmentValue}
         allocationData={allocationData}
+        moneyWeightedReturn={financialMetrics.trackedMoneyWeightedReturn}
       />
 
       <section

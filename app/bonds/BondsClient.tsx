@@ -22,6 +22,7 @@ import {
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 import { logError } from '@/lib/utils/logger';
 import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
+import { summarizeBondPerformance } from '@/lib/utils/performance';
 
 import { Bond } from '@/lib/types';
 
@@ -340,17 +341,23 @@ export default function BondsClient() {
     return { totalInvested, totalCurrent, totalPnl, avgYield, activeCount: activeBonds.length };
   }, [bonds]);
 
-  const lifetimeStats = useMemo(() => {
-    let totalBuys = 0;
-    let totalSells = 0;
-    bondTransactions.forEach((t) => {
-      if (t.transactionType === 'BUY') totalBuys += t.totalAmount;
-      else if (t.transactionType === 'SELL') totalSells += t.totalAmount;
-    });
-    const lifetimeEarned = totalSells + stats.totalCurrent - totalBuys;
-    const lifetimeReturnPct = totalBuys > 0 ? (lifetimeEarned / totalBuys) * 100 : 0;
-    return { totalBuys, totalSells, lifetimeEarned, lifetimeReturnPct };
-  }, [bondTransactions, stats.totalCurrent]);
+  const bondPerformance = useMemo(
+    () => summarizeBondPerformance(bondTransactions, stats.totalCurrent),
+    [bondTransactions, stats.totalCurrent]
+  );
+  const lifetimeStats = useMemo(
+    () => ({
+      totalBuys: bondPerformance.cashIn,
+      totalSells: bondPerformance.cashOut,
+      lifetimeEarned: bondPerformance.absoluteProfit,
+      lifetimeReturnPct:
+        bondPerformance.moneyWeightedReturn !== null
+          ? bondPerformance.moneyWeightedReturn * 100
+          : 0,
+      hasMoneyWeightedReturn: bondPerformance.moneyWeightedReturn !== null,
+    }),
+    [bondPerformance]
+  );
 
   const handleAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1059,13 +1066,13 @@ export default function BondsClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Total Invested (All Time)
+                  Cash Invested
                 </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff' }}>
                   ₹{lifetimeStats.totalBuys.toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '8px' }}>
-                  Combined value of all BUY orders
+                  Bond purchases plus recorded charges
                 </div>
               </div>
               <div>
@@ -1078,7 +1085,7 @@ export default function BondsClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Total Lifetime Gains
+                  Tracked Profit
                 </div>
                 <div
                   style={{
@@ -1091,7 +1098,7 @@ export default function BondsClient() {
                   {lifetimeStats.lifetimeEarned.toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '8px' }}>
-                  Realised + unrealised profit
+                  Current value and proceeds minus invested cash
                 </div>
               </div>
             </div>
@@ -1114,7 +1121,7 @@ export default function BondsClient() {
                     marginBottom: '8px',
                   }}
                 >
-                  Total Proceeds (Sells)
+                  Cash Returned
                 </div>
                 <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>
                   ₹{lifetimeStats.totalSells.toLocaleString()}
@@ -1146,17 +1153,21 @@ export default function BondsClient() {
                     marginBottom: '8px',
                   }}
                 >
-                  Return %
+                  Money-Weighted Return
                 </div>
                 <div
                   style={{
                     fontSize: '1.25rem',
                     fontWeight: '800',
-                    color: lifetimeStats.lifetimeReturnPct >= 0 ? '#10b981' : '#ef4444',
+                    color:
+                      !lifetimeStats.hasMoneyWeightedReturn || lifetimeStats.lifetimeReturnPct >= 0
+                        ? '#10b981'
+                        : '#ef4444',
                   }}
                 >
-                  {lifetimeStats.lifetimeReturnPct >= 0 ? '+' : ''}
-                  {lifetimeStats.lifetimeReturnPct.toFixed(2)}%
+                  {lifetimeStats.hasMoneyWeightedReturn
+                    ? `${lifetimeStats.lifetimeReturnPct >= 0 ? '+' : ''}${lifetimeStats.lifetimeReturnPct.toFixed(2)}%`
+                    : '--'}
                 </div>
               </div>
             </div>

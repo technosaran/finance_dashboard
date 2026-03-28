@@ -19,10 +19,11 @@ interface AllocationEntry {
 
 interface NetWorthCardProps {
   totalNetWorth: number;
-  globalLifetimeWealth: number;
+  trackedProfit: number;
   liquidityINR: number;
   investmentsTotal: number;
   allocationData: AllocationEntry[];
+  moneyWeightedReturn: number | null;
 }
 
 const CRORE = 10_000_000;
@@ -46,13 +47,13 @@ function pctOf(value: number, total: number): string {
 
 export function NetWorthCard({
   totalNetWorth,
-  globalLifetimeWealth,
+  trackedProfit,
   liquidityINR,
   investmentsTotal,
   allocationData,
+  moneyWeightedReturn,
 }: NetWorthCardProps) {
-  const lifetimePct = investmentsTotal > 0 ? (globalLifetimeWealth / investmentsTotal) * 100 : 0;
-  const isPositive = globalLifetimeWealth >= 0;
+  const isPositive = trackedProfit >= 0;
   const pnlColor = isPositive ? '#8de7ca' : '#fda4af';
   const pnlBg = isPositive ? 'rgba(110, 231, 183, 0.12)' : 'rgba(253, 164, 175, 0.12)';
   const pnlBorder = isPositive ? 'rgba(110, 231, 183, 0.2)' : 'rgba(253, 164, 175, 0.2)';
@@ -81,11 +82,11 @@ export function NetWorthCard({
               </div>
             </div>
 
-            {investmentsTotal > 0 && (
+            {investmentsTotal > 0 && moneyWeightedReturn !== null && (
               <div className="ios-badge">
                 <Award size={13} color="#d8cdff" />
-                {lifetimePct >= 0 ? '+' : ''}
-                {lifetimePct.toFixed(1)}% lifetime
+                {moneyWeightedReturn >= 0 ? '+' : ''}
+                {(moneyWeightedReturn * 100).toFixed(1)}% money-weighted
               </div>
             )}
           </div>
@@ -115,7 +116,7 @@ export function NetWorthCard({
             >
               {isPositive ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
               {isPositive ? '+' : ''}
-              {formatAmount(globalLifetimeWealth)} lifetime
+              {formatAmount(trackedProfit)} tracked profit
             </div>
           </div>
 
