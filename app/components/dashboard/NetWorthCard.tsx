@@ -55,7 +55,7 @@ export function NetWorthCard({
     <section className="wealth-card fade-in" style={{ marginBottom: '24px' }}>
       <div
         className="premium-card"
-        style={{ padding: '28px 32px', background: '#000', border: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ padding: '28px 32px' }}
       >
         <div className="wealth-card-inner">
           {/* Left: Net Worth Summary */}

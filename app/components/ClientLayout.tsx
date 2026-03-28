@@ -93,6 +93,8 @@ function AuthConsumer({
   return (
     <FinanceProvider>
       <TransactionModalWrapper />
+      {/* Global ambient background for liquid glass depth */}
+      <div className="bg-mesh" aria-hidden="true" />
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
