@@ -1789,7 +1789,7 @@ export default function MutualFundsClient() {
                     marginBottom: '12px',
                   }}
                 >
-                  Cumulative Wealth Created
+                  Lifetime gains
                 </div>
                 <div style={{ fontSize: '3rem', fontWeight: '950', color: '#10b981' }}>
                   +₹{lifetimeEarned.toLocaleString()}
@@ -1862,7 +1862,7 @@ export default function MutualFundsClient() {
             }}
           >
             <h4 style={{ fontSize: '1.2rem', fontWeight: '900', marginBottom: '24px' }}>
-              Stats Hub
+              Snapshot
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div

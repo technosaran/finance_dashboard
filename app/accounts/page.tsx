@@ -3,8 +3,7 @@ import AccountsClient from './AccountsClient';
 
 export const metadata: Metadata = {
   title: 'Accounts | FINCORE Accounts',
-  description:
-    'Manage your bank accounts, savings, and other financial entities in one secure place.',
+  description: 'Manage bank accounts, savings balances, and cash positions in one place.',
 };
 
 export default function AccountsPage() {

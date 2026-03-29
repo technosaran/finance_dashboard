@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import FamilyClient from './FamilyClient';
 
 export const metadata: Metadata = {
-  title: 'Family Hub | FINCORE Shared Wealth',
-  description:
-    'Manage transfers and financial support within your family network. Track shared wealth and support history securely.',
+  title: 'Family Transfers | FINCORE',
+  description: 'Record family transfers, recurring support, and shared obligations.',
 };
 
 export default function FamilyPage() {

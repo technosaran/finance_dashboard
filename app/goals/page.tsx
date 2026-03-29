@@ -3,8 +3,7 @@ import GoalsClient from './GoalsClient';
 
 export const metadata: Metadata = {
   title: 'Goals | FINCORE Milestone Tracker',
-  description:
-    'Set and achieve your financial milestones. Track progress on career, health, and lifestyle objectives with detailed analytics.',
+  description: 'Create savings goals, track progress, and plan upcoming financial milestones.',
 };
 
 export default function GoalsPage() {

@@ -4,19 +4,19 @@
  */
 
 export const colors = {
-  bgPage: '#000000',
-  bgCard: '#050505',
-  bgInput: '#000000',
-  border: '#1a1a1a',
-  textPrimary: '#e2e8f0',
-  textMuted: '#94a3b8',
-  textHeading: '#f8fafc',
-  accent: '#6366f1',
-  accentHover: '#818cf8',
-  success: '#22c55e',
+  bgPage: '#071018',
+  bgCard: '#0b1519',
+  bgInput: '#0a1216',
+  border: 'rgba(160, 188, 180, 0.14)',
+  textPrimary: '#e9f1ef',
+  textMuted: '#99aba8',
+  textHeading: '#f4f8f7',
+  accent: '#1ea672',
+  accentHover: '#43c08a',
+  success: '#20b072',
   danger: '#ef4444',
   dangerHover: '#dc2626',
-  warning: '#f59e0b',
+  warning: '#f2a93b',
 } as const;
 
 export const cardStyle: React.CSSProperties = {

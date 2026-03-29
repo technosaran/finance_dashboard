@@ -60,7 +60,7 @@ export default function LoginPage() {
         <div className="login-card">
           <div className="login-card-header">
             <h1 className="login-card-title">Welcome back</h1>
-            <p className="login-card-subtitle">Enter your credentials to access your dashboard</p>
+            <p className="login-card-subtitle">Sign in to open your finance dashboard</p>
           </div>
 
           {error && <div className="login-error">{error}</div>}
@@ -129,7 +129,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 size={20} className="animate-spin" />
-                  Authenticating...
+                  Signing in...
                 </>
               ) : (
                 <>
@@ -152,7 +152,7 @@ export default function LoginPage() {
             }}
           >
             <Shield size={13} color="#475569" />
-            <span>256-bit encrypted - Secured by Supabase</span>
+            <span>Protected by Supabase authentication</span>
           </div>
         </div>
       </div>

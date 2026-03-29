@@ -228,7 +228,7 @@ export default function LedgerClient() {
                 gap: '8px',
               }}
             >
-              <History size={16} /> History of all your transactions
+              <History size={16} /> Transaction history across your accounts
             </p>
           </div>
 
@@ -264,7 +264,7 @@ export default function LedgerClient() {
                 boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)',
               }}
             >
-              <Plus size={20} strokeWidth={3} /> Record Entry
+              <Plus size={20} strokeWidth={3} /> Add entry
             </button>
           </div>
         </div>
@@ -1074,7 +1074,7 @@ export default function LedgerClient() {
                                         borderRadius: '6px',
                                       }}
                                     >
-                                      SYSTEM LOG
+                                      AUTO ENTRY
                                     </span>
                                   )}
                                 </div>
@@ -1118,7 +1118,7 @@ export default function LedgerClient() {
                                     size={10}
                                     style={{ marginRight: '4px', verticalAlign: 'baseline' }}
                                   />{' '}
-                                  Verified
+                                  Saved
                                 </div>
                               </div>
                               <div style={{ display: 'flex', gap: '8px' }}>
@@ -1136,15 +1136,14 @@ export default function LedgerClient() {
                                   onClick={async (e) => {
                                     e.stopPropagation();
                                     const isConfirmed = await customConfirm({
-                                      title: 'Purge Record?',
-                                      message:
-                                        'This ledger entry will be permanently erased. Proceed with caution.',
+                                      title: 'Delete entry?',
+                                      message: 'This ledger entry will be permanently deleted.',
                                       type: 'error',
-                                      confirmLabel: 'Erase',
+                                      confirmLabel: 'Delete',
                                     });
                                     if (isConfirmed) {
                                       await deleteTransaction(tx.id);
-                                      showNotification('success', 'Entry purged from ledger');
+                                      showNotification('success', 'Entry deleted');
                                     }
                                   }}
                                 >
@@ -1176,7 +1175,7 @@ export default function LedgerClient() {
                     margin: '0 0 12px 0',
                   }}
                 >
-                  Zero Movements Detected
+                  No matching entries
                 </h3>
                 <p
                   style={{
@@ -1186,8 +1185,8 @@ export default function LedgerClient() {
                     lineHeight: '1.6',
                   }}
                 >
-                  No records match your current filter parameters. Try adjusting your search or
-                  matrix view.
+                  No records match the current filters. Try changing the search or clearing one of
+                  the filters.
                 </p>
                 <button
                   onClick={() => {
@@ -1244,7 +1243,7 @@ export default function LedgerClient() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                {editId ? 'Edit Entry' : 'New Ledger Record'}
+                {editId ? 'Edit entry' : 'New ledger entry'}
               </h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>
                 <X size={24} />
@@ -1257,7 +1256,7 @@ export default function LedgerClient() {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Operation Type</label>
+                  <label className="form-label">Entry type</label>
                   <div
                     style={{
                       display: 'flex',
@@ -1376,7 +1375,7 @@ export default function LedgerClient() {
               </div>
 
               <button type="submit" className="btn-primary btn-primary--indigo">
-                {editId ? 'Commit Changes' : 'Record Transaction'}
+                {editId ? 'Save changes' : 'Save entry'}
               </button>
             </form>
           </div>

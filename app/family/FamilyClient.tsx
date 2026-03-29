@@ -20,18 +20,18 @@ import {
 } from 'lucide-react';
 import { EmptyFamilyVisual } from '../components/Visuals';
 
-// Relationship emoji map
+// Relationship short labels for member avatars
 const relEmoji: Record<string, string> = {
-  Parent: '👨‍👩‍👧',
-  Father: '👨',
-  Mother: '👩',
-  Sibling: '👫',
-  Grandparent: '👴',
-  Spouse: '💑',
-  Child: '👶',
-  Friend: '🤝',
-  Relative: '👪',
-  Other: '🧑',
+  Parent: 'Pa',
+  Father: 'Fa',
+  Mother: 'Mo',
+  Sibling: 'Si',
+  Grandparent: 'Gp',
+  Spouse: 'Sp',
+  Child: 'Ch',
+  Friend: 'Fr',
+  Relative: 'Re',
+  Other: 'Ot',
 };
 
 // Color palette for family member avatars
@@ -89,7 +89,7 @@ export default function FamilyClient() {
       showNotification('success', 'Transfer record updated');
     } else {
       await addFamilyTransfer(transferData);
-      showNotification('success', 'Family transfer recorded ❤️');
+      showNotification('success', 'Family transfer saved');
     }
 
     resetForm();
@@ -223,9 +223,9 @@ export default function FamilyClient() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Family Support
+              Family Transfers
             </h1>
-            <p className="page-subtitle">Track financial support to your loved ones</p>
+            <p className="page-subtitle">Track support, shared expenses, and recurring transfers</p>
           </div>
           <button
             onClick={() => {
@@ -254,7 +254,7 @@ export default function FamilyClient() {
         >
           {[
             {
-              label: 'Total Support',
+              label: 'Total sent',
               value: `₹${totalSent.toLocaleString()}`,
               icon: <TrendingDown size={20} />,
               color: '#ec4899',
@@ -268,7 +268,7 @@ export default function FamilyClient() {
               sub: new Date().toLocaleString('en-IN', { month: 'long' }),
             },
             {
-              label: 'Family Members',
+              label: 'Contacts',
               value: familyMembers.length,
               icon: <Users size={20} />,
               color: '#06b6d4',
@@ -382,7 +382,7 @@ export default function FamilyClient() {
               >
                 {familyMembers.map((member, idx) => {
                   const colorScheme = memberColors[idx % memberColors.length];
-                  const emoji = relEmoji[member.relationship] || '🧑';
+                  const emoji = relEmoji[member.relationship] || 'Me';
                   const avgPerTransfer = member.count > 0 ? member.total / member.count : 0;
 
                   return (
@@ -469,7 +469,7 @@ export default function FamilyClient() {
                               marginTop: '2px',
                             }}
                           >
-                            {member.relationship} • {member.count} transfer
+                            {member.relationship} | {member.count} transfer
                             {member.count !== 1 ? 's' : ''}
                           </div>
                         </div>
@@ -686,7 +686,7 @@ export default function FamilyClient() {
                     marginBottom: '8px',
                   }}
                 >
-                  No Family Members Yet
+                  No contacts yet
                 </h3>
                 <p
                   style={{
@@ -698,8 +698,8 @@ export default function FamilyClient() {
                     marginRight: 'auto',
                   }}
                 >
-                  Record your first family transfer and members will appear here as quick-send
-                  contacts!
+                  Record your first family transfer and the recipient will appear here for quick
+                  access.
                 </p>
                 <button
                   onClick={() => {
@@ -746,7 +746,7 @@ export default function FamilyClient() {
                     const memberIdx = familyMembers.findIndex((m) => m.name === transfer.recipient);
                     const colorScheme =
                       memberColors[(memberIdx >= 0 ? memberIdx : 0) % memberColors.length];
-                    const emoji = relEmoji[transfer.relationship] || '🧑';
+                    const emoji = relEmoji[transfer.relationship] || 'Me';
 
                     return (
                       <div
@@ -814,7 +814,7 @@ export default function FamilyClient() {
                             }}
                           >
                             <span>{transfer.relationship}</span>
-                            <span style={{ opacity: 0.5 }}>•</span>
+                            <span style={{ opacity: 0.5 }}>|</span>
                             <span>
                               {new Date(transfer.date).toLocaleDateString('en-IN', {
                                 month: 'short',
@@ -824,7 +824,7 @@ export default function FamilyClient() {
                             </span>
                             {transfer.purpose && (
                               <>
-                                <span style={{ opacity: 0.5 }}>•</span>
+                                <span style={{ opacity: 0.5 }}>|</span>
                                 <span
                                   style={{
                                     color: '#64748b',
@@ -950,7 +950,7 @@ export default function FamilyClient() {
                 ? 'Update the transfer details'
                 : quickSendMode
                   ? `Quick transfer to ${recipient} (${relationship})`
-                  : 'Record a family support transfer'}
+                  : 'Record a family transfer'}
             </p>
 
             {/* Quick send — show member avatar */}
@@ -980,7 +980,7 @@ export default function FamilyClient() {
                     flexShrink: 0,
                   }}
                 >
-                  {relEmoji[relationship] || '🧑'}
+                  {relEmoji[relationship] || 'Me'}
                 </div>
                 <div>
                   <div style={{ fontWeight: '800', color: '#fff', fontSize: '1rem' }}>
@@ -1008,7 +1008,7 @@ export default function FamilyClient() {
                   }}
                 >
                   <div>
-                    <label className="form-label">Recipient Name</label>
+                    <label className="form-label">Recipient name</label>
                     <input
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
@@ -1083,7 +1083,7 @@ export default function FamilyClient() {
               </div>
 
               <div>
-                <label className="form-label">Debit from Account (Optional)</label>
+                <label className="form-label">Debit from account (optional)</label>
                 <select
                   value={selectedAccountId}
                   onChange={(e) =>

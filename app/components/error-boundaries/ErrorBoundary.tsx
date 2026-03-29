@@ -114,7 +114,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 color: '#fff',
               }}
             >
-              Something Went Wrong
+              Something went wrong
             </h1>
 
             <p
@@ -125,8 +125,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 lineHeight: '1.6',
               }}
             >
-              We encountered an unexpected error. Please try refreshing the page or returning to the
-              home screen.
+              An unexpected error interrupted the page. Try reloading it or heading back to the
+              dashboard.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -165,7 +165,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReset}
                 style={{
                   padding: '12px 24px',
-                  background: '#6366f1',
+                  background: colors.accent,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '12px',
@@ -178,10 +178,10 @@ export class ErrorBoundary extends Component<Props, State> {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#4f46e5';
+                  e.currentTarget.style.background = colors.accentHover;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#6366f1';
+                  e.currentTarget.style.background = colors.accent;
                 }}
               >
                 <RefreshCw size={16} />
@@ -193,9 +193,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={() => (window.location.href = '/')}
                 style={{
                   padding: '12px 24px',
-                  background: 'rgba(99, 102, 241, 0.1)',
-                  color: '#818cf8',
-                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  background: 'rgba(30, 166, 114, 0.1)',
+                  color: colors.accentHover,
+                  border: '1px solid rgba(30, 166, 114, 0.2)',
                   borderRadius: '12px',
                   fontSize: '0.875rem',
                   fontWeight: '700',
@@ -206,10 +206,10 @@ export class ErrorBoundary extends Component<Props, State> {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
+                  e.currentTarget.style.background = 'rgba(30, 166, 114, 0.18)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.background = 'rgba(30, 166, 114, 0.1)';
                 }}
               >
                 <Home size={16} />

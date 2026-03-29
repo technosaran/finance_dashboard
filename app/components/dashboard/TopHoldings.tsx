@@ -154,12 +154,12 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                     </span>
                   </div>
                   <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '600' }}>
-                    {stock.quantity} shares • {allocationPct.toFixed(1)}% of holdings
+                    {stock.quantity} shares | {allocationPct.toFixed(1)}% of holdings
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', marginRight: '12px' }}>
                   <div style={{ fontSize: '0.88rem', fontWeight: '800', color: '#fff' }}>
-                    ₹{stock.currentValue.toLocaleString()}
+                    INR {stock.currentValue.toLocaleString()}
                   </div>
                   <div
                     style={{
@@ -193,7 +193,7 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                     textAlign: 'center',
                   }}
                 >
-                  {dayChange >= 0 ? '+' : '-'}₹
+                  {dayChange >= 0 ? '+' : '-'}INR
                   {Math.abs(dayChange).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </div>
               </div>

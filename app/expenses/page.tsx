@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import ExpensesClient from './ExpensesClient';
 
 export const metadata: Metadata = {
-  title: 'Expenses Hub | FINCORE',
-  description:
-    'Track and manage your expenses across categories. Monitor spending patterns and control your budget.',
+  title: 'Expenses | FINCORE',
+  description: 'Track expenses by category, review spending patterns, and stay on budget.',
 };
 
 export default function ExpensesPage() {

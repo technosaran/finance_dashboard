@@ -3,8 +3,7 @@ import LedgerClient from './LedgerClient';
 
 export const metadata: Metadata = {
   title: 'Ledger | FINCORE Global Activity',
-  description:
-    'A comprehensive audit trail of all your financial transactions. Filter, sort, and manage your income and outflow records.',
+  description: 'Review income and expense entries with filters for category, account, and date.',
 };
 
 export default function LedgerPage() {

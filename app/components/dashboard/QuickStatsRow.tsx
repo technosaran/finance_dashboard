@@ -16,23 +16,22 @@ interface StatCard {
   subValue?: string;
   icon: React.ReactNode;
   color: string;
-  bgGrad: string;
   trend?: 'up' | 'down' | 'neutral';
 }
 
-/** Named thresholds for Indian numbering system */
 const CRORE = 10_000_000;
 const LAKH = 100_000;
 const THOUSAND = 1_000;
 
-/** Format large numbers with K/L/Cr suffixes for readability */
 function formatAmount(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
-  if (abs >= CRORE) return `${sign}₹${(abs / CRORE).toFixed(2)}Cr`;
-  if (abs >= LAKH) return `${sign}₹${(abs / LAKH).toFixed(2)}L`;
-  if (abs >= THOUSAND) return `${sign}₹${(abs / THOUSAND).toFixed(1)}K`;
-  return `${sign}₹${abs.toLocaleString()}`;
+
+  if (abs >= CRORE) return `${sign}INR ${(abs / CRORE).toFixed(2)}Cr`;
+  if (abs >= LAKH) return `${sign}INR ${(abs / LAKH).toFixed(2)}L`;
+  if (abs >= THOUSAND) return `${sign}INR ${(abs / THOUSAND).toFixed(1)}K`;
+
+  return `${sign}INR ${abs.toLocaleString()}`;
 }
 
 export function QuickStatsRow({
@@ -44,21 +43,19 @@ export function QuickStatsRow({
 }: QuickStatsRowProps) {
   const stats: StatCard[] = [
     {
-      label: 'Liquid Cash',
+      label: 'Cash available',
       value: formatAmount(liquidityINR),
-      subValue: 'Available balance',
+      subValue: 'Current balance',
       icon: <Wallet size={18} />,
-      color: '#818cf8',
-      bgGrad: 'linear-gradient(135deg, rgba(129, 140, 248, 0.08), rgba(129, 140, 248, 0.02))',
+      color: '#6bb99d',
       trend: 'neutral',
     },
     {
-      label: 'Investments',
+      label: 'Invested',
       value: formatAmount(totalInvestment),
-      subValue: 'Total deployed',
+      subValue: 'Active capital',
       icon: <BarChart3 size={18} />,
-      color: '#10b981',
-      bgGrad: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
+      color: '#20b072',
       trend: 'neutral',
     },
     {
@@ -66,23 +63,15 @@ export function QuickStatsRow({
       value: `${totalUnrealizedPnl >= 0 ? '+' : ''}${formatAmount(totalUnrealizedPnl)}`,
       subValue: `${investmentPnlPercent >= 0 ? '+' : ''}${investmentPnlPercent.toFixed(2)}% overall`,
       icon: totalUnrealizedPnl >= 0 ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />,
-      color: totalUnrealizedPnl >= 0 ? '#34d399' : '#f87171',
-      bgGrad:
-        totalUnrealizedPnl >= 0
-          ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(52, 211, 153, 0.02))'
-          : 'linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(248, 113, 113, 0.02))',
+      color: totalUnrealizedPnl >= 0 ? '#20b072' : '#ef5d5d',
       trend: totalUnrealizedPnl >= 0 ? 'up' : 'down',
     },
     {
-      label: "Day's Change",
+      label: 'Today',
       value: `${stockDayChange >= 0 ? '+' : ''}${formatAmount(stockDayChange)}`,
-      subValue: "Today's movement",
+      subValue: 'Market movement',
       icon: <TrendingUp size={18} />,
-      color: stockDayChange >= 0 ? '#10b981' : '#ef4444',
-      bgGrad:
-        stockDayChange >= 0
-          ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))'
-          : 'linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.02))',
+      color: stockDayChange >= 0 ? '#20b072' : '#ef5d5d',
       trend: stockDayChange >= 0 ? 'up' : 'down',
     },
   ];
@@ -93,52 +82,28 @@ export function QuickStatsRow({
     <section
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-        gap: '12px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
+        gap: '14px',
         marginBottom: '24px',
       }}
     >
       {stats.map((stat, idx) => (
         <div
-          key={idx}
-          className="fade-in"
+          key={stat.label}
+          className="fade-in premium-card"
           style={{
             animationDelay: animationDelays[idx] ?? '0s',
-            background: '#000000',
-            borderRadius: '4px',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            padding: '24px',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: `0 4px 20px -5px ${stat.color}05`,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.background = '#0a0a0a';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.9)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.background = '#000000';
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+            padding: '22px',
+            borderRadius: '18px',
           }}
         >
-          {/* Top accent bar */}
-          <div
-            style={{
-              display: 'none',
-            }}
-          />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                background: `${stat.color}15`,
+                width: '34px',
+                height: '34px',
+                borderRadius: '11px',
+                background: `${stat.color}18`,
                 color: stat.color,
                 display: 'flex',
                 alignItems: 'center',
@@ -149,9 +114,9 @@ export function QuickStatsRow({
             </div>
             <span
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.73rem',
                 fontWeight: '800',
-                color: '#94a3b8',
+                color: '#9aaea9',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
               }}
@@ -159,34 +124,30 @@ export function QuickStatsRow({
               {stat.label}
             </span>
           </div>
+
           <div
             className="stat-value"
             style={{
-              fontSize: 'clamp(1.1rem, 3.5vw, 1.4rem)',
+              fontSize: 'clamp(1.05rem, 3vw, 1.35rem)',
               fontWeight: '900',
               color: stat.trend !== 'neutral' ? stat.color : '#fff',
               letterSpacing: '-0.02em',
-              position: 'relative',
               background: stat.trend !== 'neutral' ? 'none' : undefined,
               WebkitTextFillColor: stat.trend !== 'neutral' ? 'currentColor' : undefined,
             }}
           >
             {stat.value}
           </div>
+
           {stat.subValue && (
             <div
               style={{
                 fontSize: '0.72rem',
                 fontWeight: '700',
-                color: stat.trend !== 'neutral' ? stat.color : '#64748b',
+                color: stat.trend !== 'neutral' ? stat.color : '#6f8480',
                 marginTop: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
               }}
             >
-              {stat.trend === 'up' && <span style={{ fontSize: '0.65rem' }}>▲</span>}
-              {stat.trend === 'down' && <span style={{ fontSize: '0.65rem' }}>▼</span>}
               {stat.subValue}
             </div>
           )}

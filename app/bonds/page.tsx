@@ -3,8 +3,7 @@ import BondsClient from './BondsClient';
 
 export const metadata: Metadata = {
   title: 'Bonds | FINCORE Income Portfolio',
-  description:
-    'Monitor your bond holdings, track yields, and manage fixed income transactions with real-time insights.',
+  description: 'Track bond holdings, yields, and fixed-income transactions.',
 };
 
 export default function BondsPage() {

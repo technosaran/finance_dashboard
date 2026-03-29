@@ -186,7 +186,7 @@ export function GoalsProgress({ goals }: GoalsProgressProps) {
                 }}
               >
                 <span style={{ fontSize: '0.65rem', color: '#475569' }}>
-                  ₹{goal.current.toLocaleString()} / ₹{goal.target.toLocaleString()}
+                  INR {goal.current.toLocaleString()} / INR {goal.target.toLocaleString()}
                 </span>
                 {daysRemaining !== null && (
                   <span

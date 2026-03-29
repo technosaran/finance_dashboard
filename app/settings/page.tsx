@@ -137,9 +137,8 @@ export default function SettingsPage() {
 
   const resetToDefaults = async () => {
     const isConfirmed = await customConfirm({
-      title: 'Reset Configuration',
-      message:
-        'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
+      title: 'Reset settings',
+      message: 'Reset all settings to their default values? This cannot be undone.',
       type: 'warning',
       confirmLabel: 'Reset',
     });
@@ -147,7 +146,7 @@ export default function SettingsPage() {
     if (!isConfirmed) return;
 
     await updateSettings(DEFAULT_SETTINGS);
-    showNotification('info', 'Settings reset to factory defaults');
+    showNotification('info', 'Settings reset to defaults');
   };
 
   if (loading) return null;
@@ -224,7 +223,7 @@ export default function SettingsPage() {
                 borderRadius: '12px',
                 border: 'none',
                 background: isActive
-                  ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                  ? 'linear-gradient(135deg, #1a8e68 0%, #146d63 100%)'
                   : 'rgba(10, 10, 10, 0.5)',
                 color: isActive ? '#fff' : '#94a3b8',
                 fontWeight: '600',
@@ -232,7 +231,7 @@ export default function SettingsPage() {
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.2s',
-                boxShadow: isActive ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none',
+                boxShadow: isActive ? '0 4px 12px rgba(13, 78, 68, 0.28)' : 'none',
                 flexShrink: 0,
               }}
             >
@@ -248,7 +247,7 @@ export default function SettingsPage() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             <SectionCard
               title="Your Profile"
-              description="Personalize your dashboard experience"
+              description="Choose how your name appears in the app"
               icon={<Shield size={22} />}
               iconColor="#6366f1"
               iconBackground="rgba(99, 102, 241, 0.1)"
@@ -274,14 +273,14 @@ export default function SettingsPage() {
                   style={textInputStyle}
                 />
                 <p style={{ fontSize: '0.75rem', color: '#475569', marginTop: '4px' }}>
-                  This name appears in your dashboard greeting.
+                  This name is shown on the dashboard.
                 </p>
               </div>
             </SectionCard>
 
             <SectionCard
               title="Default Accounts"
-              description="Auto-select accounts for specific actions"
+              description="Choose default accounts for new entries"
               icon={<Layers size={22} />}
               iconColor="#10b981"
               iconBackground="rgba(16, 185, 129, 0.1)"
@@ -313,7 +312,7 @@ export default function SettingsPage() {
 
             <SectionCard
               title="Broker Integration"
-              description="Calculations are now handled automatically inside the order forms"
+              description="Charges are calculated inside trade forms"
               icon={<Info size={22} />}
               iconColor="#3b82f6"
               iconBackground="rgba(59, 130, 246, 0.1)"
@@ -329,9 +328,8 @@ export default function SettingsPage() {
                   lineHeight: 1.6,
                 }}
               >
-                Zerodha-style delivery, Coin, and F&amp;O charge estimates are applied internally.
-                You will now see the breakdown while entering trades instead of managing rates from
-                settings.
+                Delivery, Coin, and F&amp;O charge estimates are applied automatically. You can
+                review the breakdown while entering trades instead of maintaining separate settings.
               </div>
             </SectionCard>
           </div>
@@ -341,17 +339,17 @@ export default function SettingsPage() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             <SectionCard
               title="Module Overview"
-              description="Feature availability is controlled from the Sidebar tab"
+              description="Use Sidebar settings to show or hide sections"
               icon={<Eye size={22} />}
               iconColor="#a855f7"
               iconBackground="rgba(168, 85, 247, 0.1)"
             >
               <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
                 <p style={{ fontSize: '0.95rem', fontWeight: '600' }}>
-                  All modules remain available to your account.
+                  All modules are enabled for your account.
                 </p>
                 <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>
-                  Use the Sidebar tab to hide or show navigation sections.
+                  Use the Sidebar tab to control what appears in navigation.
                 </p>
               </div>
             </SectionCard>
@@ -362,7 +360,7 @@ export default function SettingsPage() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             <SectionCard
               title="Sidebar Visibility"
-              description="Customize which sections appear in navigation"
+              description="Choose which sections appear in navigation"
               icon={<LayoutPanelLeft size={22} />}
               iconColor="#f59e0b"
               iconBackground="rgba(245, 158, 11, 0.1)"
@@ -395,7 +393,7 @@ export default function SettingsPage() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             <SectionCard
               title="Danger Zone"
-              description="Irreversible actions for your account"
+              description="Actions that affect all app settings"
               icon={<Shield size={22} />}
               iconColor="#ef4444"
               iconBackground="rgba(239, 68, 68, 0.1)"
@@ -415,10 +413,10 @@ export default function SettingsPage() {
               >
                 <div>
                   <div style={{ color: '#ef4444', fontWeight: '700', marginBottom: '4px' }}>
-                    Reset Configuration
+                    Reset settings
                   </div>
                   <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                    Restore all settings to factory defaults
+                    Restore the app configuration to its default state
                   </div>
                 </div>
                 <button
@@ -454,8 +452,7 @@ export default function SettingsPage() {
               >
                 <Info size={20} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  Preferences are saved to your FINCORE profile and applied across your signed-in
-                  session.
+                  Preferences are saved to your profile and applied across your signed-in session.
                 </div>
               </div>
             </SectionCard>

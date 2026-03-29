@@ -161,7 +161,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                 >
                   {tx.category}
                 </span>
-                <span>•</span>
+                <span>|</span>
                 {new Date(tx.date).toLocaleDateString('en-IN', {
                   day: 'numeric',
                   month: 'short',
@@ -181,7 +181,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                 gap: '2px',
               }}
             >
-              {tx.type === 'Income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}₹
+              {tx.type === 'Income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}INR
               {tx.amount.toLocaleString()}
             </div>
           </div>

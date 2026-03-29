@@ -89,7 +89,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       case 'warning':
         return <AlertTriangle size={20} color="#f59e0b" />;
       case 'info':
-        return <Info size={20} color="#3b82f6" />;
+        return <Info size={20} color={colors.accentHover} />;
     }
   };
 
@@ -115,7 +115,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             key={n.id}
             style={{
               background: colors.bgCard,
-              border: `1px solid ${n.type === 'success' ? '#10b981' : n.type === 'error' ? '#f43f5e' : n.type === 'warning' ? '#f59e0b' : '#3b82f6'}33`,
+              border: `1px solid ${
+                n.type === 'success'
+                  ? '#20b072'
+                  : n.type === 'error'
+                    ? '#f43f5e'
+                    : n.type === 'warning'
+                      ? '#f2a93b'
+                      : '#43c08a'
+              }33`,
               padding: '16px 20px',
               borderRadius: '16px',
               color: '#fff',
@@ -224,7 +232,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
                   background:
                     confirmDialog.options.type === 'error'
                       ? '#f43f5e'
-                      : 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                      : 'linear-gradient(135deg, #1a8e68 0%, #146d63 100%)',
                   border: 'none',
                   color: '#fff',
                   fontWeight: '700',

@@ -245,15 +245,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               minWidth: '40px',
               height: '40px',
               background: 'rgba(99, 102, 241, 0.12)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
+              border: '1px solid rgba(67, 192, 138, 0.24)',
               borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#818cf8',
+              color: '#43c08a',
               fontWeight: '950',
               fontSize: '1.2rem',
-              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+              boxShadow:
+                '0 4px 16px rgba(13, 78, 68, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
               flexShrink: 0,
               position: 'relative',
               backdropFilter: 'blur(16px) saturate(180%)',
@@ -290,7 +291,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 letterSpacing: '0.5px',
               }}
             >
-              Financial Dashboard
+              Personal finance dashboard
             </span>
           </div>
         </div>
@@ -319,7 +320,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   padding: '8px 12px 4px',
                   fontSize: '0.6rem',
                   fontWeight: '800',
-                  color: '#475569',
+                  color: 'var(--text-tertiary)',
                   letterSpacing: '1.5px',
                   textTransform: 'uppercase' as const,
                   userSelect: 'none' as const,
@@ -346,20 +347,24 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       position: 'relative',
                       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isActive
-                        ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(67, 56, 202, 0.3) 100%)'
+                        ? 'linear-gradient(135deg, rgba(30, 166, 114, 0.26) 0%, rgba(20, 109, 99, 0.22) 100%)'
                         : isHovered
                           ? 'rgba(255, 255, 255, 0.05)'
                           : 'transparent',
                       backdropFilter: isActive ? 'blur(16px) saturate(150%)' : 'none',
                       WebkitBackdropFilter: isActive ? 'blur(16px) saturate(150%)' : 'none',
-                      color: isActive ? '#ffffff' : isHovered ? 'var(--text-primary)' : '#64748b',
+                      color: isActive
+                        ? '#ffffff'
+                        : isHovered
+                          ? 'var(--text-primary)'
+                          : 'var(--text-secondary)',
                       border: isActive
-                        ? '1px solid rgba(99, 102, 241, 0.4)'
+                        ? '1px solid rgba(67, 192, 138, 0.28)'
                         : isHovered
                           ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid transparent',
                       boxShadow: isActive
-                        ? '0 4px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
+                        ? '0 4px 20px rgba(13, 78, 68, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0,0,0,0.2)'
                         : 'none',
                     }}
                     aria-current={isActive ? 'page' : undefined}
@@ -375,9 +380,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           top: '20%',
                           bottom: '20%',
                           width: '3px',
-                          background: '#6366f1',
+                          background: '#1ea672',
                           borderRadius: '0 4px 4px 0',
-                          boxShadow: '0 0 10px rgba(99, 102, 241, 0.4)',
+                          boxShadow: '0 0 10px rgba(30, 166, 114, 0.35)',
                         }}
                       />
                     )}
@@ -476,9 +481,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={async () => {
               const isConfirmed = await customConfirm({
                 title: 'Leaving FINCORE?',
-                message: 'Are you sure you want to log out of your secure session?',
+                message: 'Are you sure you want to log out?',
                 type: 'warning',
-                confirmLabel: 'Logout',
+                confirmLabel: 'Log out',
                 cancelLabel: 'Stay',
               });
               if (isConfirmed) {

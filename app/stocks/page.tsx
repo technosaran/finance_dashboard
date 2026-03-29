@@ -3,8 +3,7 @@ import StocksClient from './StocksClient';
 
 export const metadata: Metadata = {
   title: 'Stocks | FINCORE Equity Portfolio',
-  description:
-    'Monitor your stock holdings, track performance, and manage equity transactions with real-time insights.',
+  description: 'Track stock holdings, performance, allocation, and trade history.',
 };
 
 export default function StocksPage() {

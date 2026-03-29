@@ -1859,7 +1859,7 @@ export default function StocksClient() {
                 gap: '12px',
               }}
             >
-              <Star color="#f59e0b" fill="#f59e0b" size={24} /> Lifetime Wealth Report
+              <Star color="#f59e0b" fill="#f59e0b" size={24} /> Lifetime performance
             </h3>
 
             <div className="grid-responsive-2" style={{ gap: '48px', marginBottom: '48px' }}>

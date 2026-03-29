@@ -75,9 +75,7 @@ function AuthConsumer({
               margin: '0 auto 16px',
             }}
           />
-          <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
-            Initializing Secure Session...
-          </div>
+          <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>Loading your dashboard...</div>
         </div>
         <style jsx>{`
           @keyframes spin {
@@ -103,7 +101,7 @@ function AuthConsumer({
           left: '-9999px',
           zIndex: 999,
           padding: '12px 24px',
-          background: '#6366f1',
+          background: '#1a8e68',
           color: '#fff',
           textDecoration: 'none',
           borderRadius: '8px',
@@ -164,7 +162,7 @@ function AuthConsumer({
                   style={{
                     width: '32px',
                     height: '32px',
-                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                    background: 'linear-gradient(135deg, #1a8e68 0%, #155b58 100%)',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
@@ -245,7 +243,7 @@ function MobileNavigation() {
   const { setIsTransactionModalOpen } = useLedger();
 
   const navItems = [
-    { label: 'Dash', icon: <LayoutDashboard size={20} />, path: '/' },
+    { label: 'Home', icon: <LayoutDashboard size={20} />, path: '/' },
     { label: 'Stocks', icon: <TrendingUp size={20} />, path: '/stocks' },
     { label: 'Funds', icon: <Activity size={20} />, path: '/mutual-funds' },
     { label: 'Ledger', icon: <History size={20} />, path: '/ledger' },

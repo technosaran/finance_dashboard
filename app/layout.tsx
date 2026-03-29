@@ -16,13 +16,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'FINCORE | Digital Wealth Hub',
-  description: 'Enterprise-grade financial tracking and goal management hub',
+  title: 'FINCORE | Personal Finance Dashboard',
+  description: 'Track accounts, investments, goals, and day-to-day money activity in one place.',
   keywords: ['finance', 'portfolio', 'wealth', 'investment', 'tracking'],
   authors: [{ name: 'FINCORE Team' }],
   openGraph: {
-    title: 'FINCORE | Digital Wealth Hub',
-    description: 'Enterprise-grade financial tracking and goal management hub',
+    title: 'FINCORE | Personal Finance Dashboard',
+    description: 'Track accounts, investments, goals, and day-to-day money activity in one place.',
     type: 'website',
     locale: 'en_US',
   },

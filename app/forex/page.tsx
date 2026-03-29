@@ -3,8 +3,7 @@ import ForexClient from './ForexClient';
 
 export const metadata: Metadata = {
   title: 'Forex | FINCORE Currency Portfolio',
-  description:
-    'Monitor your forex trades, track currency performance, and manage currency investments with real-time insights.',
+  description: 'Track currency positions, rate movement, and forex trade history.',
 };
 
 export default function ForexPage() {

@@ -38,10 +38,10 @@ export default function GoalsClient() {
 
     if (editId) {
       await updateGoal(editId, goalData);
-      showNotification('success', 'Directive updated successfully');
+      showNotification('success', 'Goal updated');
     } else {
       await addGoal(goalData);
-      showNotification('success', 'New wealth directive initialized! 🎯');
+      showNotification('success', 'Goal created');
     }
 
     resetForm();
@@ -127,7 +127,7 @@ export default function GoalsClient() {
                 letterSpacing: '-0.02em',
               }}
             >
-              Target Milestones
+              Goals
             </h1>
             <p
               style={{
@@ -136,7 +136,7 @@ export default function GoalsClient() {
                 marginTop: '6px',
               }}
             >
-              Engineered for ambitious wealth accumulation
+              Track savings targets and progress over time
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -180,7 +180,7 @@ export default function GoalsClient() {
                 padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
                 minHeight: '44px',
                 borderRadius: '14px',
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                background: 'linear-gradient(135deg, #1a8e68 0%, #146d63 100%)',
                 color: 'white',
                 border: 'none',
                 cursor: 'pointer',
@@ -196,7 +196,7 @@ export default function GoalsClient() {
               onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
               onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
             >
-              <Plus size={16} strokeWidth={3} /> New Directive
+              <Plus size={16} strokeWidth={3} /> Add Goal
             </button>
           </div>
         </div>
@@ -241,12 +241,12 @@ export default function GoalsClient() {
                   style={{
                     fontSize: '0.8rem',
                     fontWeight: '800',
-                    color: '#818cf8',
+                    color: '#43c08a',
                     textTransform: 'uppercase',
                     letterSpacing: '1.5px',
                   }}
                 >
-                  Aggregate Success
+                  Overall progress
                 </span>
               </div>
               <h2
@@ -267,7 +267,7 @@ export default function GoalsClient() {
                     letterSpacing: '0',
                   }}
                 >
-                  Realized
+                  funded
                 </span>
               </h2>
               <div
@@ -316,7 +316,7 @@ export default function GoalsClient() {
                     letterSpacing: '0.8px',
                   }}
                 >
-                  Accumulated
+                  Saved
                 </div>
                 <div
                   style={{
@@ -349,7 +349,7 @@ export default function GoalsClient() {
                     letterSpacing: '0.8px',
                   }}
                 >
-                  Global Target
+                  Target
                 </div>
                 <div
                   style={{
@@ -456,7 +456,7 @@ export default function GoalsClient() {
                         <span
                           style={{
                             fontSize: '0.7rem',
-                            color: '#6366f1',
+                            color: '#43c08a',
                             fontWeight: '800',
                             textTransform: 'uppercase',
                             letterSpacing: '0.8px',
@@ -484,14 +484,14 @@ export default function GoalsClient() {
                       <button
                         onClick={async () => {
                           const isConfirmed = await customConfirm({
-                            title: 'Terminate Directive',
-                            message: `Are you sure you want to terminate the goal: ${goal.name}?`,
+                            title: 'Delete goal',
+                            message: `Delete the goal "${goal.name}"?`,
                             type: 'error',
-                            confirmLabel: 'Terminate',
+                            confirmLabel: 'Delete',
                           });
                           if (isConfirmed) {
                             await deleteGoal(goal.id);
-                            showNotification('success', 'Directive terminated');
+                            showNotification('success', 'Goal deleted');
                           }
                         }}
                         aria-label={`Delete goal ${goal.name}`}
@@ -522,7 +522,7 @@ export default function GoalsClient() {
                       <span
                         style={{ color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}
                       >
-                        Directive Progress
+                        Progress
                       </span>
                       <span style={{ color: isCompleted ? '#34d399' : '#fff', fontWeight: '900' }}>
                         {progress.toFixed(0)}%
@@ -593,7 +593,7 @@ export default function GoalsClient() {
                           marginBottom: '4px',
                         }}
                       >
-                        Secured
+                        Saved
                       </div>
                       <div
                         style={{
@@ -629,7 +629,7 @@ export default function GoalsClient() {
                             day: 'numeric',
                             year: 'numeric',
                           })
-                        : 'Continuous Directive'}
+                        : 'No target date'}
                     </span>
                   </div>
 
@@ -649,7 +649,7 @@ export default function GoalsClient() {
                         boxShadow: '0 5px 15px rgba(52, 211, 153, 0.3)',
                       }}
                     >
-                      MISSION COMPLETE
+                      COMPLETE
                     </div>
                   )}
                 </div>
@@ -678,10 +678,10 @@ export default function GoalsClient() {
                   marginBottom: '12px',
                 }}
               >
-                No Active Wealth Directives
+                No goals yet
               </h3>
               <p style={{ margin: 0, fontSize: 'clamp(0.875rem, 2vw, 1rem)', color: '#94a3b8' }}>
-                Initialize your first goal to begin accumulation tracking.
+                Create your first goal to start tracking progress.
               </p>
             </div>
           )}
@@ -729,7 +729,7 @@ export default function GoalsClient() {
               }}
             >
               <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: '900', margin: 0 }}>
-                {editId ? 'Modify Directive' : 'New Directive'}
+                {editId ? 'Edit goal' : 'New goal'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -766,12 +766,12 @@ export default function GoalsClient() {
                     letterSpacing: '1px',
                   }}
                 >
-                  Directive Title
+                  Goal name
                 </label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Sovereign Wealth Fund"
+                  placeholder="e.g. Emergency fund"
                   required
                   aria-label="Goal name"
                   style={{
@@ -803,7 +803,7 @@ export default function GoalsClient() {
                       letterSpacing: '1px',
                     }}
                   >
-                    Target Capital (₹)
+                    Target amount (INR)
                   </label>
                   <input
                     type="number"
@@ -833,7 +833,7 @@ export default function GoalsClient() {
                       letterSpacing: '1px',
                     }}
                   >
-                    Initial Seed (₹)
+                    Current amount (INR)
                   </label>
                   <input
                     type="number"
@@ -898,7 +898,7 @@ export default function GoalsClient() {
                       letterSpacing: '1px',
                     }}
                   >
-                    Classification
+                    Category
                   </label>
                   <select
                     value={category}
@@ -915,11 +915,11 @@ export default function GoalsClient() {
                       cursor: 'pointer',
                     }}
                   >
-                    <option value="Savings">Strategic Savings</option>
-                    <option value="Investment">Growth Assets</option>
-                    <option value="Emergency">Reserve Fund</option>
-                    <option value="Travel">Exploration</option>
-                    <option value="Purchase">Capital Acquisition</option>
+                    <option value="Savings">Savings</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Emergency">Emergency</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Purchase">Purchase</option>
                   </select>
                 </div>
               </div>
@@ -934,7 +934,7 @@ export default function GoalsClient() {
                       letterSpacing: '1px',
                     }}
                   >
-                    Funding Bank Account
+                    Funding account
                   </label>
                   <select
                     value={selectedAccountId}
@@ -951,7 +951,7 @@ export default function GoalsClient() {
                       cursor: 'pointer',
                     }}
                   >
-                    <option value="">No Account (Ledger Only)</option>
+                    <option value="">No account link</option>
                     {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
                         {acc.name} - ₹{acc.balance.toLocaleString()}
@@ -959,7 +959,8 @@ export default function GoalsClient() {
                     ))}
                   </select>
                   <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '6px' }}>
-                    If you increase current amount, money will be deducted from here.
+                    If the current amount increases, the difference will be deducted from this
+                    account.
                   </p>
                 </div>
               )}
@@ -968,7 +969,7 @@ export default function GoalsClient() {
                 aria-label={editId ? 'Update goal' : 'Create goal'}
                 style={{
                   marginTop: '12px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                  background: 'linear-gradient(135deg, #1a8e68 0%, #146d63 100%)',
                   color: '#fff',
                   padding: 'clamp(16px, 3vw, 20px)',
                   minHeight: '44px',
@@ -977,10 +978,10 @@ export default function GoalsClient() {
                   fontWeight: '900',
                   cursor: 'pointer',
                   fontSize: '1.1rem',
-                  boxShadow: '0 15px 30px rgba(99, 102, 241, 0.4)',
+                  boxShadow: '0 15px 30px rgba(13, 78, 68, 0.32)',
                 }}
               >
-                {editId ? 'Commit Changes' : 'Execute Directive'}
+                {editId ? 'Save changes' : 'Create goal'}
               </button>
             </form>
           </div>

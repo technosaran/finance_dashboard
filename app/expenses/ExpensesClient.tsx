@@ -93,7 +93,7 @@ export default function ExpensesClient() {
       showNotification('success', 'Expense record updated');
     } else {
       await addTransaction(txData);
-      showNotification('success', 'Expense tracked successfully! 💸');
+      showNotification('success', 'Expense saved');
     }
 
     resetForm();
@@ -177,7 +177,7 @@ export default function ExpensesClient() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Expenses Hub
+              Expenses
             </h1>
             <p className="page-subtitle">Track and manage your spending across categories</p>
           </div>
@@ -403,7 +403,7 @@ export default function ExpensesClient() {
                           <span
                             style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600' }}
                           >
-                            {stats.count} Transactions
+                            {stats.count} entries
                           </span>
                         </div>
                       </div>
@@ -445,7 +445,7 @@ export default function ExpensesClient() {
                   }}
                 >
                   <EmptyTransactionsVisual />
-                  <p style={{ marginTop: '24px', fontWeight: '700' }}>No expense categories yet.</p>
+                  <p style={{ marginTop: '24px', fontWeight: '700' }}>No categories yet.</p>
                 </div>
               )}
             </div>
@@ -529,7 +529,7 @@ export default function ExpensesClient() {
                           {item.description}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>
-                          {item.category} •{' '}
+                          {item.category} |{' '}
                           {new Date(item.date).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',
@@ -624,7 +624,7 @@ export default function ExpensesClient() {
                   color: '#fff',
                 }}
               >
-                {editId ? 'Edit Expense' : 'Track Expense 💸'}
+                {editId ? 'Edit expense' : 'Add expense'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -710,7 +710,7 @@ export default function ExpensesClient() {
                   aria-label="Select bank account"
                   className="form-input"
                 >
-                  <option value="">Just log it, don&apos;t deduct from bank</option>
+                  <option value="">Log only, do not deduct from an account</option>
                   {accounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
                       {acc.name} - ₹{acc.balance.toLocaleString()}

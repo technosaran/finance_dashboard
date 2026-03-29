@@ -154,7 +154,7 @@ export default function IncomeClient() {
       showNotification('success', 'Income updated successfully');
     } else {
       await addTransaction(txData);
-      showNotification('success', 'Income added! 💰');
+      showNotification('success', 'Income saved');
     }
 
     resetForm();
@@ -218,7 +218,7 @@ export default function IncomeClient() {
             onClick={() => setIsModalOpen(true)}
             className="header-add-btn header-add-btn--green pulse-on-hover"
           >
-            <Plus size={20} strokeWidth={3} /> Add Income
+            <Plus size={20} strokeWidth={3} /> Add income
           </button>
         </div>
 
@@ -291,14 +291,14 @@ export default function IncomeClient() {
             >
               <BarChart3 size={24} />
             </div>
-            <div className="stat-card__meta">Average Entry</div>
+            <div className="stat-card__meta">Average credit</div>
             <div className="stat-card__value">
               ₹{stats.average.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
             <div
               style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', fontWeight: '600' }}
             >
-              From {stats.count} payment{stats.count !== 1 ? 's' : ''}
+              From {stats.count} entr{stats.count !== 1 ? 'ies' : 'y'}
             </div>
           </div>
 
@@ -468,7 +468,7 @@ export default function IncomeClient() {
                 <CalendarIcon size={20} />
               </div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0 }}>
-                Recent Payments
+                Recent income
               </h3>
             </div>
 
@@ -613,7 +613,7 @@ export default function IncomeClient() {
                       cursor: 'pointer',
                     }}
                   >
-                    Record First Income
+                    Add first income
                   </button>
                 </div>
               )}
@@ -636,11 +636,11 @@ export default function IncomeClient() {
               <X size={20} />
             </button>
 
-            <h2 className="modal-title">{editId ? 'Edit Income' : 'Add Income'}</h2>
+            <h2 className="modal-title">{editId ? 'Edit income' : 'Add income'}</h2>
             <p className="modal-subtitle">
               {editId
                 ? 'Modify your earning details'
-                : 'Keep track of your latest paycheck or reward'}
+                : 'Add a salary, freelance payment, or another incoming amount'}
             </p>
 
             <form
@@ -648,7 +648,7 @@ export default function IncomeClient() {
               style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
               <div>
-                <label className="form-label">Source / Employer</label>
+                <label className="form-label">Source</label>
                 <input
                   value={sourceName}
                   onChange={(e) => setSourceName(e.target.value)}
@@ -699,7 +699,7 @@ export default function IncomeClient() {
                   />
                 </div>
                 <div>
-                  <label className="form-label">Credit to</label>
+                  <label className="form-label">Credit account</label>
                   <select
                     value={selectedAccountId}
                     onChange={(e) =>
