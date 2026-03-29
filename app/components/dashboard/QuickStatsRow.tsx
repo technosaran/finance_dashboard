@@ -27,11 +27,11 @@ function formatAmount(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
 
-  if (abs >= CRORE) return `${sign}INR ${(abs / CRORE).toFixed(2)}Cr`;
-  if (abs >= LAKH) return `${sign}INR ${(abs / LAKH).toFixed(2)}L`;
-  if (abs >= THOUSAND) return `${sign}INR ${(abs / THOUSAND).toFixed(1)}K`;
+  if (abs >= CRORE) return `${sign}₹${(abs / CRORE).toFixed(2)}Cr`;
+  if (abs >= LAKH) return `${sign}₹${(abs / LAKH).toFixed(2)}L`;
+  if (abs >= THOUSAND) return `${sign}₹${(abs / THOUSAND).toFixed(1)}K`;
 
-  return `${sign}INR ${abs.toLocaleString()}`;
+  return `${sign}₹${abs.toLocaleString()}`;
 }
 
 export function QuickStatsRow({

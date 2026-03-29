@@ -2323,7 +2323,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Trade value</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        INR {initialBuyChargePreview.turnover.toFixed(2)}
+                        ₹{initialBuyChargePreview.turnover.toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2335,7 +2335,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        INR {initialBuyChargePreview.taxes.toFixed(2)}
+                        ₹{initialBuyChargePreview.taxes.toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2347,7 +2347,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Estimated bank debit</span>
                       <span style={{ color: '#34d399', fontWeight: '900' }}>
-                        INR {initialBuyChargePreview.settlementAmount.toFixed(2)}
+                        ₹{initialBuyChargePreview.settlementAmount.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -2384,7 +2384,7 @@ export default function StocksClient() {
                       <option value="">Select Account</option>
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.name} - INR {acc.balance.toLocaleString()}
+                          {acc.name} - ₹{acc.balance.toLocaleString()}
                         </option>
                       ))}
                     </select>
@@ -2681,7 +2681,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Trade value</span>
                       <span style={{ fontWeight: '800', color: '#fff' }}>
-                        INR {transactionChargePreview.turnover.toFixed(2)}
+                        ₹{transactionChargePreview.turnover.toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2694,7 +2694,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Brokerage</span>
                       <span style={{ fontWeight: '800', color: '#fff' }}>
-                        INR {transactionChargePreview.brokerage.toFixed(2)}
+                        ₹{transactionChargePreview.brokerage.toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2707,7 +2707,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
                       <span style={{ fontWeight: '800', color: '#fff' }}>
-                        INR {transactionChargePreview.taxes.toFixed(2)}
+                        ₹{transactionChargePreview.taxes.toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2721,7 +2721,7 @@ export default function StocksClient() {
                         {transactionType === 'BUY' ? 'Estimated debit' : 'Estimated credit'}
                       </span>
                       <span style={{ fontWeight: '900', color: '#34d399' }}>
-                        INR {transactionChargePreview.settlementAmount.toFixed(2)}
+                        ₹{transactionChargePreview.settlementAmount.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -2758,7 +2758,7 @@ export default function StocksClient() {
                     <option value="">Select Account</option>
                     {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
-                        {acc.name} - INR {acc.balance.toLocaleString()}
+                        {acc.name} - ₹{acc.balance.toLocaleString()}
                       </option>
                     ))}
                   </select>
@@ -2882,7 +2882,7 @@ export default function StocksClient() {
                           Estimating for Selling
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                          {stock.symbol} - {stock.quantity} shares @ INR
+                          {stock.symbol} - {stock.quantity} shares @ ₹
                           {stock.currentPrice.toFixed(2)}
                         </div>
                       </div>
@@ -2907,7 +2907,7 @@ export default function StocksClient() {
                           {
                             label: 'SEBI Charges',
                             value: charges.sebiCharges,
-                            sub: 'INR 10 per crore turnover',
+                            sub: '₹10 per crore turnover',
                           },
                           {
                             label: 'Stamp Duty',
@@ -2918,7 +2918,7 @@ export default function StocksClient() {
                           {
                             label: 'DP Charges',
                             value: charges.dpCharges,
-                            sub: 'INR 13 plus GST on sell delivery',
+                            sub: '₹13 plus GST on sell delivery',
                           },
                         ].map((item, idx) => (
                           <div
@@ -2945,7 +2945,7 @@ export default function StocksClient() {
                                 color: item.value > 0 ? '#fff' : '#475569',
                               }}
                             >
-                              INR {item.value.toFixed(2)}
+                              ₹{item.value.toFixed(2)}
                             </div>
                           </div>
                         ))}
@@ -2963,7 +2963,7 @@ export default function StocksClient() {
                       >
                         <div style={{ fontWeight: '900', color: '#fff' }}>Total Charges</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: '950', color: '#6366f1' }}>
-                          INR {charges.total.toFixed(2)}
+                          ₹{charges.total.toFixed(2)}
                         </div>
                       </div>
                       <p

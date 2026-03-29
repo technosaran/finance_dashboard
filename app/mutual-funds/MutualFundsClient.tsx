@@ -2222,7 +2222,7 @@ export default function MutualFundsClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Investment amount</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        INR {(Number(units) * Number(avgNav)).toFixed(2)}
+                        ₹{(Number(units) * Number(avgNav)).toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2234,7 +2234,7 @@ export default function MutualFundsClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Stamp duty</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        INR {initialFundChargePreview.stampDuty.toFixed(2)}
+                        ₹{initialFundChargePreview.stampDuty.toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2246,7 +2246,7 @@ export default function MutualFundsClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Effective invested amount</span>
                       <span style={{ color: '#fbbf24', fontWeight: '900' }}>
-                        INR {initialFundChargePreview.effectiveInvestment.toFixed(2)}
+                        ₹{initialFundChargePreview.effectiveInvestment.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -2284,7 +2284,7 @@ export default function MutualFundsClient() {
                       <option value="">Select Account</option>
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.name} - INR {acc.balance.toLocaleString()}
+                          {acc.name} - ₹{acc.balance.toLocaleString()}
                         </option>
                       ))}
                     </select>
@@ -2512,7 +2512,7 @@ export default function MutualFundsClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Order amount</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        INR {(Number(txUnits) * Number(txNav)).toFixed(2)}
+                        ₹{(Number(txUnits) * Number(txNav)).toFixed(2)}
                       </span>
                     </div>
                     <div
@@ -2524,7 +2524,7 @@ export default function MutualFundsClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Stamp duty</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        INR {transactionChargePreview.stampDuty.toFixed(2)}
+                        ₹{transactionChargePreview.stampDuty.toFixed(2)}
                       </span>
                     </div>
                     {(transactionType === 'BUY' || transactionType === 'SIP') && (
@@ -2537,7 +2537,7 @@ export default function MutualFundsClient() {
                       >
                         <span style={{ color: '#94a3b8' }}>Effective invested amount</span>
                         <span style={{ color: '#fbbf24', fontWeight: '900' }}>
-                          INR {transactionChargePreview.effectiveInvestment.toFixed(2)}
+                          ₹{transactionChargePreview.effectiveInvestment.toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -2575,7 +2575,7 @@ export default function MutualFundsClient() {
                     <option value="">Select Account</option>
                     {accounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
-                        {acc.name} - INR {acc.balance.toLocaleString()}
+                        {acc.name} - ₹{acc.balance.toLocaleString()}
                       </option>
                     ))}
                   </select>
@@ -2697,7 +2697,7 @@ export default function MutualFundsClient() {
                         Direct plans are commission-free on Coin
                       </span>
                     </div>
-                    <span style={{ color: '#fff', fontWeight: '700' }}>INR 0.00</span>
+                    <span style={{ color: '#fff', fontWeight: '700' }}>₹0.00</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>

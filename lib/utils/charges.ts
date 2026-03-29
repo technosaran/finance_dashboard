@@ -56,7 +56,7 @@ export const getStockChargeMeta = (exchange?: string) => {
 
   return {
     exchange: normalizedExchange,
-    brokerageLabel: 'INR 0 delivery brokerage',
+    brokerageLabel: '₹0 delivery brokerage',
     sttRate: STOCK_DELIVERY_RATES.stt,
     transactionChargeRate: STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange],
     stampDutyRate: STOCK_DELIVERY_RATES.stampDuty,
@@ -122,8 +122,8 @@ export const getFnoChargeMeta = (instrument: string) => {
   return {
     isOption,
     brokerageLabel: isOption
-      ? 'INR 20 per executed order'
-      : '0.03% or INR 20 per executed order, whichever is lower',
+      ? '₹20 per executed order'
+      : '0.03% or ₹20 per executed order, whichever is lower',
     sttRate: isOption ? FNO_RATES.optionsStt : FNO_RATES.futuresStt,
     transactionChargeRate: isOption
       ? FNO_RATES.optionsTransactionCharges

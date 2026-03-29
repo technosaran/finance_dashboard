@@ -385,7 +385,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       notes: notes || undefined,
     });
 
-    showNotification('success', `Investment of INR ${total.toLocaleString()} recorded`);
+    showNotification('success', `Investment of ₹${total.toLocaleString()} recorded`);
     onClose();
   };
 
@@ -999,7 +999,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               >
                 <span style={{ color: '#94a3b8' }}>Trade value</span>
                 <span style={{ color: '#fff', fontWeight: '800' }}>
-                  INR {stockChargePreview.turnover.toFixed(2)}
+                  ₹{stockChargePreview.turnover.toFixed(2)}
                 </span>
               </div>
               <div
@@ -1007,7 +1007,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               >
                 <span style={{ color: '#94a3b8' }}>Brokerage</span>
                 <span style={{ color: '#fff', fontWeight: '800' }}>
-                  INR {stockChargePreview.brokerage.toFixed(2)}
+                  ₹{stockChargePreview.brokerage.toFixed(2)}
                 </span>
               </div>
               <div
@@ -1015,7 +1015,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               >
                 <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
                 <span style={{ color: '#fff', fontWeight: '800' }}>
-                  INR {stockChargePreview.taxes.toFixed(2)}
+                  ₹{stockChargePreview.taxes.toFixed(2)}
                 </span>
               </div>
               <div
@@ -1025,7 +1025,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                   {subType === 'BUY' ? 'Estimated debit' : 'Estimated credit'}
                 </span>
                 <span style={{ color: '#34d399', fontWeight: '900' }}>
-                  INR {stockChargePreview.settlementAmount.toFixed(2)}
+                  ₹{stockChargePreview.settlementAmount.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -1058,7 +1058,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               >
                 <span style={{ color: '#94a3b8' }}>Order amount</span>
                 <span style={{ color: '#fff', fontWeight: '800' }}>
-                  INR {(numericQuantity * numericPrice).toFixed(2)}
+                  ₹{(numericQuantity * numericPrice).toFixed(2)}
                 </span>
               </div>
               <div
@@ -1066,7 +1066,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               >
                 <span style={{ color: '#94a3b8' }}>Stamp duty</span>
                 <span style={{ color: '#fff', fontWeight: '800' }}>
-                  INR {mutualFundChargePreview.stampDuty.toFixed(2)}
+                  ₹{mutualFundChargePreview.stampDuty.toFixed(2)}
                 </span>
               </div>
               {(subType === 'BUY' || subType === 'SIP') && (
@@ -1075,7 +1075,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 >
                   <span style={{ color: '#94a3b8' }}>Effective invested amount</span>
                   <span style={{ color: '#fbbf24', fontWeight: '900' }}>
-                    INR {mutualFundChargePreview.effectiveInvestment.toFixed(2)}
+                    ₹{mutualFundChargePreview.effectiveInvestment.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -1114,8 +1114,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                     fontWeight: '800',
                   }}
                 >
-                  {grossFnoPnl >= 0 ? '+' : ''}
-                  INR {grossFnoPnl.toFixed(2)}
+                  {grossFnoPnl >= 0 ? '+' : ''}₹{grossFnoPnl.toFixed(2)}
                 </span>
               </div>
               <div
@@ -1123,7 +1122,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               >
                 <span style={{ color: '#94a3b8' }}>Charges</span>
                 <span style={{ color: '#fff', fontWeight: '800' }}>
-                  INR {fnoChargePreview.total.toFixed(2)}
+                  ₹{fnoChargePreview.total.toFixed(2)}
                 </span>
               </div>
               <div
@@ -1136,8 +1135,8 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                     fontWeight: '900',
                   }}
                 >
-                  {grossFnoPnl - fnoChargePreview.total >= 0 ? '+' : ''}
-                  INR {(grossFnoPnl - fnoChargePreview.total).toFixed(2)}
+                  {grossFnoPnl - fnoChargePreview.total >= 0 ? '+' : ''}₹
+                  {(grossFnoPnl - fnoChargePreview.total).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -1171,7 +1170,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               <option value="">No Account (Ledger Only)</option>
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>
-                  {acc.name} - INR {acc.balance.toLocaleString()}
+                  {acc.name} - ₹{acc.balance.toLocaleString()}
                 </option>
               ))}
             </select>

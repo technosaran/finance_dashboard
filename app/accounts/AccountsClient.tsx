@@ -892,7 +892,7 @@ export default function AccountsClient() {
                     }}
                     aria-label="Select currency"
                   >
-                    <option value="INR">INR (₹)</option>
+                    <option value="INR">₹ (INR)</option>
                     <option value="USD">USD ($)</option>
                   </select>
                 </div>
