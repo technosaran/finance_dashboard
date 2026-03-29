@@ -13,13 +13,15 @@ import { TopHoldings } from './dashboard/TopHoldings';
 import { RecentActivity } from './dashboard/RecentActivity';
 import { GoalsProgress } from './dashboard/GoalsProgress';
 
-function getGreeting(): { text: string; subtext: string } {
+function getGreeting(): { text: string; subtext: string; emoji: string; emojiLabel: string } {
   const hour = new Date().getHours();
 
   if (hour >= 5 && hour < 12) {
     return {
       text: 'Good morning',
       subtext: 'Here is where your money stands today.',
+      emoji: '☀️',
+      emojiLabel: 'sun — good morning',
     };
   }
 
@@ -27,6 +29,8 @@ function getGreeting(): { text: string; subtext: string } {
     return {
       text: 'Good afternoon',
       subtext: 'Check balances, holdings, and recent activity at a glance.',
+      emoji: '🌤️',
+      emojiLabel: 'sun behind cloud — good afternoon',
     };
   }
 
@@ -34,12 +38,16 @@ function getGreeting(): { text: string; subtext: string } {
     return {
       text: 'Good evening',
       subtext: "Review today's movement before you wrap up.",
+      emoji: '🌆',
+      emojiLabel: 'cityscape at dusk — good evening',
     };
   }
 
   return {
-    text: 'Good evening',
+    text: 'Good night',
     subtext: 'A quick summary before the day ends.',
+    emoji: '🌙',
+    emojiLabel: 'crescent moon — good night',
   };
 }
 
@@ -323,6 +331,7 @@ export default function Dashboard() {
                 flexWrap: 'wrap',
               }}
             >
+              <span role="img" aria-label={greeting.emojiLabel}>{greeting.emoji}</span>{' '}
               {greeting.text}, <span className="gradient-text">{displayName}.</span>
             </h1>
             <p
