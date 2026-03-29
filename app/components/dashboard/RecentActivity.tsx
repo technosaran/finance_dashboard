@@ -181,7 +181,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                 gap: '2px',
               }}
             >
-              {tx.type === 'Income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}INR
+              {tx.type === 'Income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}₹
               {tx.amount.toLocaleString()}
             </div>
           </div>

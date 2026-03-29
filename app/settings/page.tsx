@@ -560,7 +560,7 @@ function AccountSelect({
           <option value="">Select manually each time</option>
           {accounts.map((acc) => (
             <option key={acc.id} value={acc.id}>
-              {acc.name} ({acc.currency === 'INR' ? 'INR ' : 'USD '}
+              {acc.name} ({acc.currency === 'INR' ? '₹' : '$'}
               {acc.balance.toLocaleString()})
             </option>
           ))}

@@ -159,7 +159,7 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                 </div>
                 <div style={{ textAlign: 'right', marginRight: '12px' }}>
                   <div style={{ fontSize: '0.88rem', fontWeight: '800', color: '#fff' }}>
-                    INR {stock.currentValue.toLocaleString()}
+                    ₹{stock.currentValue.toLocaleString()}
                   </div>
                   <div
                     style={{
@@ -193,7 +193,7 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                     textAlign: 'center',
                   }}
                 >
-                  {dayChange >= 0 ? '+' : '-'}INR
+                  {dayChange >= 0 ? '+' : '-'}₹
                   {Math.abs(dayChange).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </div>
               </div>

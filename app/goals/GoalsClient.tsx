@@ -803,7 +803,7 @@ export default function GoalsClient() {
                       letterSpacing: '1px',
                     }}
                   >
-                    Target amount (INR)
+                    Target amount (₹)
                   </label>
                   <input
                     type="number"
@@ -833,7 +833,7 @@ export default function GoalsClient() {
                       letterSpacing: '1px',
                     }}
                   >
-                    Current amount (INR)
+                    Current amount (₹)
                   </label>
                   <input
                     type="number"
