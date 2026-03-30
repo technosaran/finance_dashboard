@@ -1,121 +1,114 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Plus, Trash2, Edit3, X, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '@/lib/config/supabase';
 import { useAuth } from '@/app/components/AuthContext';
 import { useNotifications } from '@/app/components/NotificationContext';
-import { Plus, Trash2, Edit3 } from 'lucide-react';
-import { EmptyPortfolioVisual } from '@/app/components/Visuals';
+import { useSettings } from '@/app/components/FinanceContext';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { formatDate, formatDateTime } from '@/lib/utils/format';
 
-// Simplified type based on database schema for local use
 export interface ForexTrade {
   id: number;
-  transaction_type: string;
+  transaction_type: 'BUY' | 'SELL';
   notes: string | null;
   amount: number;
   account_id: number | null;
   transaction_date: string | null;
+  created_at?: string | null;
 }
 
 export default function ForexClient() {
   const { user } = useAuth();
-  const { showNotification, confirm: customConfirm } = useNotifications();
+  const { settings } = useSettings();
+  const { showNotification, showActionNotification } = useNotifications();
+
   const [trades, setTrades] = useState<ForexTrade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
 
-  // Form states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [amount, setAmount] = useState('');
-  const [transactionType, setTransactionType] = useState('BUY');
+  const [transactionType, setTransactionType] = useState<'BUY' | 'SELL'>('BUY');
   const [notes, setNotes] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filterType, setFilterType] = useState<'ALL' | 'BUY' | 'SELL'>('ALL');
+
+  const compactNumbers = settings.compactNumbers ?? false;
 
   const fetchTrades = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setTrades([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('forex_transactions')
         .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setTrades(data as ForexTrade[]);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch forex trades';
-      showNotification('error', errorMessage);
+        .order('transaction_date', { ascending: false });
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      setTrades((data ?? []) as ForexTrade[]);
+    } catch (fetchUnknownError) {
+      const message =
+        fetchUnknownError instanceof Error
+          ? fetchUnknownError.message
+          : 'Failed to fetch forex trades.';
+      setError(message);
+      showNotification('error', message);
     } finally {
       setLoading(false);
     }
-  }, [user, showNotification]);
+  }, [showNotification, user]);
 
   useEffect(() => {
     fetchTrades();
   }, [fetchTrades]);
 
+  const visibleTrades = useMemo(
+    () =>
+      trades
+        .filter((trade) => !pendingDeleteIds.includes(trade.id))
+        .filter((trade) => filterType === 'ALL' || trade.transaction_type === filterType),
+    [filterType, pendingDeleteIds, trades]
+  );
+
   const stats = useMemo(() => {
-    const totalTraded = trades.reduce((sum, t) => sum + (t.amount || 0), 0);
-    const buyCount = trades.filter((t) => t.transaction_type === 'BUY').length;
-    const sellCount = trades.filter((t) => t.transaction_type === 'SELL').length;
+    const totalVolume = visibleTrades.reduce((sum, trade) => sum + (trade.amount || 0), 0);
+    const buyVolume = visibleTrades
+      .filter((trade) => trade.transaction_type === 'BUY')
+      .reduce((sum, trade) => sum + trade.amount, 0);
+    const sellVolume = visibleTrades
+      .filter((trade) => trade.transaction_type === 'SELL')
+      .reduce((sum, trade) => sum + trade.amount, 0);
 
-    return { totalTraded, buyCount, sellCount, totalTrades: trades.length };
-  }, [trades]);
-
-  const handleAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !amount) return;
-
-    const tradeData = {
-      user_id: user.id,
-      amount: parseFloat(amount),
-      transaction_type: transactionType,
-      notes: notes || null,
-      transaction_date: transactionDate || null,
+    return {
+      totalVolume,
+      buyCount: visibleTrades.filter((trade) => trade.transaction_type === 'BUY').length,
+      sellCount: visibleTrades.filter((trade) => trade.transaction_type === 'SELL').length,
+      buyVolume,
+      sellVolume,
     };
+  }, [visibleTrades]);
 
-    try {
-      if (editId) {
-        const { error } = await supabase
-          .from('forex_transactions')
-          .update(tradeData)
-          .eq('id', editId);
-        if (error) throw error;
-        showNotification('success', 'Trade updated successfully');
-      } else {
-        const { error } = await supabase.from('forex_transactions').insert([tradeData]);
-        if (error) throw error;
-        showNotification('success', 'Trade logged successfully');
-      }
-      resetForm();
-      fetchTrades();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error saving trade';
-      showNotification('error', errorMessage);
-    }
-  };
-
-  const handleEdit = (t: ForexTrade) => {
-    setEditId(t.id);
-    setAmount(t.amount?.toString() || '');
-    setTransactionType(t.transaction_type || 'BUY');
-    setNotes(t.notes || '');
-    setTransactionDate(t.transaction_date || '');
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (await customConfirm({ title: 'Delete Trade', message: 'Are you sure?', type: 'warning' })) {
-      try {
-        const { error } = await supabase.from('forex_transactions').delete().eq('id', id);
-        if (error) throw error;
-        showNotification('success', 'Trade removed');
-        fetchTrades();
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Error';
-        showNotification('error', errorMessage);
-      }
-    }
-  };
+  const lastUpdatedAt = useMemo(() => {
+    const values = trades
+      .map((trade) => trade.created_at || trade.transaction_date)
+      .filter(Boolean) as string[];
+    return values[0];
+  }, [trades]);
 
   const resetForm = () => {
     setEditId(null);
@@ -123,511 +116,402 @@ export default function ForexClient() {
     setTransactionType('BUY');
     setNotes('');
     setTransactionDate(new Date().toISOString().split('T')[0]);
-    setIsModalOpen(false);
+  };
+
+  const openNewTradeModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (trade: ForexTrade) => {
+    setEditId(trade.id);
+    setAmount(trade.amount.toString());
+    setTransactionType(trade.transaction_type || 'BUY');
+    setNotes(trade.notes || '');
+    setTransactionDate(trade.transaction_date || new Date().toISOString().split('T')[0]);
+    setIsModalOpen(true);
+  };
+
+  const deleteTrade = async (id: number) => {
+    const { error: deleteError } = await supabase.from('forex_transactions').delete().eq('id', id);
+    if (deleteError) {
+      throw deleteError;
+    }
+    setTrades((current) => current.filter((trade) => trade.id !== id));
+  };
+
+  const requestDelete = (trade: ForexTrade) => {
+    setPendingDeleteIds((current) => [...current, trade.id]);
+    showActionNotification({
+      type: 'warning',
+      message: `Forex ${trade.transaction_type.toLowerCase()} removed from view. Undo within 8 seconds to restore it.`,
+      actionLabel: 'Undo',
+      duration: 8000,
+      onAction: () => {
+        setPendingDeleteIds((current) => current.filter((id) => id !== trade.id));
+        showNotification('info', 'Forex trade restored');
+      },
+      onDismiss: async () => {
+        await deleteTrade(trade.id);
+        setPendingDeleteIds((current) => current.filter((id) => id !== trade.id));
+        showNotification('success', 'Forex trade deleted');
+      },
+    });
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!user || !amount) {
+      showNotification('error', 'Amount is required to save the forex trade.');
+      return;
+    }
+
+    const tradeData = {
+      user_id: user.id,
+      amount: Number(amount),
+      transaction_type: transactionType,
+      notes: notes || null,
+      transaction_date: transactionDate || null,
+    };
+
+    try {
+      if (editId) {
+        const { error: updateError } = await supabase
+          .from('forex_transactions')
+          .update(tradeData)
+          .eq('id', editId);
+        if (updateError) throw updateError;
+        showNotification('success', 'Forex trade updated');
+      } else {
+        const { error: insertError } = await supabase
+          .from('forex_transactions')
+          .insert([tradeData]);
+        if (insertError) throw insertError;
+        showNotification('success', 'Forex trade logged');
+      }
+
+      resetForm();
+      setIsModalOpen(false);
+      await fetchTrades();
+    } catch (submitUnknownError) {
+      const message =
+        submitUnknownError instanceof Error
+          ? submitUnknownError.message
+          : 'Unable to save the forex trade.';
+      showNotification('error', message);
+    }
   };
 
   if (loading) {
     return (
-      <div
-        className="page-container"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '80vh',
-        }}
-      >
-        <div style={{ color: '#f43f5e', fontWeight: 'bold' }}>Loading forex market data...</div>
+      <div className="page-container">
+        <PageSkeleton cardCount={4} rowCount={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="Forex trades are unavailable right now"
+          description={error}
+          actionLabel="Retry"
+          onAction={fetchTrades}
+        />
       </div>
     );
   }
 
   return (
     <div className="page-container">
-      {/* Header */}
       <div
-        className="flex-col-mobile"
+        className="page-header"
         style={{
+          display: 'flex',
           justifyContent: 'space-between',
+          gap: '16px',
           alignItems: 'flex-start',
           marginBottom: '24px',
-          gap: '20px',
+          flexWrap: 'wrap',
         }}
       >
         <div>
-          <h1
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Forex Terminal
+          <h1 className="page-title" style={{ margin: 0 }}>
+            Forex
           </h1>
-          <p style={{ color: '#64748b', marginTop: '8px' }}>
-            Log and manage your global currency exchange transactions.
+          <p className="page-subtitle" style={{ marginTop: '8px' }}>
+            Log currency buy and sell activity with clear volume totals and safer actions.
           </p>
+          {lastUpdatedAt ? (
+            <p style={{ margin: '10px 0 0', color: 'var(--muted)', fontSize: '0.82rem' }}>
+              As of {formatDateTime(lastUpdatedAt)}
+            </p>
+          ) : null}
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          style={{
-            background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '16px',
-            fontWeight: '900',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            boxShadow: '0 8px 16px rgba(225, 29, 72, 0.2)',
-            transition: 'all 0.3s',
-          }}
-        >
-          <Plus size={20} /> Record Trade
+        <button type="button" className="add-transaction-btn" onClick={openNewTradeModal}>
+          <Plus size={18} />
+          Record Trade
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '32px' }}>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Total Volume
-          </div>
-          <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#fff' }}>
-            ₹{stats.totalTraded.toLocaleString()}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Buy Trades
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#10b981' }}
-          >
-            {stats.buyCount}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Sell Trades
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#f43f5e' }}
-          >
-            {stats.sellCount}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Total Trades
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#f43f5e' }}
-          >
-            {stats.totalTrades}
-          </div>
-        </div>
+      <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '24px' }}>
+        <ForexStatCard
+          label="Total volume"
+          value={<MoneyValue amount={stats.totalVolume} compact={compactNumbers} />}
+        />
+        <ForexStatCard
+          label="Buy volume"
+          value={<MoneyValue amount={stats.buyVolume} compact={compactNumbers} />}
+          accent="#2bd576"
+        />
+        <ForexStatCard
+          label="Sell volume"
+          value={<MoneyValue amount={stats.sellVolume} compact={compactNumbers} />}
+          accent="#ff4d6d"
+        />
+        <ForexStatCard label="Trades" value={visibleTrades.length} accent="#6aa6ff" />
       </div>
 
-      {/* Trade List */}
-      <div className="premium-card" style={{ padding: 0, overflow: 'hidden' }}>
-        {trades.length > 0 ? (
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              textAlign: 'left',
-              fontSize: '0.9rem',
-            }}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        {[
+          { id: 'ALL', label: 'All' },
+          { id: 'BUY', label: 'Buy' },
+          { id: 'SELL', label: 'Sell' },
+        ].map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            className="tab-btn"
+            aria-pressed={filterType === filter.id}
+            onClick={() => setFilterType(filter.id as 'ALL' | 'BUY' | 'SELL')}
           >
-            <thead>
-              <tr
-                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #111111' }}
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {visibleTrades.length === 0 ? (
+        <PageState
+          title="No forex trades yet"
+          description="Record your first buy or sell to build a clean forex activity history."
+          actionLabel="Record your first trade"
+          onAction={openNewTradeModal}
+        />
+      ) : (
+        <div style={{ display: 'grid', gap: '14px' }}>
+          {visibleTrades.map((trade) => {
+            const isBuy = trade.transaction_type === 'BUY';
+            return (
+              <article
+                key={trade.id}
+                className="premium-card"
+                style={{
+                  padding: '18px 20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}
               >
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Type
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                  }}
-                >
-                  Amount
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Date
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Notes
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'center',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {trades.map((trade) => (
-                <tr key={trade.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                  <td style={{ padding: '16px' }}>
+                <div style={{ flex: '1 1 260px' }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}
+                  >
                     <span
                       style={{
-                        fontSize: '0.75rem',
-                        fontWeight: '900',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        background:
-                          trade.transaction_type === 'BUY'
-                            ? 'rgba(16, 185, 129, 0.1)'
-                            : 'rgba(244, 63, 94, 0.1)',
-                        color: trade.transaction_type === 'BUY' ? '#10b981' : '#f43f5e',
+                        display: 'inline-flex',
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '12px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: isBuy ? 'rgba(43,213,118,0.12)' : 'rgba(255,77,109,0.12)',
+                        color: isBuy ? '#2bd576' : '#ff4d6d',
                       }}
                     >
-                      {trade.transaction_type}
+                      {isBuy ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
                     </span>
-                  </td>
-                  <td
-                    style={{
-                      padding: '16px',
-                      textAlign: 'right',
-                      fontWeight: '800',
-                      color: '#fff',
-                    }}
-                  >
-                    ₹{trade.amount?.toLocaleString()}
-                  </td>
-                  <td style={{ padding: '16px', color: '#cbd5e1' }}>
-                    {trade.transaction_date
-                      ? new Date(trade.transaction_date).toLocaleDateString()
-                      : 'N/A'}
-                  </td>
-                  <td style={{ padding: '16px', color: '#64748b' }}>{trade.notes || '-'}</td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <button
-                      onClick={() => handleEdit(trade)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#64748b',
-                        cursor: 'pointer',
-                        marginRight: '12px',
-                      }}
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(trade.id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#f43f5e',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
-            <EmptyPortfolioVisual />
-            <div style={{ fontWeight: '700', marginTop: '20px' }}>No forex transactions found.</div>
-          </div>
-        )}
-      </div>
+                    <div>
+                      <strong>{isBuy ? 'Buy' : 'Sell'} FX</strong>
+                      <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+                        {trade.transaction_date
+                          ? formatDate(trade.transaction_date)
+                          : 'No trade date'}
+                      </p>
+                    </div>
+                  </div>
+                  {trade.notes ? (
+                    <p style={{ margin: '10px 0 0', color: 'var(--muted)', lineHeight: 1.6 }}>
+                      {trade.notes}
+                    </p>
+                  ) : null}
+                </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            className="premium-card fade-in"
-            style={{
-              width: '100%',
-              maxWidth: '500px',
-              background: '#050505',
-              padding: '32px',
-              borderRadius: '24px',
-            }}
-          >
-            <h2 style={{ color: '#fff', marginBottom: '24px', fontWeight: '900' }}>
-              {editId ? 'Edit Trade' : 'Record Forex Trade'}
-            </h2>
-            <form
-              onSubmit={handleAction}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                    <div style={{ color: isBuy ? '#2bd576' : '#ff4d6d', fontWeight: 800 }}>
+                      <MoneyValue amount={trade.amount} compact={compactNumbers} />
+                    </div>
+                    <div style={{ color: 'var(--muted)', fontSize: '0.78rem', marginTop: '4px' }}>
+                      {trade.transaction_type}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="action-btn action-btn--edit"
+                      data-label="Edit"
+                      aria-label={`Edit forex ${trade.transaction_type.toLowerCase()} trade`}
+                      title="Edit forex trade"
+                      onClick={() => handleEdit(trade)}
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="action-btn action-btn--delete"
+                      data-label="Delete"
+                      aria-label={`Delete forex ${trade.transaction_type.toLowerCase()} trade`}
+                      title="Delete forex trade"
+                      onClick={() => requestDelete(trade)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {isModalOpen ? (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '520px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+              }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label
+              <h2 style={{ margin: 0 }}>{editId ? 'Edit forex trade' : 'New forex trade'}</h2>
+              <button type="button" className="modal-close" onClick={() => setIsModalOpen(false)}>
+                <X size={22} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {(['BUY', 'SELL'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setTransactionType(type)}
                     style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
+                      minHeight: '38px',
+                      padding: '8px 12px',
+                      borderRadius: '999px',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      background:
+                        transactionType === type
+                          ? type === 'BUY'
+                            ? 'rgba(43,213,118,0.16)'
+                            : 'rgba(255,77,109,0.16)'
+                          : 'rgba(255,255,255,0.03)',
+                      color: transactionType === type ? '#fff' : 'var(--muted)',
+                      cursor: 'pointer',
+                      fontWeight: 700,
                     }}
                   >
-                    Action *
-                  </label>
-                  <select
-                    required
-                    value={transactionType}
-                    onChange={(e) => setTransactionType(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  >
-                    <option value="BUY">BUY</option>
-                    <option value="SELL">SELL</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Amount *
-                  </label>
-                  <input
-                    required
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    type="number"
-                    step="any"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
+                    {type === 'BUY' ? 'Buy' : 'Sell'}
+                  </button>
+                ))}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Date
-                  </label>
-                  <input
-                    value={transactionDate}
-                    onChange={(e) => setTransactionDate(e.target.value)}
-                    type="date"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Notes
-                  </label>
-                  <input
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    type="text"
-                    placeholder="Currency pair, fees..."
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+              <input
+                className="form-input table-nums"
+                type="number"
+                min="0"
+                step="0.01"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder="Amount"
+                required
+              />
+              <input
+                className="form-input"
+                type="date"
+                value={transactionDate}
+                onChange={(event) => setTransactionDate(event.target.value)}
+              />
+              <textarea
+                className="form-input"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Notes"
+                rows={4}
+                style={{ resize: 'vertical' }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
-                  onClick={resetForm}
-                  style={{
-                    flex: 1,
-                    padding: '14px',
-                    background: 'transparent',
-                    border: '1px solid #111111',
-                    color: '#94a3b8',
-                    borderRadius: '12px',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                  }}
+                  className="page-state__button"
+                  onClick={() => setIsModalOpen(false)}
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 1,
-                    padding: '14px',
-                    background: '#e11d48',
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '12px',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {editId ? 'Save Changes' : 'Record Trade'}
+                <button type="submit" className="add-transaction-btn">
+                  {editId ? 'Save changes' : 'Save trade'}
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+function ForexStatCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: string;
+}) {
+  return (
+    <div className="premium-card" style={{ padding: '22px' }}>
+      <div
+        style={{
+          color: 'var(--muted)',
+          fontSize: '0.76rem',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          marginBottom: '10px',
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: '1.45rem', fontWeight: 900, color: accent ?? 'var(--text)' }}>
+        {value}
+      </div>
     </div>
   );
 }

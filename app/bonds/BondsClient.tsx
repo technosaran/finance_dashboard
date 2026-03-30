@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { useAuth } from '@/app/components/AuthContext';
-import { useLedger, usePortfolio } from '../components/FinanceContext';
+import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
 import { useNotifications } from '@/app/components/NotificationContext';
 import {
   Plus,
@@ -20,6 +20,9 @@ import {
   X,
 } from 'lucide-react';
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { formatDateTime } from '@/lib/utils/format';
 import { logError } from '@/lib/utils/logger';
 import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
 
@@ -63,7 +66,7 @@ function StatCard({
   valueColor = '#fff',
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   valueColor?: string;
 }) {
   return (
@@ -156,7 +159,7 @@ function SelectField({
 
 export default function BondsClient() {
   const { user } = useAuth();
-  const { accounts } = useLedger();
+  const { accounts, error, lastUpdatedAt } = useLedger();
   const {
     bonds,
     loading,
@@ -169,6 +172,8 @@ export default function BondsClient() {
     refreshPortfolio,
   } = usePortfolio();
   const { showNotification, confirm: customConfirm } = useNotifications();
+  const { settings } = useSettings();
+  const compactNumbers = settings.compactNumbers ?? false;
 
   const [activeTab, setActiveTab] = useState<'holdings' | 'history' | 'lifetime'>('holdings');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -516,16 +521,22 @@ export default function BondsClient() {
 
   if (loading) {
     return (
-      <div
-        className="page-container"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '80vh',
-        }}
-      >
-        <div style={{ color: '#2dd4bf', fontWeight: 'bold' }}>Loading your bonds...</div>
+      <div className="page-container">
+        <PageSkeleton cardCount={4} rowCount={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="Bonds data is unavailable right now"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -558,6 +569,11 @@ export default function BondsClient() {
           <p style={{ color: '#64748b', marginTop: '8px', fontSize: '0.9rem' }}>
             Fixed-income securities across {stats.activeCount} active positions.
           </p>
+          {lastUpdatedAt ? (
+            <p style={{ color: 'var(--muted)', marginTop: '8px', fontSize: '0.82rem' }}>
+              As of {formatDateTime(lastUpdatedAt)}
+            </p>
+          ) : null}
         </div>
         <div
           className="mobile-page-header__actions"
@@ -589,11 +605,17 @@ export default function BondsClient() {
 
       {/* Stats */}
       <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '32px' }}>
-        <StatCard label="Total Invested" value={`₹${stats.totalInvested.toLocaleString()}`} />
-        <StatCard label="Current Value" value={`₹${stats.totalCurrent.toLocaleString()}`} />
+        <StatCard
+          label="Total Invested"
+          value={<MoneyValue amount={stats.totalInvested} compact={compactNumbers} />}
+        />
+        <StatCard
+          label="Current Value"
+          value={<MoneyValue amount={stats.totalCurrent} compact={compactNumbers} />}
+        />
         <StatCard
           label="Total P&L"
-          value={`₹${stats.totalPnl.toLocaleString()}`}
+          value={<MoneyValue amount={stats.totalPnl} compact={compactNumbers} />}
           valueColor={stats.totalPnl >= 0 ? '#10b981' : '#f43f5e'}
         />
         <StatCard label="Avg Yield" value={`${stats.avgYield.toFixed(2)}%`} valueColor="#2dd4bf" />
@@ -791,11 +813,14 @@ export default function BondsClient() {
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           {bond.status !== 'SOLD' && bond.status !== 'MATURED' && (
                             <button
+                              className="action-btn"
+                              data-label="Exit"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleSellBond(bond);
                               }}
                               title="Sell Bond"
+                              aria-label={`Sell ${bond.name}`}
                               style={{
                                 background: 'none',
                                 border: 'none',
@@ -804,17 +829,18 @@ export default function BondsClient() {
                                 padding: '4px',
                                 transition: 'all 0.2s',
                               }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.transform = 'scale(1.2)')
-                              }
+                              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
                               onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                             >
                               <ArrowRight size={16} strokeWidth={3} />
                             </button>
                           )}
                           <button
+                            className="action-btn action-btn--edit"
+                            data-label="Edit"
                             onClick={() => handleEdit(bond)}
                             title="Edit Bond"
+                            aria-label={`Edit ${bond.name}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -829,6 +855,8 @@ export default function BondsClient() {
                             <Edit3 size={16} />
                           </button>
                           <button
+                            className="action-btn action-btn--delete"
+                            data-label="Delete"
                             onClick={async (e) => {
                               e.stopPropagation();
                               const confirmed = await customConfirm({
@@ -848,6 +876,7 @@ export default function BondsClient() {
                               }
                             }}
                             title="Delete Bond"
+                            aria-label={`Delete ${bond.name}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -952,7 +981,14 @@ export default function BondsClient() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      textAlign: 'right',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
                     <div>
                       <div
                         style={{
@@ -961,11 +997,12 @@ export default function BondsClient() {
                           color: tx.transactionType === 'BUY' ? '#f87171' : '#34d399',
                         }}
                       >
-                        {tx.transactionType === 'BUY' ? '-' : '+'}₹
-                        {tx.totalAmount.toLocaleString()}
+                        {tx.transactionType === 'BUY' ? '-' : '+'}₹{tx.totalAmount.toLocaleString()}
                       </div>
                     </div>
                     <button
+                      className="action-btn action-btn--delete"
+                      data-label="Delete"
                       onClick={async (e) => {
                         e.stopPropagation();
                         const confirmed = await customConfirm({
@@ -991,6 +1028,7 @@ export default function BondsClient() {
                         justifyContent: 'center',
                       }}
                       aria-label="Delete transaction"
+                      title="Delete transaction"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -1296,18 +1334,14 @@ export default function BondsClient() {
                           onMouseEnter={(e) =>
                             (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
                           }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = 'transparent')
-                          }
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         >
                           <div style={{ color: '#fff', fontWeight: 'bold' }}>{result.symbol}</div>
                           <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
                             {result.companyName}
                           </div>
                           <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
-                            {result.couponRate
-                              ? `${result.couponRate}% coupon`
-                              : 'Coupon pending'}
+                            {result.couponRate ? `${result.couponRate}% coupon` : 'Coupon pending'}
                             {result.maturityDate ? ` • Matures ${result.maturityDate}` : ''}
                           </div>
                         </div>
