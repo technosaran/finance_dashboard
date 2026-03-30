@@ -38,11 +38,14 @@ import { useLedger, usePortfolio, useSettings } from '../components/FinanceConte
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
 import { calculateMfCharges } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { formatDateTime } from '@/lib/utils/format';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
 export default function MutualFundsClient() {
-  const { accounts, loading } = useLedger();
+  const { accounts, loading, error, lastUpdatedAt } = useLedger();
   const {
     mutualFunds,
     mutualFundTransactions,
@@ -55,6 +58,7 @@ export default function MutualFundsClient() {
   } = usePortfolio();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
+  const compactNumbers = settings.compactNumbers ?? false;
 
   const [activeTab, setActiveTab] = useState<'holdings' | 'history' | 'lifetime' | 'allocation'>(
     'holdings'
@@ -431,16 +435,22 @@ export default function MutualFundsClient() {
 
   if (loading) {
     return (
-      <div
-        className="page-container"
-        style={{
-          padding: '40px 60px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ color: '#64748b', fontSize: '1.2rem' }}>Syncing with markets...</div>
+      <div className="page-container">
+        <PageSkeleton cardCount={4} rowCount={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="Mutual funds data is unavailable right now"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -471,6 +481,11 @@ export default function MutualFundsClient() {
           >
             Mutual Funds
           </h1>
+          {lastUpdatedAt ? (
+            <p style={{ margin: '10px 0 0', color: 'var(--muted)', fontSize: '0.82rem' }}>
+              As of {formatDateTime(lastUpdatedAt)}
+            </p>
+          ) : null}
         </div>
         <div
           className="mobile-page-header__actions"
@@ -565,7 +580,7 @@ export default function MutualFundsClient() {
               fontWeight: '900',
             }}
           >
-            ₹{totalInvestment.toLocaleString()}
+            <MoneyValue amount={totalInvestment} compact={compactNumbers} />
           </div>
         </div>
         <div
@@ -594,7 +609,7 @@ export default function MutualFundsClient() {
               fontWeight: '900',
             }}
           >
-            ₹{totalCurrentValue.toLocaleString()}
+            <MoneyValue amount={totalCurrentValue} compact={compactNumbers} />
           </div>
         </div>
         <div
@@ -624,7 +639,7 @@ export default function MutualFundsClient() {
               color: totalPnL >= 0 ? '#34d399' : '#f87171',
             }}
           >
-            {totalPnL >= 0 ? '+' : ''}₹{totalPnL.toLocaleString()}
+            <MoneyValue amount={totalPnL} compact={compactNumbers} showSign />
           </div>
         </div>
         <div
@@ -655,7 +670,7 @@ export default function MutualFundsClient() {
             }}
           >
             {totalDayPnL >= 0 ? '+' : ''}₹
-            {totalDayPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <MoneyValue amount={totalDayPnL} compact={compactNumbers} showSign />
           </div>
           <div
             style={{
@@ -882,10 +897,14 @@ export default function MutualFundsClient() {
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <button
+                        className="mobile-action-btn mobile-action-btn--view"
+                        data-label="View"
                         onClick={(e) => {
                           e.stopPropagation();
                           setViewingCharges(mf);
                         }}
+                        aria-label={`View charges for ${mf.schemeName}`}
+                        title="View charges"
                         style={{
                           color: '#6366f1',
                           background: 'none',
@@ -902,10 +921,14 @@ export default function MutualFundsClient() {
                         <Eye size={18} />
                       </button>
                       <button
+                        className="mobile-action-btn mobile-action-btn--sell"
+                        data-label="Exit"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleExitFund(mf);
                         }}
+                        aria-label={`Exit ${mf.schemeName}`}
+                        title="Exit / sell"
                         style={{
                           color: '#10b981',
                           background: 'none',
@@ -922,6 +945,8 @@ export default function MutualFundsClient() {
                         <ArrowRight size={18} />
                       </button>
                       <button
+                        className="mobile-action-btn mobile-action-btn--delete"
+                        data-label="Delete"
                         onClick={async (e) => {
                           e.stopPropagation();
                           const isConfirmed = await customConfirm({
@@ -932,6 +957,8 @@ export default function MutualFundsClient() {
                           });
                           if (isConfirmed) await deleteMutualFund(mf.id);
                         }}
+                        aria-label={`Delete ${mf.schemeName}`}
+                        title="Delete fund"
                         style={{
                           color: '#f43f5e',
                           background: 'none',
@@ -1198,11 +1225,14 @@ export default function MutualFundsClient() {
                       <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
+                            className="action-btn"
+                            data-label="View"
                             onClick={(e) => {
                               e.stopPropagation();
                               setViewingCharges(mf);
                             }}
                             title="Estimated Sell Charges"
+                            aria-label={`View charges for ${mf.schemeName}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -1222,11 +1252,14 @@ export default function MutualFundsClient() {
                             <Eye size={16} />
                           </button>
                           <button
+                            className="action-btn"
+                            data-label="Exit"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleExitFund(mf);
                             }}
                             title="Exit / Sell"
+                            aria-label={`Exit ${mf.schemeName}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -1246,6 +1279,8 @@ export default function MutualFundsClient() {
                             <ArrowRight size={16} strokeWidth={3} />
                           </button>
                           <button
+                            className="action-btn action-btn--edit"
+                            data-label="Edit"
                             onClick={() => handleEditFund(mf)}
                             style={{
                               background: 'none',
@@ -1260,10 +1295,13 @@ export default function MutualFundsClient() {
                               justifyContent: 'center',
                             }}
                             title="Edit"
+                            aria-label={`Edit ${mf.schemeName}`}
                           >
                             <Edit3 size={16} />
                           </button>
                           <button
+                            className="action-btn action-btn--delete"
+                            data-label="Delete"
                             onClick={async () => {
                               const isConfirmed = await customConfirm({
                                 title: 'Delete Fund',
@@ -1286,6 +1324,7 @@ export default function MutualFundsClient() {
                               justifyContent: 'center',
                             }}
                             title="Delete"
+                            aria-label={`Delete ${mf.schemeName}`}
                           >
                             <Trash2 size={16} />
                           </button>

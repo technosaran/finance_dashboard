@@ -7,6 +7,9 @@ import { useLedger, usePortfolio, useSettings } from '../components/FinanceConte
 import { Stock } from '@/lib/types';
 import { calculateStockCharges, getStockChargeMeta } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { formatDateTime } from '@/lib/utils/format';
 import {
   TrendingUp,
   TrendingDown,
@@ -43,7 +46,7 @@ const COLORS = [
 ];
 
 export default function StocksClient() {
-  const { accounts, loading } = useLedger();
+  const { accounts, loading, error, lastUpdatedAt } = useLedger();
   const {
     stocks,
     stockTransactions,
@@ -56,6 +59,7 @@ export default function StocksClient() {
   } = usePortfolio();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
+  const compactNumbers = settings.compactNumbers ?? false;
   const [activeTab, setActiveTab] = useState<'portfolio' | 'history' | 'lifetime' | 'allocation'>(
     'portfolio'
   );
@@ -512,26 +516,22 @@ export default function StocksClient() {
 
   if (loading) {
     return (
-      <div
-        className="main-content"
-        style={{
-          padding: 'clamp(20px, 4vw, 60px)',
-          backgroundColor: '#000000',
-          minHeight: '100vh',
-          color: '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <Loader2
-            size={32}
-            className="spin-animation"
-            style={{ color: '#6366f1', marginBottom: '12px' }}
-          />
-          <div style={{ fontSize: '1rem', color: '#64748b' }}>Loading your portfolio...</div>
-        </div>
+      <div className="page-container">
+        <PageSkeleton cardCount={4} rowCount={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="Stocks data is unavailable right now"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -561,6 +561,11 @@ export default function StocksClient() {
           >
             Stock Portfolio
           </h1>
+          {lastUpdatedAt ? (
+            <p style={{ margin: '10px 0 0', color: 'var(--muted)', fontSize: '0.82rem' }}>
+              As of {formatDateTime(lastUpdatedAt)}
+            </p>
+          ) : null}
         </div>
         <div
           className="mobile-page-header__actions"
@@ -648,7 +653,7 @@ export default function StocksClient() {
             className="stat-value-responsive"
             style={{ fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: '900', color: '#fff' }}
           >
-            ₹{totalInvestment.toLocaleString()}
+            <MoneyValue amount={totalInvestment} compact={compactNumbers} />
           </div>
         </div>
         <div
@@ -677,7 +682,7 @@ export default function StocksClient() {
             className="stat-value-responsive"
             style={{ fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: '900', color: '#fff' }}
           >
-            ₹{totalCurrentValue.toLocaleString()}
+            <MoneyValue amount={totalCurrentValue} compact={compactNumbers} />
           </div>
         </div>
         <div
@@ -710,8 +715,7 @@ export default function StocksClient() {
               color: totalDayPnL >= 0 ? '#34d399' : '#f87171',
             }}
           >
-            {totalDayPnL >= 0 ? '+' : ''}₹
-            {totalDayPnL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <MoneyValue amount={totalDayPnL} compact={compactNumbers} showSign />
           </div>
           <div
             style={{
@@ -756,7 +760,7 @@ export default function StocksClient() {
               color: totalPnL >= 0 ? '#34d399' : '#f87171',
             }}
           >
-            {totalPnL >= 0 ? '+' : ''}₹{totalPnL.toLocaleString()}
+            <MoneyValue amount={totalPnL} compact={compactNumbers} showSign />
           </div>
         </div>
       </div>
@@ -971,26 +975,31 @@ export default function StocksClient() {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         className="mobile-action-btn mobile-action-btn--view"
+                        data-label="View"
                         onClick={(e) => {
                           e.stopPropagation();
                           setViewingCharges({ type: 'stock', data: stock });
                         }}
                         aria-label="View charges"
+                        title="View charges"
                       >
                         <Eye size={16} />
                       </button>
                       <button
                         className="mobile-action-btn mobile-action-btn--sell"
+                        data-label="Exit"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleExitStock(stock);
                         }}
                         aria-label="Sell stock"
+                        title="Exit / sell"
                       >
                         <ArrowRight size={16} />
                       </button>
                       <button
                         className="mobile-action-btn mobile-action-btn--delete"
+                        data-label="Delete"
                         onClick={async (e) => {
                           e.stopPropagation();
                           const isConfirmed = await customConfirm({
@@ -1002,6 +1011,7 @@ export default function StocksClient() {
                           if (isConfirmed) await deleteStock(stock.id);
                         }}
                         aria-label="Delete stock"
+                        title="Delete stock"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1278,11 +1288,14 @@ export default function StocksClient() {
                       <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
+                            className="action-btn"
+                            data-label="View"
                             onClick={(e) => {
                               e.stopPropagation();
                               setViewingCharges({ type: 'stock', data: stock });
                             }}
                             title="Estimated Exit Charges"
+                            aria-label={`View exit charges for ${stock.symbol}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -1297,11 +1310,14 @@ export default function StocksClient() {
                             <Eye size={16} />
                           </button>
                           <button
+                            className="action-btn"
+                            data-label="Exit"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleExitStock(stock);
                             }}
                             title="Exit / Sell"
+                            aria-label={`Exit ${stock.symbol}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -1316,10 +1332,14 @@ export default function StocksClient() {
                             <ArrowRight size={16} strokeWidth={3} />
                           </button>
                           <button
+                            className="action-btn action-btn--edit"
+                            data-label="Edit"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditStock(stock);
                             }}
+                            aria-label={`Edit ${stock.symbol}`}
+                            title="Edit stock"
                             style={{
                               background: 'none',
                               border: 'none',
@@ -1333,6 +1353,8 @@ export default function StocksClient() {
                             <Edit3 size={16} />
                           </button>
                           <button
+                            className="action-btn action-btn--delete"
+                            data-label="Delete"
                             onClick={async (e) => {
                               e.stopPropagation();
                               const isConfirmed = await customConfirm({
@@ -1343,6 +1365,8 @@ export default function StocksClient() {
                               });
                               if (isConfirmed) await deleteStock(stock.id);
                             }}
+                            aria-label={`Delete ${stock.symbol}`}
+                            title="Delete stock"
                             style={{
                               background: 'none',
                               border: 'none',
@@ -1784,6 +1808,8 @@ export default function StocksClient() {
                       )}
                     </div>
                     <button
+                      className="action-btn action-btn--delete"
+                      data-label="Delete"
                       onClick={async (e) => {
                         e.stopPropagation();
                         const isConfirmed = await customConfirm({
@@ -1809,6 +1835,7 @@ export default function StocksClient() {
                         justifyContent: 'center',
                       }}
                       aria-label="Delete transaction"
+                      title="Delete transaction"
                     >
                       <Trash2 size={14} />
                     </button>

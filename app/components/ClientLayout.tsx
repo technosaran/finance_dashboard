@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Sidebar from './Sidebar';
@@ -29,12 +29,15 @@ import { useRouter } from 'next/navigation';
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === '/login';
+  const skipAuth = pathname?.startsWith('/qa') ?? false;
 
   return (
     <ErrorBoundary>
       <AuthProvider>
         <NotificationProvider>
-          <AuthConsumer isAuthPage={isAuthPage}>{children}</AuthConsumer>
+          <AuthConsumer isAuthPage={isAuthPage} skipAuth={skipAuth}>
+            {children}
+          </AuthConsumer>
         </NotificationProvider>
       </AuthProvider>
     </ErrorBoundary>
@@ -44,14 +47,66 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 function AuthConsumer({
   children,
   isAuthPage,
+  skipAuth,
 }: {
   children: React.ReactNode;
   isAuthPage: boolean;
+  skipAuth: boolean;
 }) {
   const { loading: authLoading, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const showAmbientBackground = !isAuthPage && !skipAuth;
+  const showGlobalNavigation = !isAuthPage && !skipAuth;
 
-  if ((authLoading || !user) && !isAuthPage) {
+  useEffect(() => {
+    if (
+      !isSidebarOpen ||
+      typeof window === 'undefined' ||
+      !window.matchMedia('(max-width: 767px)').matches
+    ) {
+      return;
+    }
+
+    const sidebar = document.getElementById('sidebar-navigation');
+    const selectors =
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = sidebar
+      ? Array.from(sidebar.querySelectorAll<HTMLElement>(selectors))
+      : [];
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    firstElement?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSidebarOpen(false);
+        return;
+      }
+
+      if (event.key === 'Tab' && firstElement && lastElement) {
+        if (event.shiftKey && document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+        } else if (!event.shiftKey && document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSidebarOpen]);
+
+  if ((authLoading || !user) && !isAuthPage && !skipAuth) {
     return (
       <div
         style={{
@@ -90,9 +145,9 @@ function AuthConsumer({
 
   return (
     <FinanceProvider>
-      <TransactionModalWrapper />
-      {/* Global ambient background for liquid glass depth */}
-      <div className="bg-mesh" aria-hidden="true" />
+      {showGlobalNavigation ? <TransactionModalWrapper /> : null}
+      {/* Keep the heavy ambient mesh off auth and QA routes to protect first paint. */}
+      {showAmbientBackground ? <div className="bg-mesh" aria-hidden="true" /> : null}
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
@@ -221,7 +276,7 @@ function AuthConsumer({
             {children}
           </main>
         </div>
-        {!isAuthPage && <MobileNavigation />}
+        {showGlobalNavigation ? <MobileNavigation /> : null}
       </div>
     </FinanceProvider>
   );
