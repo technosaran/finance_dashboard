@@ -86,9 +86,11 @@ export type Database = {
           bonds_enabled: boolean | null;
           brokerage_type: string;
           brokerage_value: number;
+          compact_numbers: boolean | null;
           default_mf_account_id: number | null;
           default_salary_account_id: number | null;
           default_stock_account_id: number | null;
+          display_name: string | null;
           dp_charges: number;
           expenses_visible: boolean | null;
           family_visible: boolean | null;
@@ -113,9 +115,11 @@ export type Database = {
           bonds_enabled?: boolean | null;
           brokerage_type?: string;
           brokerage_value?: number;
+          compact_numbers?: boolean | null;
           default_mf_account_id?: number | null;
           default_salary_account_id?: number | null;
           default_stock_account_id?: number | null;
+          display_name?: string | null;
           dp_charges?: number;
           expenses_visible?: boolean | null;
           family_visible?: boolean | null;
@@ -140,9 +144,11 @@ export type Database = {
           bonds_enabled?: boolean | null;
           brokerage_type?: string;
           brokerage_value?: number;
+          compact_numbers?: boolean | null;
           default_mf_account_id?: number | null;
           default_salary_account_id?: number | null;
           default_stock_account_id?: number | null;
+          display_name?: string | null;
           dp_charges?: number;
           expenses_visible?: boolean | null;
           family_visible?: boolean | null;
@@ -1032,6 +1038,7 @@ export type Database = {
           description: string;
           id: number;
           metadata: Json | null;
+          transaction_type: string | null;
           type: string;
           updated_at: string | null;
           user_id: string | null;
@@ -1045,6 +1052,7 @@ export type Database = {
           description: string;
           id?: number;
           metadata?: Json | null;
+          transaction_type?: string | null;
           type: string;
           updated_at?: string | null;
           user_id?: string | null;
@@ -1058,6 +1066,7 @@ export type Database = {
           description?: string;
           id?: number;
           metadata?: Json | null;
+          transaction_type?: string | null;
           type?: string;
           updated_at?: string | null;
           user_id?: string | null;

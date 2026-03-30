@@ -2,6 +2,8 @@
  * Number utility functions for financial calculations
  */
 
+import { formatCurrency as sharedFormatCurrency } from '@/lib/utils/format';
+
 /**
  * Format number as currency
  */
@@ -10,12 +12,7 @@ export function formatCurrency(
   currency: 'INR' | 'USD' = 'INR',
   locale: string = 'en-IN'
 ): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return sharedFormatCurrency(amount, { currency, locale });
 }
 
 /**
