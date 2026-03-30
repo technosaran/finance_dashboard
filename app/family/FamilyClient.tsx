@@ -1,48 +1,25 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Users, X, Edit3, Trash2, Send, Plus } from 'lucide-react';
 import { useNotifications } from '../components/NotificationContext';
-import { useLedger } from '../components/FinanceContext';
+import { useLedger, useSettings } from '../components/FinanceContext';
 import { FamilyTransfer } from '@/lib/types';
-import {
-  Users,
-  X,
-  Heart,
-  TrendingDown,
-  Clock,
-  Edit3,
-  Trash2,
-  DollarSign,
-  Send,
-  Plus,
-  UserPlus,
-  ChevronRight,
-} from 'lucide-react';
-import { EmptyFamilyVisual } from '../components/Visuals';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { formatDate, formatDateTime } from '@/lib/utils/format';
 
-// Relationship short labels for member avatars
-const relEmoji: Record<string, string> = {
-  Parent: 'Pa',
-  Father: 'Fa',
-  Mother: 'Mo',
-  Sibling: 'Si',
-  Grandparent: 'Gp',
-  Spouse: 'Sp',
-  Child: 'Ch',
-  Friend: 'Fr',
-  Relative: 'Re',
-  Other: 'Ot',
+const RELATIONSHIPS = ['Parent', 'Spouse', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'];
+
+const relationshipAccent: Record<string, string> = {
+  Parent: '#ec4899',
+  Spouse: '#8b5cf6',
+  Child: '#06b6d4',
+  Sibling: '#f59e0b',
+  Relative: '#10b981',
+  Friend: '#6366f1',
+  Other: '#94a3b8',
 };
-
-// Color palette for family member avatars
-const memberColors = [
-  { bg: 'rgba(236, 72, 153, 0.12)', border: 'rgba(236, 72, 153, 0.25)', text: '#ec4899' },
-  { bg: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.25)', text: '#8b5cf6' },
-  { bg: 'rgba(6, 182, 212, 0.12)', border: 'rgba(6, 182, 212, 0.25)', text: '#06b6d4' },
-  { bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.25)', text: '#f59e0b' },
-  { bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.25)', text: '#10b981' },
-  { bg: 'rgba(99, 102, 241, 0.12)', border: 'rgba(99, 102, 241, 0.25)', text: '#6366f1' },
-];
 
 export default function FamilyClient() {
   const {
@@ -52,49 +29,94 @@ export default function FamilyClient() {
     updateFamilyTransfer,
     deleteFamilyTransfer,
     loading,
+    error,
+    lastUpdatedAt,
   } = useLedger();
-  const { showNotification, confirm: customConfirm } = useNotifications();
+  const { settings } = useSettings();
+  const { showNotification, showActionNotification } = useNotifications();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState<number | ''>('');
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'members' | 'history'>('members');
 
-  // Form State
   const [recipient, setRecipient] = useState('');
   const [relationship, setRelationship] = useState('Parent');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [purpose, setPurpose] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState<number | ''>('');
 
-  // Quick send pre-fill from member card
-  const [quickSendMode, setQuickSendMode] = useState(false);
+  const compactNumbers = settings.compactNumbers ?? false;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!recipient || !amount || parseFloat(amount) <= 0) return;
+  const visibleTransfers = useMemo(
+    () =>
+      familyTransfers
+        .filter((transfer) => !pendingDeleteIds.includes(transfer.id))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [familyTransfers, pendingDeleteIds]
+  );
 
-    const transferData = {
-      recipient,
-      relationship,
-      amount: parseFloat(amount),
-      date,
-      purpose,
-      notes,
-      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
+  const familyMembers = useMemo(() => {
+    const membersMap = visibleTransfers.reduce(
+      (acc, transfer) => {
+        if (!acc[transfer.recipient]) {
+          acc[transfer.recipient] = {
+            name: transfer.recipient,
+            relationship: transfer.relationship,
+            total: 0,
+            count: 0,
+            latestDate: transfer.date,
+            latestAmount: transfer.amount,
+          };
+        }
+
+        acc[transfer.recipient].total += transfer.amount;
+        acc[transfer.recipient].count += 1;
+        if (new Date(transfer.date) > new Date(acc[transfer.recipient].latestDate)) {
+          acc[transfer.recipient].latestDate = transfer.date;
+          acc[transfer.recipient].latestAmount = transfer.amount;
+        }
+
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          name: string;
+          relationship: string;
+          total: number;
+          count: number;
+          latestDate: string;
+          latestAmount: number;
+        }
+      >
+    );
+
+    return Object.values(membersMap).sort((a, b) => b.total - a.total);
+  }, [visibleTransfers]);
+
+  const stats = useMemo(() => {
+    const totalSent = visibleTransfers.reduce((sum, transfer) => sum + transfer.amount, 0);
+    const thisMonth = visibleTransfers
+      .filter((transfer) => {
+        const transferDate = new Date(transfer.date);
+        const now = new Date();
+        return (
+          transferDate.getMonth() === now.getMonth() &&
+          transferDate.getFullYear() === now.getFullYear()
+        );
+      })
+      .reduce((sum, transfer) => sum + transfer.amount, 0);
+
+    return {
+      totalSent,
+      thisMonth,
+      recipients: familyMembers.length,
+      averageTransfer: visibleTransfers.length ? totalSent / visibleTransfers.length : 0,
     };
-
-    if (editId) {
-      await updateFamilyTransfer(editId, transferData);
-      showNotification('success', 'Transfer record updated');
-    } else {
-      await addFamilyTransfer(transferData);
-      showNotification('success', 'Family transfer saved');
-    }
-
-    resetForm();
-    setIsModalOpen(false);
-  };
+  }, [familyMembers.length, visibleTransfers]);
 
   const resetForm = () => {
     setEditId(null);
@@ -105,7 +127,11 @@ export default function FamilyClient() {
     setPurpose('');
     setNotes('');
     setSelectedAccountId('');
-    setQuickSendMode(false);
+  };
+
+  const openNewTransferModal = () => {
+    resetForm();
+    setIsModalOpen(true);
   };
 
   const handleEdit = (transfer: FamilyTransfer) => {
@@ -117,7 +143,6 @@ export default function FamilyClient() {
     setPurpose(transfer.purpose || '');
     setNotes(transfer.notes || '');
     setSelectedAccountId(transfer.accountId || '');
-    setQuickSendMode(false);
     setIsModalOpen(true);
   };
 
@@ -125,1010 +150,468 @@ export default function FamilyClient() {
     resetForm();
     setRecipient(memberName);
     setRelationship(memberRelationship);
-    setDate(new Date().toISOString().split('T')[0]);
-    setQuickSendMode(true);
     setIsModalOpen(true);
   };
 
-  // Compute family member profiles from transfer history
-  const familyMembers = useMemo(() => {
-    const membersMap = familyTransfers.reduce(
-      (acc, t) => {
-        if (!acc[t.recipient]) {
-          acc[t.recipient] = {
-            name: t.recipient,
-            relationship: t.relationship,
-            total: 0,
-            count: 0,
-            lastDate: t.date,
-            lastAmount: t.amount,
-          };
-        }
-        acc[t.recipient].total += t.amount;
-        acc[t.recipient].count += 1;
-        if (new Date(t.date) > new Date(acc[t.recipient].lastDate)) {
-          acc[t.recipient].lastDate = t.date;
-          acc[t.recipient].lastAmount = t.amount;
-        }
-        return acc;
-      },
-      {} as Record<
-        string,
-        {
-          name: string;
-          relationship: string;
-          total: number;
-          count: number;
-          lastDate: string;
-          lastAmount: number;
-        }
-      >
-    );
-    return Object.values(membersMap).sort((a, b) => b.total - a.total);
-  }, [familyTransfers]);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  // Calculate statistics
-  const totalSent = familyTransfers.reduce((sum, t) => sum + t.amount, 0);
-  const thisMonthTotal = useMemo(() => {
-    const now = new Date();
-    return familyTransfers
-      .filter((t) => {
-        const d = new Date(t.date);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [familyTransfers]);
+    if (!recipient.trim() || !amount || Number(amount) <= 0) {
+      showNotification('error', 'Recipient and a positive amount are required.');
+      return;
+    }
+
+    const transferData = {
+      recipient: recipient.trim(),
+      relationship,
+      amount: Number(amount),
+      date,
+      purpose: purpose.trim(),
+      notes: notes.trim(),
+      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
+    };
+
+    try {
+      if (editId) {
+        await updateFamilyTransfer(editId, transferData);
+        showNotification('success', 'Family transfer updated');
+      } else {
+        await addFamilyTransfer(transferData);
+        showNotification('success', 'Family transfer saved');
+      }
+
+      resetForm();
+      setIsModalOpen(false);
+    } catch (submitError) {
+      const message =
+        submitError instanceof Error
+          ? submitError.message
+          : 'Unable to save the family transfer right now.';
+      showNotification('error', message);
+    }
+  };
+
+  const requestDelete = (transfer: FamilyTransfer) => {
+    setPendingDeleteIds((current) => [...current, transfer.id]);
+    showActionNotification({
+      type: 'warning',
+      message: `${transfer.recipient}'s transfer removed from view. Undo within 8 seconds to restore it.`,
+      actionLabel: 'Undo',
+      duration: 8000,
+      onAction: () => {
+        setPendingDeleteIds((current) => current.filter((id) => id !== transfer.id));
+        showNotification('info', 'Transfer restored');
+      },
+      onDismiss: async () => {
+        await deleteFamilyTransfer(transfer.id);
+        setPendingDeleteIds((current) => current.filter((id) => id !== transfer.id));
+        showNotification('success', 'Transfer deleted');
+      },
+    });
+  };
 
   if (loading) {
     return (
-      <div
-        className="main-content"
-        style={{
-          backgroundColor: '#000000',
-          minHeight: '100vh',
-          color: '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: '#94a3b8' }}>
-            Loading family transfers...
-          </div>
-        </div>
+      <div className="page-container">
+        <PageSkeleton cardCount={4} rowCount={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="Family transfers are unavailable right now"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
 
   return (
-    <div
-      className="main-content"
-      style={{
-        backgroundColor: '#000000',
-        minHeight: '100vh',
-        color: '#f8fafc',
-        padding: 'clamp(12px, 4vw, 24px)',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header Section */}
-        <div className="page-header" style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}>
-          <div>
-            <h1
-              className="page-title"
-              style={{
-                background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #f472b6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Family Transfers
-            </h1>
-            <p className="page-subtitle">Track support, shared expenses, and recurring transfers</p>
-          </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
-            }}
-            className="header-add-btn"
-            style={{
-              background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)',
-              boxShadow: '0 10px 30px rgba(236, 72, 153, 0.3)',
-            }}
-          >
-            <Heart size={18} fill="currentColor" /> Log Transfer
-          </button>
+    <div className="page-container">
+      <div
+        className="page-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '16px',
+          alignItems: 'flex-start',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <h1 className="page-title" style={{ margin: 0 }}>
+            Family
+          </h1>
+          <p className="page-subtitle" style={{ marginTop: '8px' }}>
+            Track family support with clearer member summaries and transfer history.
+          </p>
+          {lastUpdatedAt ? (
+            <p style={{ margin: '10px 0 0', color: 'var(--muted)', fontSize: '0.82rem' }}>
+              As of {formatDateTime(lastUpdatedAt)}
+            </p>
+          ) : null}
         </div>
-
-        {/* Stats Row */}
-        <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-            gap: 'clamp(12px, 3vw, 24px)',
-            marginBottom: 'clamp(24px, 5vw, 40px)',
-          }}
-        >
-          {[
-            {
-              label: 'Total sent',
-              value: `₹${totalSent.toLocaleString()}`,
-              icon: <TrendingDown size={20} />,
-              color: '#ec4899',
-              sub: 'Lifetime',
-            },
-            {
-              label: 'This Month',
-              value: `₹${thisMonthTotal.toLocaleString()}`,
-              icon: <DollarSign size={20} />,
-              color: '#8b5cf6',
-              sub: new Date().toLocaleString('en-IN', { month: 'long' }),
-            },
-            {
-              label: 'Contacts',
-              value: familyMembers.length,
-              icon: <Users size={20} />,
-              color: '#06b6d4',
-              sub: `${familyTransfers.length} transfers`,
-            },
-          ].map((stat, i) => (
-            <div key={i} className="stat-card stat-card--pink" style={{ minHeight: 'auto' }}>
-              <div className="stat-card__glow" />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '14px',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '12px',
-                      background: `linear-gradient(135deg, ${stat.color}30, ${stat.color}10)`,
-                      border: `1px solid ${stat.color}30`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: stat.color,
-                    }}
-                  >
-                    {stat.icon}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: '800',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {stat.label}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(1.4rem, 3vw, 2rem)',
-                    fontWeight: '900',
-                    color: stat.color,
-                    marginBottom: '4px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
-                  {stat.sub}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Tab Switcher */}
-        <div
-          className="mobile-tab-scroll"
-          style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: 'clamp(20px, 4vw, 32px)',
-          }}
-        >
-          {[
-            { key: 'members' as const, label: 'Family Members', icon: <Users size={16} /> },
-            { key: 'history' as const, label: 'Transfer History', icon: <Clock size={16} /> },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={activeTab === tab.key ? 'period-btn period-btn--active' : 'period-btn'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                ...(activeTab === tab.key
-                  ? {
-                      borderColor: '#ec4899',
-                      color: '#ec4899',
-                      background: 'rgba(236, 72, 153, 0.1)',
-                    }
-                  : {}),
-              }}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── FAMILY MEMBERS TAB ── */}
-        {activeTab === 'members' && (
-          <div className="section-fade-in">
-            {familyMembers.length > 0 ? (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-                  gap: 'clamp(12px, 3vw, 20px)',
-                }}
-              >
-                {familyMembers.map((member, idx) => {
-                  const colorScheme = memberColors[idx % memberColors.length];
-                  const emoji = relEmoji[member.relationship] || 'Me';
-                  const avgPerTransfer = member.count > 0 ? member.total / member.count : 0;
-
-                  return (
-                    <div
-                      key={member.name}
-                      style={{
-                        background: '#050505',
-                        borderRadius: 'clamp(20px, 4vw, 28px)',
-                        border: `1px solid ${colorScheme.border}`,
-                        padding: 'clamp(16px, 4vw, 24px)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        transition: 'all 0.3s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.borderColor = colorScheme.text;
-                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.borderColor = colorScheme.border;
-                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                      }}
-                    >
-                      {/* Background glow */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '-30px',
-                          right: '-30px',
-                          width: '120px',
-                          height: '120px',
-                          background: `${colorScheme.text}08`,
-                          borderRadius: '50%',
-                          filter: 'blur(30px)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-
-                      {/* Top row: Avatar + name + quick send */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'clamp(12px, 3vw, 16px)',
-                          marginBottom: '16px',
-                          position: 'relative',
-                          zIndex: 1,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 'clamp(48px, 10vw, 56px)',
-                            height: 'clamp(48px, 10vw, 56px)',
-                            borderRadius: '18px',
-                            background: colorScheme.bg,
-                            border: `1px solid ${colorScheme.border}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 'clamp(1.3rem, 3vw, 1.6rem)',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {emoji}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontWeight: '800',
-                              fontSize: 'clamp(1rem, 2.5vw, 1.15rem)',
-                              color: '#fff',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {member.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#64748b',
-                              fontWeight: '700',
-                              marginTop: '2px',
-                            }}
-                          >
-                            {member.relationship} | {member.count} transfer
-                            {member.count !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                        {/* Quick Send Button */}
-                        <button
-                          onClick={() => handleQuickSend(member.name, member.relationship)}
-                          aria-label={`Quick send to ${member.name}`}
-                          style={{
-                            width: 'clamp(40px, 8vw, 44px)',
-                            height: 'clamp(40px, 8vw, 44px)',
-                            borderRadius: '14px',
-                            background: `linear-gradient(135deg, ${colorScheme.text}20, ${colorScheme.text}10)`,
-                            border: `1px solid ${colorScheme.border}`,
-                            color: colorScheme.text,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s ease',
-                            flexShrink: 0,
-                          }}
-                          onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background =
-                              `${colorScheme.text}30`;
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background =
-                              `${colorScheme.text}15`;
-                          }}
-                        >
-                          <Send size={18} />
-                        </button>
-                      </div>
-
-                      {/* Stats row */}
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '12px',
-                          position: 'relative',
-                          zIndex: 1,
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: 'rgba(255,255,255,0.02)',
-                            borderRadius: '14px',
-                            padding: 'clamp(10px, 2vw, 14px)',
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: '0.65rem',
-                              fontWeight: '800',
-                              color: '#475569',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginBottom: '4px',
-                            }}
-                          >
-                            Total Sent
-                          </div>
-                          <div
-                            style={{
-                              fontWeight: '900',
-                              fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
-                              color: colorScheme.text,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            ₹{member.total.toLocaleString()}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            background: 'rgba(255,255,255,0.02)',
-                            borderRadius: '14px',
-                            padding: 'clamp(10px, 2vw, 14px)',
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: '0.65rem',
-                              fontWeight: '800',
-                              color: '#475569',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginBottom: '4px',
-                            }}
-                          >
-                            Avg / Transfer
-                          </div>
-                          <div
-                            style={{
-                              fontWeight: '900',
-                              fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
-                              color: '#94a3b8',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            ₹
-                            {avgPerTransfer.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Last transfer info */}
-                      <div
-                        style={{
-                          marginTop: '12px',
-                          paddingTop: '12px',
-                          borderTop: '1px solid rgba(255,255,255,0.04)',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          fontSize: '0.75rem',
-                          color: '#475569',
-                          fontWeight: '600',
-                          position: 'relative',
-                          zIndex: 1,
-                        }}
-                      >
-                        <span>
-                          Last:{' '}
-                          {new Date(member.lastDate).toLocaleDateString('en-IN', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                        <span style={{ color: '#f472b6' }}>
-                          ₹{member.lastAmount.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Add New Member Card */}
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setIsModalOpen(true);
-                  }}
-                  style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    borderRadius: 'clamp(20px, 4vw, 28px)',
-                    border: '2px dashed #111111',
-                    padding: 'clamp(24px, 5vw, 40px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    color: '#475569',
-                    minHeight: '200px',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#ec4899';
-                    (e.currentTarget as HTMLButtonElement).style.color = '#ec4899';
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'rgba(236, 72, 153, 0.03)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#111111';
-                    (e.currentTarget as HTMLButtonElement).style.color = '#475569';
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'rgba(255,255,255,0.02)';
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '52px',
-                      height: '52px',
-                      borderRadius: '16px',
-                      background: 'rgba(236, 72, 153, 0.08)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <UserPlus size={24} />
-                  </div>
-                  <div style={{ fontWeight: '800', fontSize: '0.9rem' }}>Add Family Member</div>
-                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                    Record a transfer to add them
-                  </div>
-                </button>
-              </div>
-            ) : (
-              <div
-                style={{
-                  padding: 'clamp(40px, 8vw, 80px) 20px',
-                  textAlign: 'center',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  borderRadius: 'clamp(24px, 5vw, 32px)',
-                  border: '2px dashed #111111',
-                }}
-              >
-                <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
-                  <EmptyFamilyVisual />
-                </div>
-                <h3
-                  style={{
-                    color: '#f8fafc',
-                    fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
-                    fontWeight: '800',
-                    marginBottom: '8px',
-                  }}
-                >
-                  No contacts yet
-                </h3>
-                <p
-                  style={{
-                    color: '#94a3b8',
-                    fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
-                    marginBottom: '24px',
-                    maxWidth: '400px',
-                    marginLeft: 'auto',
-                    marginRight: 'auto',
-                  }}
-                >
-                  Record your first family transfer and the recipient will appear here for quick
-                  access.
-                </p>
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setIsModalOpen(true);
-                  }}
-                  style={{
-                    padding: 'clamp(12px, 2.5vw, 16px) clamp(24px, 5vw, 32px)',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)',
-                    color: '#fff',
-                    border: 'none',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    fontSize: '0.95rem',
-                    boxShadow: '0 10px 25px rgba(236, 72, 153, 0.3)',
-                    minHeight: '44px',
-                  }}
-                >
-                  <Plus size={18} /> Record First Transfer
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TRANSFER HISTORY TAB ── */}
-        {activeTab === 'history' && (
-          <div className="section-fade-in">
-            <div
-              style={{
-                background: '#050505',
-                borderRadius: 'clamp(20px, 4vw, 28px)',
-                border: '1px solid #111111',
-                padding: 'clamp(16px, 4vw, 28px)',
-              }}
-            >
-              {familyTransfers.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {familyTransfers.map((transfer) => {
-                    const memberIdx = familyMembers.findIndex((m) => m.name === transfer.recipient);
-                    const colorScheme =
-                      memberColors[(memberIdx >= 0 ? memberIdx : 0) % memberColors.length];
-                    const emoji = relEmoji[transfer.relationship] || 'Me';
-
-                    return (
-                      <div
-                        key={transfer.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'clamp(10px, 2.5vw, 16px)',
-                          padding: 'clamp(12px, 3vw, 16px)',
-                          borderRadius: '16px',
-                          background: 'rgba(255,255,255,0.02)',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLDivElement).style.background =
-                            'rgba(255,255,255,0.04)';
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLDivElement).style.background =
-                            'rgba(255,255,255,0.02)';
-                        }}
-                      >
-                        {/* Avatar */}
-                        <div
-                          style={{
-                            width: 'clamp(38px, 8vw, 44px)',
-                            height: 'clamp(38px, 8vw, 44px)',
-                            borderRadius: '14px',
-                            background: colorScheme.bg,
-                            border: `1px solid ${colorScheme.border}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.1rem',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {emoji}
-                        </div>
-
-                        {/* Info */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontWeight: '800',
-                              fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
-                              color: '#e2e8f0',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {transfer.recipient}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
-                              color: '#475569',
-                              fontWeight: '600',
-                              marginTop: '2px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              flexWrap: 'wrap',
-                            }}
-                          >
-                            <span>{transfer.relationship}</span>
-                            <span style={{ opacity: 0.5 }}>|</span>
-                            <span>
-                              {new Date(transfer.date).toLocaleDateString('en-IN', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </span>
-                            {transfer.purpose && (
-                              <>
-                                <span style={{ opacity: 0.5 }}>|</span>
-                                <span
-                                  style={{
-                                    color: '#64748b',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    maxWidth: '120px',
-                                  }}
-                                >
-                                  {transfer.purpose}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Amount + Actions */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'clamp(8px, 2vw, 12px)',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontWeight: '900',
-                              fontSize: 'clamp(0.9rem, 2vw, 1.05rem)',
-                              color: '#f472b6',
-                              textAlign: 'right',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            ₹{transfer.amount.toLocaleString()}
-                          </div>
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            <button
-                              onClick={() => handleEdit(transfer)}
-                              aria-label={`Edit transfer to ${transfer.recipient}`}
-                              className="action-btn action-btn--edit"
-                              style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <Edit3 size={13} />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const isConfirmed = await customConfirm({
-                                  title: 'Delete Transfer',
-                                  message: `Delete record for ${transfer.recipient}?`,
-                                  type: 'error',
-                                  confirmLabel: 'Delete',
-                                });
-                                if (isConfirmed) {
-                                  await deleteFamilyTransfer(transfer.id);
-                                  showNotification('success', 'Transfer deleted');
-                                }
-                              }}
-                              aria-label={`Delete transfer to ${transfer.recipient}`}
-                              className="action-btn action-btn--delete"
-                              style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div
-                  style={{
-                    padding: 'clamp(40px, 8vw, 60px) 20px',
-                    textAlign: 'center',
-                    color: '#64748b',
-                  }}
-                >
-                  <Clock size={40} style={{ opacity: 0.2, marginBottom: '16px' }} />
-                  <p style={{ fontWeight: '600', fontSize: '0.95rem' }}>
-                    No transfers recorded yet
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <button type="button" className="add-transaction-btn" onClick={openNewTransferModal}>
+          <Plus size={18} />
+          Add Transfer
+        </button>
       </div>
 
-      {/* ── MODAL ── */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '500px' }}>
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                resetForm();
+      <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '24px' }}>
+        <FamilyStatCard
+          label="Total sent"
+          value={<MoneyValue amount={stats.totalSent} compact={compactNumbers} />}
+          accent="#ec4899"
+        />
+        <FamilyStatCard
+          label="This month"
+          value={<MoneyValue amount={stats.thisMonth} compact={compactNumbers} />}
+          accent="#6aa6ff"
+        />
+        <FamilyStatCard label="Recipients" value={stats.recipients} accent="#2bd576" />
+        <FamilyStatCard
+          label="Average transfer"
+          value={<MoneyValue amount={stats.averageTransfer} compact={compactNumbers} />}
+          accent="#ffb020"
+        />
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        {[
+          { id: 'members', label: 'Members' },
+          { id: 'history', label: 'History' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className="tab-btn"
+            aria-pressed={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id as 'members' | 'history')}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {visibleTransfers.length === 0 ? (
+        <PageState
+          title="No family transfers yet"
+          description="Add your first family transfer to keep a clean history of support payments and recipients."
+          actionLabel="Add your first transfer"
+          onAction={openNewTransferModal}
+        />
+      ) : activeTab === 'members' ? (
+        <div className="grid-responsive-3" style={{ gap: '16px' }}>
+          {familyMembers.map((member) => {
+            const accent = relationshipAccent[member.relationship] ?? '#94a3b8';
+            return (
+              <article
+                key={member.name}
+                className="premium-card"
+                style={{ padding: '22px', display: 'grid', gap: '16px' }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '14px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: `${accent}20`,
+                        color: accent,
+                        marginBottom: '14px',
+                      }}
+                    >
+                      <Users size={20} />
+                    </div>
+                    <h2 style={{ margin: 0, fontSize: '1.05rem' }}>{member.name}</h2>
+                    <p style={{ margin: '8px 0 0', color: 'var(--muted)' }}>
+                      {member.relationship}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="action-btn"
+                    data-label="Send"
+                    aria-label={`Add transfer for ${member.name}`}
+                    title="Quick send"
+                    onClick={() => handleQuickSend(member.name, member.relationship)}
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+
+                <div className="grid-responsive-2" style={{ gap: '12px' }}>
+                  <FamilyMetric
+                    label="Total sent"
+                    value={<MoneyValue amount={member.total} compact={compactNumbers} />}
+                  />
+                  <FamilyMetric label="Transfers" value={member.count} />
+                  <FamilyMetric
+                    label="Latest transfer"
+                    value={<MoneyValue amount={member.latestAmount} compact={compactNumbers} />}
+                  />
+                  <FamilyMetric label="Last sent" value={formatDate(member.latestDate)} />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: '14px' }}>
+          {visibleTransfers.map((transfer) => (
+            <article
+              key={transfer.id}
+              className="premium-card"
+              style={{
+                padding: '18px 20px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '16px',
+                flexWrap: 'wrap',
+                alignItems: 'center',
               }}
-              className="modal-close"
             >
-              <X size={20} />
-            </button>
+              <div style={{ flex: '1 1 260px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}
+                >
+                  <strong>{transfer.recipient}</strong>
+                  <span
+                    style={{
+                      borderRadius: '999px',
+                      padding: '4px 10px',
+                      background: `${relationshipAccent[transfer.relationship] ?? '#94a3b8'}20`,
+                      color: relationshipAccent[transfer.relationship] ?? '#94a3b8',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {transfer.relationship}
+                  </span>
+                </div>
+                <p style={{ color: 'var(--muted)', margin: '8px 0 0' }}>
+                  {transfer.purpose || 'General support'} • {formatDate(transfer.date)}
+                </p>
+                {transfer.notes ? (
+                  <p style={{ color: 'var(--muted)', margin: '8px 0 0', lineHeight: 1.6 }}>
+                    {transfer.notes}
+                  </p>
+                ) : null}
+              </div>
 
-            <h2 className="modal-title">
-              {editId ? 'Edit Transfer' : quickSendMode ? `Send to ${recipient}` : 'New Transfer'}
-            </h2>
-            <p className="modal-subtitle">
-              {editId
-                ? 'Update the transfer details'
-                : quickSendMode
-                  ? `Quick transfer to ${recipient} (${relationship})`
-                  : 'Record a family transfer'}
-            </p>
-
-            {/* Quick send — show member avatar */}
-            {quickSendMode && (
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '14px',
-                  padding: '16px',
-                  background: 'rgba(236, 72, 153, 0.06)',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(236, 72, 153, 0.15)',
-                  marginBottom: '24px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-end',
                 }}
               >
-                <div
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '14px',
-                    background: 'rgba(236, 72, 153, 0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.3rem',
-                    flexShrink: 0,
-                  }}
-                >
-                  {relEmoji[relationship] || 'Me'}
-                </div>
-                <div>
-                  <div style={{ fontWeight: '800', color: '#fff', fontSize: '1rem' }}>
-                    {recipient}
+                <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                  <div style={{ color: '#ec4899', fontWeight: 800 }}>
+                    <MoneyValue amount={transfer.amount} compact={compactNumbers} />
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#ec4899', fontWeight: '700' }}>
-                    {relationship}
+                  <div style={{ color: 'var(--muted)', fontSize: '0.78rem', marginTop: '4px' }}>
+                    {transfer.accountId
+                      ? (accounts.find((account) => account.id === transfer.accountId)?.name ??
+                        'Selected account')
+                      : 'No account linked'}
                   </div>
                 </div>
-                <ChevronRight size={16} style={{ marginLeft: 'auto', color: '#475569' }} />
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="action-btn action-btn--edit"
+                    data-label="Edit"
+                    aria-label={`Edit transfer to ${transfer.recipient}`}
+                    title="Edit transfer"
+                    onClick={() => handleEdit(transfer)}
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="action-btn action-btn--delete"
+                    data-label="Delete"
+                    aria-label={`Delete transfer to ${transfer.recipient}`}
+                    title="Delete transfer"
+                    onClick={() => requestDelete(transfer)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-            )}
+            </article>
+          ))}
+        </div>
+      )}
 
-            <form
-              onSubmit={handleSubmit}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+      {isModalOpen ? (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '560px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+              }}
             >
-              {/* Show recipient/relationship fields only if NOT quick send */}
-              {!quickSendMode && (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
-                    gap: '16px',
-                  }}
-                >
-                  <div>
-                    <label className="form-label">Recipient name</label>
-                    <input
-                      value={recipient}
-                      onChange={(e) => setRecipient(e.target.value)}
-                      placeholder="e.g. Mother"
-                      required
-                      className="form-input"
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Relationship</label>
-                    <select
-                      value={relationship}
-                      onChange={(e) => setRelationship(e.target.value)}
-                      className="form-input"
-                    >
-                      <option value="Parent">Parent</option>
-                      <option value="Father">Father</option>
-                      <option value="Mother">Mother</option>
-                      <option value="Sibling">Sibling</option>
-                      <option value="Grandparent">Grandparent</option>
-                      <option value="Spouse">Spouse</option>
-                      <option value="Child">Child</option>
-                      <option value="Friend">Friend</option>
-                      <option value="Relative">Relative</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-              )}
+              <h2 style={{ margin: 0 }}>{editId ? 'Edit transfer' : 'New family transfer'}</h2>
+              <button type="button" className="modal-close" onClick={() => setIsModalOpen(false)}>
+                <X size={22} />
+              </button>
+            </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
-                  gap: '16px',
-                }}
-              >
-                <div>
-                  <label className="form-label">Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    min="1"
-                    step="1"
-                    required
-                    className="form-input"
-                    autoFocus={quickSendMode}
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Date</label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="form-label">Purpose</label>
-                <input
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
-                  placeholder="e.g. Monthly support, Medical"
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px' }}>
+              <input
+                className="form-input"
+                value={recipient}
+                onChange={(event) => setRecipient(event.target.value)}
+                placeholder="Recipient name"
+                required
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <select
                   className="form-input"
+                  value={relationship}
+                  onChange={(event) => setRelationship(event.target.value)}
+                >
+                  {RELATIONSHIPS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="form-input table-nums"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  placeholder="Amount"
+                  required
                 />
               </div>
-
-              <div>
-                <label className="form-label">Debit from account (optional)</label>
-                <select
-                  value={selectedAccountId}
-                  onChange={(e) =>
-                    setSelectedAccountId(e.target.value ? Number(e.target.value) : '')
-                  }
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <input
                   className="form-input"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                />
+                <select
+                  className="form-input"
+                  value={selectedAccountId}
+                  onChange={(event) =>
+                    setSelectedAccountId(event.target.value ? Number(event.target.value) : '')
+                  }
                 >
-                  <option value="">No Account (Ledger Only)</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} - ₹{acc.balance.toLocaleString()}
+                  <option value="">Select account</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
                     </option>
                   ))}
                 </select>
               </div>
+              <input
+                className="form-input"
+                value={purpose}
+                onChange={(event) => setPurpose(event.target.value)}
+                placeholder="Purpose"
+              />
+              <textarea
+                className="form-input"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Notes"
+                rows={4}
+                style={{ resize: 'vertical' }}
+              />
 
-              <div>
-                <label className="form-label">Notes (Optional)</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Additional details..."
-                  className="form-input"
-                  style={{ minHeight: '70px', resize: 'vertical', fontFamily: 'inherit' }}
-                />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="page-state__button"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="add-transaction-btn">
+                  {editId ? 'Save changes' : 'Save transfer'}
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{
-                  background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)',
-                  boxShadow: '0 10px 25px rgba(236, 72, 153, 0.3)',
-                }}
-              >
-                {editId
-                  ? 'Update Transfer'
-                  : quickSendMode
-                    ? `Send to ${recipient}`
-                    : 'Record Transfer'}
-              </button>
             </form>
           </div>
         </div>
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+function FamilyStatCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: string;
+}) {
+  return (
+    <div className="premium-card" style={{ padding: '22px' }}>
+      <div
+        style={{
+          color: 'var(--muted)',
+          fontSize: '0.76rem',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          marginBottom: '10px',
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: '1.45rem', fontWeight: 900, color: accent ?? 'var(--text)' }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function FamilyMetric({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div
+      style={{
+        borderRadius: '16px',
+        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(255,255,255,0.03)',
+        padding: '14px 16px',
+      }}
+    >
+      <div style={{ color: 'var(--muted)', fontSize: '0.78rem', marginBottom: '6px' }}>{label}</div>
+      <div style={{ fontSize: '1rem', fontWeight: 800 }}>{value}</div>
     </div>
   );
 }

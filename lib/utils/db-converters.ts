@@ -2,6 +2,7 @@ import {
   Account,
   AccountType,
   Transaction,
+  TransactionMetadata,
   Goal,
   FamilyTransfer,
   Stock,
@@ -14,6 +15,7 @@ import {
   Bond,
   BondTransaction,
 } from '../types';
+import { normalizeTransactionType } from './transactions';
 
 // Database row types
 export type AccountRow = {
@@ -31,8 +33,10 @@ export type TransactionRow = {
   description: string;
   category: string;
   type: string;
+  transaction_type?: string | null;
   amount: number;
   account_id?: number | null;
+  metadata?: unknown;
   [key: string]: unknown;
 };
 export type GoalRow = {
@@ -195,11 +199,13 @@ export type AppSettingsRow = {
   goals_visible?: boolean | null;
   family_visible?: boolean | null;
   display_name?: string | null;
+  compact_numbers?: boolean | null;
   [key: string]: unknown;
 };
 
 export const dbSettingsToSettings = (dbSettings: AppSettingsRow): AppSettings => ({
   displayName: dbSettings.display_name ?? undefined,
+  compactNumbers: dbSettings.compact_numbers ?? false,
   brokerageType: dbSettings.brokerage_type as 'flat' | 'percentage',
   brokerageValue: Number(dbSettings.brokerage_value),
   sttRate: Number(dbSettings.stt_rate),
@@ -246,8 +252,20 @@ export const dbTransactionToTransaction = (dbTransaction: TransactionRow): Trans
   description: dbTransaction.description,
   category: dbTransaction.category,
   type: dbTransaction.type as 'Income' | 'Expense',
+  transactionType: normalizeTransactionType(
+    dbTransaction.transaction_type,
+    dbTransaction.type as 'Income' | 'Expense',
+    dbTransaction.description,
+    dbTransaction.category
+  ),
   amount: Number(dbTransaction.amount),
   accountId: dbTransaction.account_id ? Number(dbTransaction.account_id) : undefined,
+  metadata:
+    dbTransaction.metadata &&
+    typeof dbTransaction.metadata === 'object' &&
+    !Array.isArray(dbTransaction.metadata)
+      ? (dbTransaction.metadata as TransactionMetadata)
+      : undefined,
 });
 
 export const dbGoalToGoal = (dbGoal: GoalRow): Goal => ({

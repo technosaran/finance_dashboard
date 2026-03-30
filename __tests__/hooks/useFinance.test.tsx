@@ -265,6 +265,7 @@ describe('useFinance Hook - Data Addition Tests', () => {
       description: 'Test Tx',
       category: 'Food',
       type: 'Expense',
+      transactionType: 'EXPENSE' as const,
       amount: 500,
       accountId: 1,
     };
@@ -279,6 +280,8 @@ describe('useFinance Hook - Data Addition Tests', () => {
       description: newTx.description,
       category: newTx.category,
       type: newTx.type,
+      transaction_type: newTx.transactionType,
+      metadata: {},
       amount: newTx.amount,
       account_id: newTx.accountId,
     });
