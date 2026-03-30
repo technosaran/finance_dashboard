@@ -6,6 +6,9 @@ import {
   inRange,
   safeParseNumber,
   formatCompactNumber,
+  formatCurrency,
+  formatCurrencyCompact,
+  formatPercent,
 } from '@/lib/utils/number';
 
 describe('calculatePercentage', () => {
@@ -74,5 +77,61 @@ describe('formatCompactNumber', () => {
     expect(formatCompactNumber(1500)).toBe('1.5K');
     expect(formatCompactNumber(1500000)).toBe('1.5M');
     expect(formatCompactNumber(2500000000)).toBe('2.5B');
+  });
+});
+
+describe('formatCurrency', () => {
+  it('formats INR amounts in full notation by default', () => {
+    const result = formatCurrency(365783.28);
+    // Expect the formatted string to contain the amount digits
+    expect(result).toMatch(/3,65,783/);
+  });
+
+  it('formats INR in compact notation when compact=true', () => {
+    expect(formatCurrency(365783.28, 'INR', { compact: true })).toBe('₹3.66L');
+    expect(formatCurrency(10000000, 'INR', { compact: true })).toBe('₹1.00Cr');
+    expect(formatCurrency(5000, 'INR', { compact: true })).toBe('₹5.00K');
+    expect(formatCurrency(500, 'INR', { compact: true })).toBe('₹500.00');
+  });
+
+  it('supports legacy string locale argument', () => {
+    const result = formatCurrency(1000, 'INR', 'en-IN');
+    expect(result).toContain('1,000');
+  });
+});
+
+describe('formatCurrencyCompact', () => {
+  it('uses Indian short-scale suffixes', () => {
+    expect(formatCurrencyCompact(1_00_00_000)).toBe('₹1.00Cr'); // 1 crore
+    expect(formatCurrencyCompact(3_66_000)).toBe('₹3.66L'); // 3.66 lakh
+    expect(formatCurrencyCompact(50_000)).toBe('₹50.00K'); // 50 thousand
+    expect(formatCurrencyCompact(999)).toBe('₹999.00'); // plain
+  });
+
+  it('handles negative amounts correctly', () => {
+    expect(formatCurrencyCompact(-5_00_000)).toBe('-₹5.00L');
+    expect(formatCurrencyCompact(-1500)).toBe('-₹1.50K');
+  });
+
+  it('respects custom decimal places', () => {
+    expect(formatCurrencyCompact(1_00_000, 0)).toBe('₹1L');
+    expect(formatCurrencyCompact(1_50_000, 1)).toBe('₹1.5L');
+  });
+});
+
+describe('formatPercent', () => {
+  it('formats positive percentage with + prefix', () => {
+    expect(formatPercent(12.5)).toBe('+12.50%');
+    // Zero is displayed neutrally – no + prefix
+    expect(formatPercent(0)).toBe('0.00%');
+  });
+
+  it('formats negative percentage without + prefix', () => {
+    expect(formatPercent(-3.25)).toBe('-3.25%');
+  });
+
+  it('respects custom decimal places', () => {
+    expect(formatPercent(7.1234, 1)).toBe('+7.1%');
+    expect(formatPercent(-1.9876, 0)).toBe('-2%');
   });
 });

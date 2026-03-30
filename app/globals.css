@@ -35,6 +35,17 @@
   --warning-light: rgba(245, 158, 11, 0.1);
   --error: #ef4444;
   --error-light: rgba(239, 68, 68, 0.1);
+  /* Alias for semantic clarity (--danger = --error) */
+  --danger: #ef4444;
+  --danger-light: rgba(239, 68, 68, 0.1);
+  --info: #6aa6ff;
+  --info-light: rgba(106, 166, 255, 0.1);
+
+  /* Focus ring – single token for all :focus-visible rules */
+  --focus-ring: 0 0 0 3px rgba(106, 166, 255, 0.45);
+
+  /* Icon button minimum tap target (WCAG 2.5.8) */
+  --icon-btn-min-size: 32px;
 
   /* Spacing - Responsive */
   --spacing-xs: 8px;
@@ -3046,17 +3057,53 @@ select:focus {
   }
 }
 
-/* Better focus-visible styles for keyboard accessibility */
+/* ── Focus-visible: keyboard accessibility ──────────────────────────────── */
+/* Use box-shadow via --focus-ring so it works inside overflow:hidden cards.  */
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-md);
 }
 
 button:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+a:focus-visible,
+[role='tab']:focus-visible,
+[role='menuitem']:focus-visible,
+[role='option']:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-md);
+}
+
+/* ── Icon button accessibility ──────────────────────────────────────────── */
+/* Ensure every icon-only button meets the 32×32 minimum tap-target size.   */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--icon-btn-min-size);
+  min-height: var(--icon-btn-min-size);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  padding: 0 4px;
+  transition: color 0.18s ease;
+}
+
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Tabular numbers: right-align numeric table cells ───────────────────── */
+.table-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.num-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Mobile bottom nav active indicator dot */

@@ -3,7 +3,14 @@
  */
 
 /**
- * Format date to locale string
+ * Format date to a consistent, human-readable string.
+ *
+ * All display dates use the same locale (`en-GB`) so they render as:
+ *   "24 Mar 2026"  (short / medium – day numeric, month short, year numeric)
+ *   "Monday, 24 March 2026"  (long – includes weekday)
+ *
+ * Using `en-GB` avoids the comma-separated US format ("Mar 24, 2026") and the
+ * slash-separated ISO ambiguity ("26/2/2026") – finance UIs need unambiguous dates.
  */
 export function formatDate(
   date: string | Date,
@@ -12,12 +19,15 @@ export function formatDate(
   const d = typeof date === 'string' ? new Date(date) : date;
 
   const formatOptions: Record<string, Intl.DateTimeFormatOptions> = {
-    short: { year: 'numeric', month: 'short', day: 'numeric' },
-    medium: { year: 'numeric', month: 'short', day: 'numeric' },
-    long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+    // "24 Mar 2026"
+    short: { day: 'numeric', month: 'short', year: 'numeric' },
+    // "24 Mar 2026"
+    medium: { day: 'numeric', month: 'short', year: 'numeric' },
+    // "Monday, 24 March 2026"
+    long: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
   };
 
-  return d.toLocaleDateString('en-IN', formatOptions[format]);
+  return d.toLocaleDateString('en-GB', formatOptions[format]);
 }
 
 /**

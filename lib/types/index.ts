@@ -34,11 +34,13 @@ export interface Account {
 // Transaction Types
 // ============================================================================
 
-export type TransactionType = 'Income' | 'Expense';
+export type TransactionType = 'Income' | 'Expense' | 'Transfer';
 export type TransactionCategory =
   | 'Salary'
   | 'Business'
   | 'Investment'
+  | 'Dividend'
+  | 'Cashback'
   | 'Rent'
   | 'Food'
   | 'Transport'

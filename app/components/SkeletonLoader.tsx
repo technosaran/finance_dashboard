@@ -48,6 +48,42 @@ export function SkeletonCard() {
   );
 }
 
+/**
+ * Skeleton for a KPI row – renders `count` placeholder stat tiles side-by-side.
+ * Matches the typical "4 KPI tiles" layout used in module page headers.
+ */
+export function SkeletonKPIRow({ count = 4 }: { count?: number }) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${count}, 1fr)`,
+        gap: '16px',
+      }}
+    >
+      {[...Array(count)].map((_, i) => (
+        <div
+          key={i}
+          style={{
+            background: colors.bgCard,
+            borderRadius: '16px',
+            border: `1px solid ${colors.border}`,
+            padding: '20px',
+          }}
+        >
+          <SkeletonLoader height="12px" width="50%" />
+          <div style={{ marginTop: '12px' }}>
+            <SkeletonLoader height="28px" width="65%" />
+          </div>
+          <div style={{ marginTop: '10px' }}>
+            <SkeletonLoader height="10px" width="40%" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SkeletonTable() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

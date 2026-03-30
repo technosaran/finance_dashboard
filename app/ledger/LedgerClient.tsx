@@ -40,7 +40,7 @@ export default function LedgerClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [filterAccount, setFilterAccount] = useState<number | 'All'>('All');
-  const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense'>('All');
+  const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense' | 'Transfer'>('All');
 
   // Form State
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -139,7 +139,10 @@ export default function LedgerClient() {
     const expense = filteredTransactions
       .filter((t) => t.type === 'Expense')
       .reduce((s, t) => s + t.amount, 0);
-    return { income, expense, balance: income - expense };
+    const transfer = filteredTransactions
+      .filter((t) => t.type === 'Transfer')
+      .reduce((s, t) => s + t.amount, 0);
+    return { income, expense, transfer, balance: income - expense };
   }, [filteredTransactions]);
 
   if (loading) {
@@ -683,7 +686,7 @@ export default function LedgerClient() {
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
-                {(['All', 'Income', 'Expense'] as const).map((t) => (
+                {(['All', 'Income', 'Expense', 'Transfer'] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setFilterType(t)}
@@ -698,7 +701,9 @@ export default function LedgerClient() {
                             ? 'rgba(16, 185, 129, 0.4)'
                             : t === 'Expense'
                               ? 'rgba(244, 63, 94, 0.4)'
-                              : 'rgba(99, 102, 241, 0.4)'
+                              : t === 'Transfer'
+                                ? 'rgba(251, 191, 36, 0.4)'
+                                : 'rgba(99, 102, 241, 0.4)'
                           : '#1a1a1a',
                       background:
                         filterType === t
@@ -706,7 +711,9 @@ export default function LedgerClient() {
                             ? 'rgba(16, 185, 129, 0.12)'
                             : t === 'Expense'
                               ? 'rgba(244, 63, 94, 0.12)'
-                              : 'rgba(99, 102, 241, 0.12)'
+                              : t === 'Transfer'
+                                ? 'rgba(251, 191, 36, 0.12)'
+                                : 'rgba(99, 102, 241, 0.12)'
                           : 'transparent',
                       color:
                         filterType === t
@@ -714,7 +721,9 @@ export default function LedgerClient() {
                             ? '#34d399'
                             : t === 'Expense'
                               ? '#fb7185'
-                              : '#a5b4fc'
+                              : t === 'Transfer'
+                                ? '#fbbf24'
+                                : '#a5b4fc'
                           : '#475569',
                       fontSize: '0.65rem',
                       fontWeight: '900',
