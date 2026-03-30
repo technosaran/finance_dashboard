@@ -9,6 +9,8 @@ import {
   PieChart as PieChartIcon,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { InfoHint } from '@/app/components/ui/InfoHint';
 
 interface AllocationEntry {
   name: string;
@@ -18,25 +20,11 @@ interface AllocationEntry {
 
 interface NetWorthCardProps {
   totalNetWorth: number;
-  globalLifetimeWealth: number;
+  realizedPnl: number;
   liquidityINR: number;
   investmentsTotal: number;
   allocationData: AllocationEntry[];
-}
-
-const CRORE = 10_000_000;
-const LAKH = 100_000;
-const THOUSAND = 1_000;
-
-function formatAmount(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-
-  if (abs >= CRORE) return `${sign}₹${(abs / CRORE).toFixed(2)}Cr`;
-  if (abs >= LAKH) return `${sign}₹${(abs / LAKH).toFixed(2)}L`;
-  if (abs >= THOUSAND) return `${sign}₹${(abs / THOUSAND).toFixed(1)}K`;
-
-  return `${sign}₹${abs.toLocaleString()}`;
+  compactNumbers?: boolean;
 }
 
 function pctOf(value: number, total: number): string {
@@ -45,13 +33,14 @@ function pctOf(value: number, total: number): string {
 
 export function NetWorthCard({
   totalNetWorth,
-  globalLifetimeWealth,
+  realizedPnl,
   liquidityINR,
   investmentsTotal,
   allocationData,
+  compactNumbers = false,
 }: NetWorthCardProps) {
-  const lifetimePct = investmentsTotal > 0 ? (globalLifetimeWealth / investmentsTotal) * 100 : 0;
-  const isPositive = globalLifetimeWealth >= 0;
+  const realizedPct = investmentsTotal > 0 ? (realizedPnl / investmentsTotal) * 100 : 0;
+  const isPositive = realizedPnl >= 0;
   const pnlColor = isPositive ? '#20b072' : '#ef5d5d';
   const pnlBg = isPositive ? 'rgba(32, 176, 114, 0.12)' : 'rgba(239, 93, 93, 0.12)';
   const pnlBorder = isPositive ? 'rgba(32, 176, 114, 0.22)' : 'rgba(239, 93, 93, 0.22)';
@@ -77,9 +66,12 @@ export function NetWorthCard({
                 className="stat-label"
                 style={{ fontSize: '0.75rem', color: '#6f8480', letterSpacing: '0.12em' }}
               >
-                TOTAL NET WORTH
+                <InfoHint
+                  label="Total net worth"
+                  description="Cash plus current market value of tracked investments."
+                />
               </span>
-              {investmentsTotal > 0 && (
+              {investmentsTotal > 0 ? (
                 <div
                   style={{
                     marginLeft: 'auto',
@@ -88,23 +80,24 @@ export function NetWorthCard({
                     gap: '5px',
                     padding: '4px 10px',
                     borderRadius: '20px',
-                    background: 'rgba(242, 169, 59, 0.12)',
-                    border: '1px solid rgba(242, 169, 59, 0.2)',
-                    color: '#f2a93b',
+                    background: pnlBg,
+                    border: `1px solid ${pnlBorder}`,
+                    color: pnlColor,
                     fontSize: '0.7rem',
                     fontWeight: '800',
                   }}
+                  title="Realized P&L is profit or loss already locked in from completed trades and closed positions."
                 >
-                  {lifetimePct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                  {lifetimePct >= 0 ? '+' : ''}
-                  {lifetimePct.toFixed(1)}% lifetime
+                  {realizedPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                  {realizedPct >= 0 ? '+' : ''}
+                  {realizedPct.toFixed(1)}% realized
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div style={{ marginBottom: '24px' }}>
               <div
-                className="stat-value"
+                className="stat-value table-nums"
                 style={{
                   fontSize: 'clamp(2.2rem, 6vw, 3.75rem)',
                   lineHeight: 1.05,
@@ -112,7 +105,7 @@ export function NetWorthCard({
                   letterSpacing: '-0.03em',
                 }}
               >
-                {formatAmount(totalNetWorth)}
+                <MoneyValue amount={totalNetWorth} compact={compactNumbers} />
               </div>
 
               <div
@@ -128,10 +121,14 @@ export function NetWorthCard({
                   fontSize: '0.82rem',
                   fontWeight: '800',
                 }}
+                title="Realized P&L is profit or loss already locked in from completed trades and closed positions."
               >
                 {isPositive ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
-                {isPositive ? '+' : ''}
-                {formatAmount(globalLifetimeWealth)} lifetime
+                <InfoHint
+                  label="Realized P&L"
+                  description="Profit or loss already locked in from completed trades and closed positions."
+                />
+                <MoneyValue amount={realizedPnl} compact={compactNumbers} showSign={isPositive} />
               </div>
             </div>
 
@@ -168,8 +165,11 @@ export function NetWorthCard({
                     Cash
                   </span>
                 </div>
-                <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                  {formatAmount(liquidityINR)}
+                <div
+                  className="table-nums"
+                  style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}
+                >
+                  <MoneyValue amount={liquidityINR} compact={compactNumbers} />
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#6f8480', marginTop: '3px' }}>
                   {totalNetWorth > 0
@@ -202,8 +202,11 @@ export function NetWorthCard({
                     Investments
                   </span>
                 </div>
-                <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                  {formatAmount(investmentsTotal)}
+                <div
+                  className="table-nums"
+                  style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}
+                >
+                  <MoneyValue amount={investmentsTotal} compact={compactNumbers} />
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#6f8480', marginTop: '3px' }}>
                   {totalNetWorth > 0
@@ -269,7 +272,7 @@ export function NetWorthCard({
                       >
                         {allocationData.map((entry, index) => (
                           <Cell
-                            key={`cell-${index}`}
+                            key={index}
                             fill={entry.color}
                             style={{ filter: `drop-shadow(0 0 6px ${entry.color}44)` }}
                           />
@@ -286,7 +289,12 @@ export function NetWorthCard({
                         itemStyle={{ color: '#fff', fontWeight: '700', fontSize: '0.82rem' }}
                         labelStyle={{ display: 'none' }}
                         formatter={(value, _name, props) => [
-                          `${formatAmount(Number(value))} | ${pctOf(Number(value), totalNetWorth)}%`,
+                          `${new Intl.NumberFormat('en-IN', {
+                            style: 'currency',
+                            currency: 'INR',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(Number(value))} | ${pctOf(Number(value), totalNetWorth)}%`,
                           props.payload?.name ?? '',
                         ]}
                       />
@@ -315,18 +323,21 @@ export function NetWorthCard({
                     >
                       Total
                     </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#fff' }}>
-                      {formatAmount(totalNetWorth)}
+                    <div
+                      className="table-nums"
+                      style={{ fontSize: '0.95rem', fontWeight: '900', color: '#fff' }}
+                    >
+                      <MoneyValue amount={totalNetWorth} compact={compactNumbers} />
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {allocationData.map((item, idx) => {
+                  {allocationData.map((item, index) => {
                     const pct = totalNetWorth > 0 ? (item.value / totalNetWorth) * 100 : 0;
 
                     return (
-                      <div key={idx}>
+                      <div key={index}>
                         <div
                           style={{
                             display: 'flex',
@@ -354,9 +365,10 @@ export function NetWorthCard({
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span
+                              className="table-nums"
                               style={{ fontSize: '0.78rem', fontWeight: '700', color: '#6f8480' }}
                             >
-                              {formatAmount(item.value)}
+                              <MoneyValue amount={item.value} compact={compactNumbers} />
                             </span>
                             <span
                               style={{

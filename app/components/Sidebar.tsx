@@ -1,5 +1,4 @@
 'use client';
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -214,8 +213,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             align-self: stretch;
           }
         }
+        @media (min-width: 768px) and (max-width: 1023px) {
+          aside {
+            width: 84px;
+            min-width: 84px;
+          }
+          :global(.sidebar-brand-text),
+          :global(.sidebar-section-title),
+          :global(.sidebar-link-label),
+          :global(.sidebar-footer-label) {
+            display: none !important;
+          }
+          :global(.sidebar-link) {
+            justify-content: center;
+          }
+        }
       `}</style>
-      <aside id="sidebar-navigation">
+      <aside id="sidebar-navigation" className="app-sidebar">
         {/* Logo / Brand */}
         <div
           style={{
@@ -263,7 +277,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <Command size={20} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div
+            className="sidebar-brand-text"
+            style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
+          >
             <span
               style={{
                 fontSize: '1.15rem',
@@ -316,6 +333,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               style={{ marginBottom: sectionIdx < navSections.length - 1 ? '4px' : '0' }}
             >
               <div
+                className="sidebar-section-title"
                 style={{
                   padding: '8px 12px 4px',
                   fontSize: '0.6rem',
@@ -335,6 +353,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    className="sidebar-link"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -368,6 +387,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         : 'none',
                     }}
                     aria-current={isActive ? 'page' : undefined}
+                    aria-label={item.label}
+                    title={item.label}
                     onClick={onClose}
                     onMouseEnter={() => setHoveredItem(item.href)}
                     onMouseLeave={() => setHoveredItem(null)}
@@ -400,6 +421,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       {item.icon}
                     </div>
                     <span
+                      className="sidebar-link-label"
                       style={{
                         fontWeight: isActive ? '700' : '600',
                         fontSize: '0.9rem',
@@ -451,7 +473,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             }}
           />
 
-          <Link href="/settings" style={{ textDecoration: 'none' }} onClick={onClose}>
+          <Link
+            href="/settings"
+            style={{ textDecoration: 'none' }}
+            onClick={onClose}
+            aria-label="Settings"
+            title="Settings"
+          >
             <div
               style={{
                 padding: '12px',
@@ -472,7 +500,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onTouchEnd={() => setHoveredItem(null)}
             >
               <Settings size={18} />
-              <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>Settings</span>
+              <span
+                className="sidebar-footer-label"
+                style={{ fontWeight: '600', fontSize: '0.85rem' }}
+              >
+                Settings
+              </span>
             </div>
           </Link>
 
@@ -507,13 +540,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               width: '100%',
               textAlign: 'left' as const,
             }}
+            aria-label="Logout"
+            title="Logout"
             onMouseEnter={() => setHoveredItem('logout')}
             onMouseLeave={() => setHoveredItem(null)}
             onTouchStart={() => setHoveredItem('logout')}
             onTouchEnd={() => setHoveredItem(null)}
           >
             <LogOut size={18} />
-            <span style={{ fontWeight: '700', fontSize: '0.85rem' }}>Logout</span>
+            <span
+              className="sidebar-footer-label"
+              style={{ fontWeight: '700', fontSize: '0.85rem' }}
+            >
+              Logout
+            </span>
           </button>
         </div>
       </aside>

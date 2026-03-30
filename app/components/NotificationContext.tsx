@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+  useRef,
+  useEffect,
+} from 'react';
 import { X, CheckCircle, AlertTriangle, Info, AlertOctagon } from 'lucide-react';
 import { colors } from '@/lib/styles/constants';
 
@@ -11,6 +19,9 @@ interface Notification {
   type: NotificationType;
   message: string;
   duration?: number;
+  actionLabel?: string;
+  onAction?: () => void;
+  onDismiss?: () => void;
 }
 
 interface ConfirmOptions {
@@ -23,6 +34,7 @@ interface ConfirmOptions {
 
 interface NotificationContextType {
   showNotification: (type: NotificationType, message: string, duration?: number) => void;
+  showActionNotification: (notification: Omit<Notification, 'id'>) => void;
   confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
 
@@ -38,11 +50,25 @@ export const useNotifications = () => {
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const notificationsRef = useRef<Notification[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     options: ConfirmOptions;
     resolve: (value: boolean) => void;
   } | null>(null);
+
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
+  const removeNotification = useCallback((id: string, commitDismiss = true) => {
+    const notification = notificationsRef.current.find((item) => item.id === id);
+    setNotifications((prev) => prev.filter((item) => item.id !== id));
+
+    if (notification?.onDismiss && commitDismiss) {
+      notification.onDismiss();
+    }
+  }, []);
 
   const showNotification = useCallback(
     (type: NotificationType, message: string, duration = 5000) => {
@@ -51,11 +77,27 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       if (duration !== Infinity) {
         setTimeout(() => {
-          setNotifications((prev) => prev.filter((n) => n.id !== id));
+          removeNotification(id);
         }, duration);
       }
     },
-    []
+    [removeNotification]
+  );
+
+  const showActionNotification = useCallback(
+    (notification: Omit<Notification, 'id'>) => {
+      const id = Math.random().toString(36).substring(2, 9);
+      const duration = notification.duration ?? 8000;
+
+      setNotifications((prev) => [...prev, { ...notification, id, duration }]);
+
+      if (duration !== Infinity) {
+        setTimeout(() => {
+          removeNotification(id);
+        }, duration);
+      }
+    },
+    [removeNotification]
   );
 
   const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
@@ -94,7 +136,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <NotificationContext.Provider value={{ showNotification, confirm }}>
+    <NotificationContext.Provider value={{ showNotification, showActionNotification, confirm }}>
       {children}
 
       {/* Notifications Portal */}
@@ -142,7 +184,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             <div style={{ flex: 1, fontSize: '0.9rem', fontWeight: '600' }}>{n.message}</div>
             <button
               type="button"
-              onClick={() => setNotifications((prev) => prev.filter((item) => item.id !== n.id))}
+              onClick={() => removeNotification(n.id)}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -154,6 +196,27 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             >
               <X size={16} />
             </button>
+            {n.actionLabel && n.onAction ? (
+              <button
+                type="button"
+                onClick={() => {
+                  n.onAction?.();
+                  removeNotification(n.id, false);
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: `1px solid ${colors.border}`,
+                  color: '#fff',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  marginLeft: '4px',
+                }}
+              >
+                {n.actionLabel}
+              </button>
+            ) : null}
           </div>
         ))}
       </div>
