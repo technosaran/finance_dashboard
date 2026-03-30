@@ -29,6 +29,7 @@ import {
 type SettingsTab = 'general' | 'modules' | 'sidebar' | 'system';
 
 const DEFAULT_SETTINGS: AppSettings = {
+  compactNumbers: false,
   brokerageType: 'flat',
   brokerageValue: 0,
   sttRate: 0.1,
@@ -308,6 +309,26 @@ export default function SettingsPage() {
                   icon={<Banknote size={16} />}
                 />
               </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Display Preferences"
+              description="Choose how numbers are presented across the app"
+              icon={<Monitor size={22} />}
+              iconColor="#6aa6ff"
+              iconBackground="rgba(106, 166, 255, 0.1)"
+              style={{ marginTop: '24px' }}
+            >
+              <ToggleCard
+                label="Compact numbers"
+                description="Show amounts like ₹3.66L instead of full values in KPI cards and summaries."
+                isActive={settings.compactNumbers === true}
+                onToggle={() =>
+                  updateSettings({ compactNumbers: !(settings.compactNumbers === true) })
+                }
+                color="#6aa6ff"
+                icon={<Layers size={18} />}
+              />
             </SectionCard>
 
             <SectionCard

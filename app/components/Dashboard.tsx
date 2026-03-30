@@ -1,17 +1,19 @@
 'use client';
 
 import { useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
 import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useAuth } from '@/app/components/AuthContext';
-import { MutualFundTransaction } from '@/lib/types';
-import { SkeletonCard } from './SkeletonLoader';
-import { EmptyPortfolioVisual } from './Visuals';
 import { QuickStatsRow } from './dashboard/QuickStatsRow';
 import { NetWorthCard } from './dashboard/NetWorthCard';
 import { TopHoldings } from './dashboard/TopHoldings';
 import { RecentActivity } from './dashboard/RecentActivity';
 import { GoalsProgress } from './dashboard/GoalsProgress';
+import { EmptyPortfolioVisual } from './Visuals';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { InfoHint } from '@/app/components/ui/InfoHint';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { formatDateTime } from '@/lib/utils/format';
+import { calculateDashboardMetrics } from '@/lib/utils/dashboard';
 
 function getGreeting(): { text: string; subtext: string; emoji: string; emojiLabel: string } {
   const hour = new Date().getHours();
@@ -20,8 +22,8 @@ function getGreeting(): { text: string; subtext: string; emoji: string; emojiLab
     return {
       text: 'Good morning',
       subtext: 'Here is where your money stands today.',
-      emoji: '☀️',
-      emojiLabel: 'sun — good morning',
+      emoji: 'Sun',
+      emojiLabel: 'good morning',
     };
   }
 
@@ -29,8 +31,8 @@ function getGreeting(): { text: string; subtext: string; emoji: string; emojiLab
     return {
       text: 'Good afternoon',
       subtext: 'Check balances, holdings, and recent activity at a glance.',
-      emoji: '🌤️',
-      emojiLabel: 'sun behind cloud — good afternoon',
+      emoji: 'Day',
+      emojiLabel: 'good afternoon',
     };
   }
 
@@ -38,16 +40,16 @@ function getGreeting(): { text: string; subtext: string; emoji: string; emojiLab
     return {
       text: 'Good evening',
       subtext: "Review today's movement before you wrap up.",
-      emoji: '🌆',
-      emojiLabel: 'cityscape at dusk — good evening',
+      emoji: 'Dusk',
+      emojiLabel: 'good evening',
     };
   }
 
   return {
     text: 'Good night',
     subtext: 'A quick summary before the day ends.',
-    emoji: '🌙',
-    emojiLabel: 'crescent moon — good night',
+    emoji: 'Night',
+    emojiLabel: 'good night',
   };
 }
 
@@ -60,7 +62,7 @@ function getUserDisplayName(
     user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name;
 
   if (metadataName) {
-    return (metadataName as string).split(' ')[0];
+    return String(metadataName).split(' ')[0];
   }
 
   if (user.email) {
@@ -73,7 +75,7 @@ function getUserDisplayName(
 }
 
 export default function Dashboard() {
-  const { accounts, goals, transactions, loading, error } = useLedger();
+  const { accounts, goals, transactions, loading, error, lastUpdatedAt } = useLedger();
   const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades, bonds } =
     usePortfolio();
   const { settings } = useSettings();
@@ -85,108 +87,39 @@ export default function Dashboard() {
     [settings?.displayName, user]
   );
 
-  const financialMetrics = useMemo(() => {
-    const liquidityINR = accounts
-      .filter((account) => account.currency === 'INR')
-      .reduce((sum, account) => sum + account.balance, 0);
-
-    const stocksValue = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.currentValue, 0);
-
-    const mutualFundsValue = mutualFunds.reduce((sum, fund) => sum + fund.currentValue, 0);
-    const bondsValue = bonds.reduce((sum, bond) => sum + bond.currentValue, 0);
-
-    const totalNetWorth = liquidityINR + stocksValue + mutualFundsValue + bondsValue;
-
-    const stockInvestment = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.investmentAmount, 0);
-    const mutualFundInvestment = mutualFunds.reduce((sum, fund) => sum + fund.investmentAmount, 0);
-    const bondInvestment = bonds.reduce((sum, bond) => sum + bond.investmentAmount, 0);
-    const totalInvestment = stockInvestment + mutualFundInvestment + bondInvestment;
-
-    const stockBuys = stockTransactions
-      .filter((transaction) => transaction.transactionType === 'BUY')
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const stockSells = stockTransactions
-      .filter((transaction) => transaction.transactionType === 'SELL')
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const stockCharges = stockTransactions.reduce(
-      (sum, transaction) => sum + (transaction.brokerage || 0) + (transaction.taxes || 0),
-      0
-    );
-    const stockLifetime = stockSells + stocksValue - (stockBuys + stockCharges);
-
-    const mutualFundStampDutyRate = 0.00005;
-
-    const mutualFundBuys = mutualFundTransactions
-      .filter(
-        (transaction: MutualFundTransaction) =>
-          transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
-      )
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const mutualFundSells = mutualFundTransactions
-      .filter((transaction: MutualFundTransaction) => transaction.transactionType === 'SELL')
-      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
-    const mutualFundCharges = mutualFundTransactions
-      .filter(
-        (transaction: MutualFundTransaction) =>
-          transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
-      )
-      .reduce((sum, transaction) => sum + transaction.totalAmount * mutualFundStampDutyRate, 0);
-    const mutualFundLifetime =
-      mutualFundSells + mutualFundsValue - (mutualFundBuys + mutualFundCharges);
-
-    const fnoLifetime = fnoTrades
-      .filter((trade) => trade.status === 'CLOSED')
-      .reduce((sum, trade) => sum + trade.pnl, 0);
-
-    const bondLifetime = bonds.reduce((sum, bond) => sum + bond.pnl, 0);
-
-    const globalLifetimeWealth = stockLifetime + mutualFundLifetime + fnoLifetime + bondLifetime;
-
-    const stockPnl = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.pnl, 0);
-    const mutualFundPnl = mutualFundsValue - mutualFundInvestment;
-    const bondPnl = bondsValue - bondInvestment;
-    const totalUnrealizedPnl = stockPnl + mutualFundPnl + bondPnl;
-
-    const stockDayChange = stocks
-      .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => {
-        const dayChange =
-          (stock.currentPrice - (stock.previousPrice ?? stock.currentPrice)) * stock.quantity;
-        return sum + dayChange;
-      }, 0);
-    const mutualFundDayChange = mutualFunds.reduce((sum, fund) => {
-      const dayChange = (fund.currentNav - (fund.previousNav ?? fund.currentNav)) * fund.units;
-      return sum + dayChange;
-    }, 0);
-
-    return {
-      liquidityINR,
-      stocksValue,
-      mutualFundsValue,
-      bondsValue,
-      totalNetWorth,
-      totalInvestment,
-      globalLifetimeWealth,
-      totalUnrealizedPnl,
-      stockDayChange: stockDayChange + mutualFundDayChange,
-    };
-  }, [accounts, stocks, mutualFunds, bonds, stockTransactions, mutualFundTransactions, fnoTrades]);
+  const metrics = useMemo(
+    () =>
+      calculateDashboardMetrics({
+        accounts,
+        transactions,
+        stocks,
+        stockTransactions,
+        mutualFunds,
+        mutualFundTransactions,
+        fnoTrades,
+        bonds,
+      }),
+    [
+      accounts,
+      bonds,
+      fnoTrades,
+      mutualFunds,
+      mutualFundTransactions,
+      stockTransactions,
+      stocks,
+      transactions,
+    ]
+  );
 
   const allocationData = useMemo(
     () =>
       [
-        { name: 'Cash', value: financialMetrics.liquidityINR, color: '#6bb99d' },
-        { name: 'Stocks', value: financialMetrics.stocksValue, color: '#20b072' },
-        { name: 'Mutual Funds', value: financialMetrics.mutualFundsValue, color: '#f2a93b' },
-        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#2f7b74' },
+        { name: 'Cash', value: metrics.liquidityINR, color: '#6bb99d' },
+        { name: 'Stocks', value: metrics.stocksValue, color: '#20b072' },
+        { name: 'Mutual Funds', value: metrics.mutualFundsValue, color: '#f2a93b' },
+        { name: 'Bonds', value: metrics.bondsValue, color: '#2f7b74' },
       ].filter((entry) => entry.value > 0),
-    [financialMetrics]
+    [metrics]
   );
 
   const recentTransactions = useMemo(
@@ -228,16 +161,7 @@ export default function Dashboard() {
     return (
       <div className="page-container">
         <div className="bg-mesh" />
-        <div style={{ marginBottom: '32px' }}>
-          <div
-            className="skeleton"
-            style={{ height: '48px', width: 'min(100%, 350px)', marginBottom: '12px' }}
-          />
-          <div className="skeleton" style={{ height: '24px', width: 'min(100%, 450px)' }} />
-        </div>
-        <div style={{ marginBottom: '32px' }}>
-          <SkeletonCard />
-        </div>
+        <PageSkeleton cardCount={4} rowCount={5} />
       </div>
     );
   }
@@ -246,54 +170,13 @@ export default function Dashboard() {
     return (
       <div className="page-container">
         <div className="bg-mesh" />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '48px 24px',
-            textAlign: 'center',
-            gap: '16px',
-          }}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AlertTriangle size={32} color="#ef5d5d" />
-          </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff', margin: 0 }}>
-            Unable to load your dashboard
-          </h2>
-          <p style={{ fontSize: '0.9rem', color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6' }}>
-            {error}
-          </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 24px',
-              background: '#1a8e68',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              marginTop: '8px',
-            }}
-          >
-            Reload
-          </button>
-        </div>
+        <PageState
+          variant="error"
+          title="Unable to load your dashboard"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -331,7 +214,7 @@ export default function Dashboard() {
                 flexWrap: 'wrap',
               }}
             >
-              <span role="img" aria-label={greeting.emojiLabel}>{greeting.emoji}</span>{' '}
+              <span aria-label={greeting.emojiLabel}>{greeting.emoji}</span>
               {greeting.text}, <span className="gradient-text">{displayName}.</span>
             </h1>
             <p
@@ -347,27 +230,101 @@ export default function Dashboard() {
               {greeting.subtext}
             </p>
           </div>
+
+          <div
+            className="premium-card"
+            style={{
+              padding: '14px 16px',
+              minWidth: '260px',
+              display: 'grid',
+              gap: '8px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.72rem',
+                color: 'var(--muted)',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              As of
+            </div>
+            <div style={{ fontWeight: '800', color: '#fff' }}>
+              {lastUpdatedAt ? formatDateTime(lastUpdatedAt) : 'Not synced yet'}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+              Numbers and prices reflect the latest successful refresh in this session.
+            </div>
+          </div>
         </div>
       </header>
 
       <QuickStatsRow
-        liquidityINR={financialMetrics.liquidityINR}
-        totalInvestment={financialMetrics.totalInvestment}
-        totalUnrealizedPnl={financialMetrics.totalUnrealizedPnl}
-        stockDayChange={financialMetrics.stockDayChange}
+        liquidityINR={metrics.liquidityINR}
+        totalInvestment={metrics.totalInvestment}
+        totalUnrealizedPnl={metrics.totalUnrealizedPnl}
+        todayMovement={metrics.todayMovement}
+        compactNumbers={settings.compactNumbers}
         investmentPnlPercent={
-          financialMetrics.totalInvestment > 0
-            ? (financialMetrics.totalUnrealizedPnl / financialMetrics.totalInvestment) * 100
+          metrics.totalInvestment > 0
+            ? (metrics.totalUnrealizedPnl / metrics.totalInvestment) * 100
             : 0
         }
       />
 
+      <div
+        className="premium-card"
+        style={{
+          marginBottom: '24px',
+          padding: '16px 18px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '0.85rem',
+            color: 'var(--muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <InfoHint
+            label="Net movement"
+            description="Inflow minus spending across the ledger, excluding internal transfers so movement is not double-counted."
+          />
+          <span>Across tracked ledger activity</span>
+        </div>
+        <div
+          className="table-nums"
+          style={{
+            fontSize: '1rem',
+            fontWeight: '900',
+            color: metrics.netMovement >= 0 ? '#20b072' : '#ff4d6d',
+          }}
+        >
+          <MoneyValue
+            amount={metrics.netMovement}
+            compact={settings.compactNumbers}
+            showSign={metrics.netMovement >= 0}
+          />
+        </div>
+      </div>
+
       <NetWorthCard
-        totalNetWorth={financialMetrics.totalNetWorth}
-        globalLifetimeWealth={financialMetrics.globalLifetimeWealth}
-        liquidityINR={financialMetrics.liquidityINR}
-        investmentsTotal={financialMetrics.stocksValue + financialMetrics.mutualFundsValue}
+        totalNetWorth={metrics.totalNetWorth}
+        realizedPnl={metrics.realizedPnl}
+        liquidityINR={metrics.liquidityINR}
+        investmentsTotal={metrics.stocksValue + metrics.mutualFundsValue + metrics.bondsValue}
         allocationData={allocationData}
+        compactNumbers={settings.compactNumbers}
       />
 
       <section
@@ -378,10 +335,13 @@ export default function Dashboard() {
         }}
       >
         <TopHoldings holdings={topHoldings} />
-        <RecentActivity transactions={recentTransactions} />
+        <RecentActivity
+          transactions={recentTransactions}
+          compactNumbers={settings.compactNumbers}
+        />
         <GoalsProgress goals={goalsProgress} />
 
-        {!hasAnyData && (
+        {!hasAnyData ? (
           <div
             className="fade-in"
             style={{
@@ -417,7 +377,7 @@ export default function Dashboard() {
               activity here.
             </div>
           </div>
-        )}
+        ) : null}
       </section>
     </div>
   );

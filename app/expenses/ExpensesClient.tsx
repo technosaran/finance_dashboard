@@ -1,104 +1,83 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Plus, X, Coffee, Edit3, Trash2, Car, Home, Heart, GraduationCap, Zap } from 'lucide-react';
 import { useNotifications } from '../components/NotificationContext';
 import { useLedger, useSettings } from '../components/FinanceContext';
 import { Transaction } from '@/lib/types';
-import {
-  TrendingDown,
-  Calendar,
-  Plus,
-  X,
-  Clock,
-  ShoppingBag,
-  Coffee,
-  Edit3,
-  Trash2,
-  Car,
-  Home,
-  Heart,
-  GraduationCap,
-  Zap,
-} from 'lucide-react';
-import { EmptyTransactionsVisual } from '../components/Visuals';
+import { isExpenseTransaction } from '@/lib/utils/transactions';
+import { formatDate } from '@/lib/utils/format';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
 
 export default function ExpensesClient() {
-  const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } =
-    useLedger();
+  const {
+    accounts,
+    transactions,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    loading,
+    error,
+    lastUpdatedAt,
+  } = useLedger();
   const { settings } = useSettings();
-  const { showNotification, confirm: customConfirm } = useNotifications();
+  const { showNotification, showActionNotification } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'This Year' | 'All Time'>('This Year');
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<number | ''>(
     settings.defaultSalaryAccountId || ''
   );
 
-  // Expense Data Filtering
-  const expenseItems = transactions.filter(
-    (t) => t.type === 'Expense' && t.category !== 'Investment'
-  );
-
-  // Process Categories
-  const categoriesMap = expenseItems.reduce(
-    (acc, item) => {
-      const category = item.category || 'Other';
-      if (!acc[category]) acc[category] = { total: 0, count: 0 };
-      acc[category].total += item.amount;
-      acc[category].count += 1;
-      return acc;
-    },
-    {} as Record<string, { total: number; count: number }>
-  );
-
-  const categories = Object.entries(categoriesMap).sort((a, b) => b[1].total - a[1].total);
-  const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
-
-  // Calculate average monthly spending
-  const avgMonthlySpending = (() => {
-    if (activeTab === 'This Year') {
-      return totalExpenses / Math.max(new Date().getMonth() + 1, 1);
-    } else if (expenseItems.length > 0) {
-      // For all time, calculate based on date range
-      const dates = expenseItems.map((e) => new Date(e.date).getTime());
-      const earliest = Math.min(...dates);
-      const latest = Math.max(...dates);
-      const monthsDiff = Math.max(1, Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24 * 30)));
-      return totalExpenses / monthsDiff;
-    }
-    return 0;
-  })();
-
-  // Form State
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Food');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const handleLogExpense = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || !description) return;
+  const expenseItems = useMemo(
+    () =>
+      transactions
+        .filter((transaction) => isExpenseTransaction(transaction))
+        .filter((transaction) => !pendingDeleteIds.includes(transaction.id))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [pendingDeleteIds, transactions]
+  );
 
-    const txData = {
-      date,
-      description,
-      category,
-      type: 'Expense' as const,
-      amount: parseFloat(amount),
-      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
-    };
+  const categoriesMap = useMemo(
+    () =>
+      expenseItems.reduce(
+        (acc, item) => {
+          const nextCategory = item.category || 'Other';
+          if (!acc[nextCategory]) acc[nextCategory] = { total: 0, count: 0 };
+          acc[nextCategory].total += item.amount;
+          acc[nextCategory].count += 1;
+          return acc;
+        },
+        {} as Record<string, { total: number; count: number }>
+      ),
+    [expenseItems]
+  );
 
-    if (editId) {
-      await updateTransaction(editId, txData);
-      showNotification('success', 'Expense record updated');
-    } else {
-      await addTransaction(txData);
-      showNotification('success', 'Expense saved');
-    }
+  const categories = useMemo(
+    () => Object.entries(categoriesMap).sort((a, b) => b[1].total - a[1].total),
+    [categoriesMap]
+  );
 
-    resetForm();
-    setIsModalOpen(false);
-  };
+  const totalExpenses = useMemo(
+    () => expenseItems.reduce((sum, item) => sum + item.amount, 0),
+    [expenseItems]
+  );
+
+  const avgMonthlySpending = useMemo(() => {
+    if (expenseItems.length === 0) return 0;
+
+    const dates = expenseItems.map((item) => new Date(item.date).getTime());
+    const earliest = Math.min(...dates);
+    const latest = Math.max(...dates);
+    const monthsDiff = Math.max(1, Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24 * 30)));
+    return totalExpenses / monthsDiff;
+  }, [expenseItems, totalExpenses]);
 
   const resetForm = () => {
     setAmount('');
@@ -108,65 +87,109 @@ export default function ExpensesClient() {
     setEditId(null);
   };
 
+  const handleLogExpense = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!amount || !description) return;
+
+    const transactionPayload = {
+      date,
+      description,
+      category,
+      type: 'Expense' as const,
+      transactionType: 'EXPENSE' as const,
+      amount: parseFloat(amount),
+      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
+      metadata: {
+        autoGenerated: false,
+        sourceTable: 'transactions',
+      },
+    };
+
+    if (editId) {
+      await updateTransaction(editId, transactionPayload);
+      showNotification('success', 'Expense updated');
+    } else {
+      await addTransaction(transactionPayload);
+      showNotification('success', 'Expense saved');
+    }
+
+    resetForm();
+    setIsModalOpen(false);
+  };
+
   const handleEdit = (item: Transaction) => {
     setEditId(item.id);
     setAmount(item.amount.toString());
     setDescription(item.description);
-    setCategory(item.category);
+    setCategory(String(item.category));
     setDate(item.date);
+    setSelectedAccountId(item.accountId || '');
     setIsModalOpen(true);
   };
 
-  const getCategoryIcon = (cat: string) => {
-    switch (cat) {
+  const scheduleDelete = (item: Transaction) => {
+    setPendingDeleteIds((current) => [...current, item.id]);
+    showActionNotification({
+      type: 'warning',
+      message: `${item.description} removed from view. Undo within 8 seconds to restore it.`,
+      actionLabel: 'Undo',
+      duration: 8000,
+      onAction: () => {
+        setPendingDeleteIds((current) => current.filter((id) => id !== item.id));
+        showNotification('info', 'Expense restored');
+      },
+      onDismiss: async () => {
+        await deleteTransaction(item.id);
+        setPendingDeleteIds((current) => current.filter((id) => id !== item.id));
+        showNotification('success', 'Expense deleted');
+      },
+    });
+  };
+
+  const getCategoryIcon = (expenseCategory: string) => {
+    switch (expenseCategory) {
       case 'Food':
-        return <Coffee size={24} />;
+        return <Coffee size={20} />;
       case 'Transport':
-        return <Car size={24} />;
+        return <Car size={20} />;
       case 'Shopping':
-        return <ShoppingBag size={24} />;
+        return <Home size={20} />;
       case 'Healthcare':
-        return <Heart size={24} />;
+        return <Heart size={20} />;
       case 'Education':
-        return <GraduationCap size={24} />;
+        return <GraduationCap size={20} />;
       case 'Utilities':
-        return <Zap size={24} />;
-      case 'Entertainment':
-        return <Home size={24} />;
+        return <Zap size={20} />;
       default:
-        return <ShoppingBag size={24} />;
+        return <Coffee size={20} />;
     }
   };
 
   if (loading) {
     return (
-      <div
-        className="main-content"
-        style={{
-          backgroundColor: '#000000',
-          minHeight: '100vh',
-          color: '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: '#94a3b8' }}>
-            Loading your expenses...
-          </div>
-        </div>
+      <div className="page-container">
+        <PageSkeleton cardCount={3} rowCount={6} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="Expenses could not be loaded"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
 
   return (
-    <div
-      className="main-content"
-      style={{ backgroundColor: '#000000', minHeight: '100vh', color: '#f8fafc' }}
-    >
+    <div className="main-content" style={{ backgroundColor: 'transparent', minHeight: '100vh' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header Section */}
         <div className="page-header">
           <div>
             <h1
@@ -179,341 +202,130 @@ export default function ExpensesClient() {
             >
               Expenses
             </h1>
-            <p className="page-subtitle">Track and manage your spending across categories</p>
+            <p className="page-subtitle">
+              Spending only. Investment buys and transfers are excluded so your budget stays honest.
+            </p>
+            <p style={{ color: '#64748b', fontSize: '0.82rem', marginTop: '8px' }}>
+              As of {lastUpdatedAt ? formatDate(lastUpdatedAt) : 'today'}
+            </p>
           </div>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            <div
-              style={{
-                display: 'flex',
-                background: '#050505',
-                padding: '6px',
-                borderRadius: '14px',
-                border: '1px solid #111111',
-              }}
-            >
-              {['This Year', 'All Time'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab as 'This Year' | 'All Time')}
-                  aria-pressed={activeTab === tab}
-                  style={{
-                    padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background:
-                      activeTab === tab
-                        ? 'linear-gradient(135deg, #1a1a1a 0%, #111111 100%)'
-                        : 'transparent',
-                    color: activeTab === tab ? '#fff' : '#64748b',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    transition: '0.3s',
-                    fontSize: 'clamp(0.8rem, 2vw, 0.85rem)',
-                    minHeight: '44px',
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              aria-label="Add new expense"
-              className="header-add-btn header-add-btn--red"
-            >
-              <Plus size={18} strokeWidth={3} /> Add Expense
-            </button>
-          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            aria-label="Add expense"
+            className="header-add-btn header-add-btn--red"
+          >
+            <Plus size={18} strokeWidth={3} /> Add Expense
+          </button>
         </div>
 
-        {/* Key Summary Cards */}
         <div
-          className="section-fade-in"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
-            gap: '32px',
-            marginBottom: '48px',
+            gap: '24px',
+            marginBottom: '32px',
           }}
         >
-          {[
-            {
-              label:
-                activeTab === 'This Year' ? 'Total Expenses (Year)' : 'Total Expenses (All Time)',
-              value: `₹${totalExpenses.toLocaleString()}`,
-              icon: <TrendingDown size={22} />,
-              color: '#ef4444',
-              sub: 'Money spent',
-              gradient: 'linear-gradient(135deg, #ef444420 0%, #dc262610 100%)',
-              cardClass: 'stat-card stat-card--red',
-            },
-            {
-              label: 'Average per Month',
-              value: `₹${avgMonthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-              icon: <Calendar size={22} />,
-              color: '#f59e0b',
-              sub: 'Monthly spending',
-              gradient: 'linear-gradient(135deg, #f59e0b20 0%, #d9770610 100%)',
-              cardClass: 'stat-card stat-card--amber',
-            },
-            {
-              label: 'Expense Categories',
-              value: categories.length,
-              icon: <ShoppingBag size={22} />,
-              color: '#6366f1',
-              sub: 'Tracked categories',
-              gradient: 'linear-gradient(135deg, #6366f120 0%, #4f46e510 100%)',
-              cardClass: 'stat-card stat-card--indigo',
-            },
-          ].map((stat, i) => (
-            <div key={i} className={stat.cardClass}>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: stat.gradient,
-                  opacity: 0.5,
-                }}
-                aria-hidden="true"
-              />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '20px',
-                  }}
-                >
-                  <div
-                    style={{
-                      background: `${stat.color}15`,
-                      padding: '10px',
-                      borderRadius: '14px',
-                      color: stat.color,
-                    }}
-                    aria-hidden="true"
-                  >
-                    {stat.icon}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: '800',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      color: '#94a3b8',
-                    }}
-                  >
-                    {stat.label}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
-                    fontWeight: '900',
-                    color: '#fff',
-                    marginBottom: '8px',
-                    letterSpacing: '-1px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: stat.color, fontWeight: '700' }}>
-                  {stat.sub}
-                </div>
-              </div>
-            </div>
-          ))}
+          <SummaryCard
+            label="Total spending"
+            value={<MoneyValue amount={totalExpenses} compact={settings.compactNumbers} />}
+            sub="Consumption expenses only"
+            accent="#ff4d6d"
+          />
+          <SummaryCard
+            label="Average per month"
+            value={<MoneyValue amount={avgMonthlySpending} compact={settings.compactNumbers} />}
+            sub="Across tracked date range"
+            accent="#f59e0b"
+          />
+          <SummaryCard
+            label="Expense categories"
+            value={String(categories.length)}
+            sub="Active spending buckets"
+            accent="#6aa6ff"
+          />
         </div>
 
         <div
-          className="section-fade-in"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))',
-            gap: '40px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+            gap: '32px',
           }}
         >
-          {/* Categories List */}
-          <div>
-            <h3
-              style={{
-                fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-                fontWeight: '900',
-                marginBottom: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: '#fff',
-              }}
-            >
-              <ShoppingBag size={20} color="#6366f1" aria-hidden="true" /> Expense Categories
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {categories.length > 0 ? (
-                categories.map(([name, stats]) => (
-                  <div key={name} className="expense-category-card">
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '20px',
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
+          <div className="premium-card">
+            <h3 style={{ marginBottom: '20px', color: '#fff' }}>Category Breakdown</h3>
+            {categories.length > 0 ? (
+              <div style={{ display: 'grid', gap: '14px' }}>
+                {categories.map(([name, stats]) => (
+                  <div key={name} className="tx-row tx-row--expense">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                       <div
                         style={{
-                          width: '52px',
-                          height: '52px',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          borderRadius: '16px',
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '14px',
+                          background: 'rgba(255, 77, 109, 0.12)',
+                          color: '#ff4d6d',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#f87171',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          flexShrink: 0,
                         }}
-                        aria-hidden="true"
                       >
                         {getCategoryIcon(name)}
                       </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            color: '#fff',
-                            fontWeight: '800',
-                            fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
-                            marginBottom: '4px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {name}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span
-                            style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600' }}
-                          >
-                            {stats.count} entries
-                          </span>
+                      <div>
+                        <div style={{ color: '#fff', fontWeight: '800' }}>{name}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>
+                          {stats.count} entries
                         </div>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: 'clamp(1.2rem, 2.5vw, 1.4rem)',
-                          fontWeight: '900',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        ₹{stats.total.toLocaleString()}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.75rem',
-                          color: '#64748b',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Total Spent
-                      </div>
+                    <div className="table-nums" style={{ fontWeight: '900', color: '#ff4d6d' }}>
+                      <MoneyValue amount={stats.total} compact={settings.compactNumbers} />
                     </div>
                   </div>
-                ))
-              ) : (
-                <div
-                  style={{
-                    padding: '80px 24px',
-                    textAlign: 'center',
-                    background: '#050505',
-                    borderRadius: '24px',
-                    border: '1px dashed #111111',
-                    color: '#94a3b8',
-                  }}
-                >
-                  <EmptyTransactionsVisual />
-                  <p style={{ marginTop: '24px', fontWeight: '700' }}>No categories yet.</p>
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <PageState
+                title="No expenses yet"
+                description="Add your first expense to see category trends and monthly spending here."
+                actionLabel="Add expense"
+                onAction={() => setIsModalOpen(true)}
+              />
+            )}
           </div>
 
-          {/* Recent Expenses History */}
-          <div>
-            <h3
-              style={{
-                fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-                fontWeight: '900',
-                marginBottom: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: '#fff',
-              }}
-            >
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  padding: '8px',
-                  borderRadius: '12px',
-                }}
-                aria-hidden="true"
-              >
-                <Clock size={20} color="#fff" />
-              </div>
-              <span>Recent Expenses</span>
-            </h3>
-            <div
-              style={{
-                background: '#050505',
-                borderRadius: '28px',
-                border: '1px solid #111111',
-                padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}
-            >
-              {expenseItems.length > 0 ? (
-                expenseItems.slice(0, 8).map((item) => (
-                  <div
-                    key={item.id}
-                    className="tx-row tx-row--expense"
-                    style={{ flexWrap: 'wrap' }}
-                  >
+          <div className="premium-card">
+            <h3 style={{ marginBottom: '20px', color: '#fff' }}>Recent Expenses</h3>
+            {expenseItems.length > 0 ? (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {expenseItems.slice(0, 8).map((item) => (
+                  <div key={item.id} className="tx-row tx-row--expense">
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '16px',
+                        gap: '14px',
                         flex: 1,
                         minWidth: 0,
                       }}
                     >
                       <div
                         style={{
-                          color: '#ef4444',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          padding: '8px',
-                          borderRadius: '10px',
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '14px',
+                          background: 'rgba(255, 77, 109, 0.12)',
+                          color: '#ff4d6d',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           flexShrink: 0,
                         }}
-                        aria-hidden="true"
                       >
-                        {getCategoryIcon(item.category)}
+                        {getCategoryIcon(String(item.category))}
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div
@@ -529,59 +341,36 @@ export default function ExpensesClient() {
                           {item.description}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>
-                          {item.category} |{' '}
-                          {new Date(item.date).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                          {String(item.category)} | {formatDate(item.date)}
                         </div>
                       </div>
                     </div>
-                    <div
-                      style={{
-                        textAlign: 'right',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontWeight: '950',
-                          fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        -₹{item.amount.toLocaleString()}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="table-nums" style={{ color: '#ff4d6d', fontWeight: '950' }}>
+                        <MoneyValue amount={item.amount} compact={settings.compactNumbers} />
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={(event) => {
+                            event.stopPropagation();
                             handleEdit(item);
                           }}
                           className="action-btn action-btn--edit"
+                          data-label="Edit"
+                          title="Edit expense"
                           aria-label="Edit expense"
                         >
                           <Edit3 size={14} />
                         </button>
                         <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const isConfirmed = await customConfirm({
-                              title: 'Delete Expense',
-                              message: 'Are you sure you want to delete this expense record?',
-                              type: 'error',
-                              confirmLabel: 'Delete',
-                            });
-                            if (isConfirmed) {
-                              await deleteTransaction(item.id);
-                              showNotification('success', 'Expense record removed');
-                            }
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            scheduleDelete(item);
                           }}
                           className="action-btn action-btn--delete"
+                          data-label="Delete"
+                          title="Delete expense"
                           aria-label="Delete expense"
                         >
                           <Trash2 size={14} />
@@ -589,22 +378,21 @@ export default function ExpensesClient() {
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                  <EmptyTransactionsVisual />
-                  <p style={{ color: '#94a3b8', marginTop: '20px', fontWeight: '700' }}>
-                    No expense history found.
-                  </p>
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <PageState
+                title="No expense history found"
+                description="Expenses appear here after you record them. Investment buys are intentionally kept out of this list."
+                actionLabel="Add expense"
+                onAction={() => setIsModalOpen(true)}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Simple Modal - Add Expense */}
-      {isModalOpen && (
+      {isModalOpen ? (
         <div className="modal-overlay">
           <div className="modal-card" style={{ maxWidth: '480px' }}>
             <div
@@ -612,7 +400,7 @@ export default function ExpensesClient() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '32px',
+                marginBottom: '24px',
                 gap: '12px',
               }}
             >
@@ -627,7 +415,10 @@ export default function ExpensesClient() {
                 {editId ? 'Edit expense' : 'Add expense'}
               </h2>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  resetForm();
+                }}
                 aria-label="Close modal"
                 className="modal-close"
                 style={{ flexShrink: 0 }}
@@ -635,59 +426,58 @@ export default function ExpensesClient() {
                 <X size={20} />
               </button>
             </div>
+
             <form
               onSubmit={handleLogExpense}
-              aria-label="Log expense form"
-              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+              aria-label="Expense form"
+              style={{ display: 'grid', gap: '20px' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
                 <label className="form-label">What did you spend on?</label>
                 <input
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Groceries, Uber ride, Movie tickets"
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="e.g. Groceries, taxi, subscription"
                   required
-                  aria-label="Expense description"
                   className="form-input"
                   autoFocus
                 />
               </div>
+
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-                  gap: '20px',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: '16px',
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Amount (₹)</label>
+                <div>
+                  <label className="form-label">Amount</label>
                   <input
                     type="number"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(event) => setAmount(event.target.value)}
                     placeholder="0.00"
                     required
-                    aria-label="Expense amount"
-                    className="form-input"
+                    className="form-input table-nums"
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div>
                   <label className="form-label">Date</label>
                   <input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    aria-label="Expense date"
+                    onChange={(event) => setDate(event.target.value)}
                     className="form-input"
                   />
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+              <div>
                 <label className="form-label">Category</label>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  aria-label="Expense category"
+                  onChange={(event) => setCategory(event.target.value)}
                   className="form-input"
                 >
                   <option value="Food">Food & Dining</option>
@@ -700,35 +490,67 @@ export default function ExpensesClient() {
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">Bank Account (Optional)</label>
+
+              <div>
+                <label className="form-label">Account</label>
                 <select
                   value={selectedAccountId}
-                  onChange={(e) =>
-                    setSelectedAccountId(e.target.value ? Number(e.target.value) : '')
+                  onChange={(event) =>
+                    setSelectedAccountId(event.target.value ? Number(event.target.value) : '')
                   }
-                  aria-label="Select bank account"
                   className="form-input"
                 >
                   <option value="">Log only, do not deduct from an account</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} - ₹{acc.balance.toLocaleString()}
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
                     </option>
                   ))}
                 </select>
               </div>
-              <button
-                type="submit"
-                aria-label="Save expense"
-                className="btn-primary btn-primary--red"
-              >
-                {editId ? 'Update Expense' : 'Track This Expense'}
+
+              <button type="submit" className="btn-primary btn-primary--red">
+                {editId ? 'Update Expense' : 'Track Expense'}
               </button>
             </form>
           </div>
         </div>
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string;
+  value: ReactNode;
+  sub: string;
+  accent: string;
+}) {
+  return (
+    <div className="premium-card" style={{ padding: '22px' }}>
+      <div
+        style={{
+          color: accent,
+          fontSize: '0.75rem',
+          fontWeight: '800',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+      >
+        {label}
+      </div>
+      <div
+        className="table-nums"
+        style={{ color: '#fff', fontSize: '2rem', fontWeight: '950', margin: '10px 0 6px' }}
+      >
+        {value}
+      </div>
+      <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>{sub}</div>
     </div>
   );
 }

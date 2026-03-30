@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useLedger, usePortfolio } from '../components/FinanceContext';
+import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
 import { FnoTrade } from '@/lib/types';
 import { calculateFnoCharges } from '@/lib/utils/charges';
 import { useNotifications } from '../components/NotificationContext';
 import { Plus, TrendingUp, X, Edit3, Trash2, Zap, Clock, Trophy, ArrowRight } from 'lucide-react';
 import { EmptyPortfolioVisual } from '../components/Visuals';
+import { MoneyValue } from '@/app/components/ui/MoneyValue';
+import { PageSkeleton, PageState } from '@/app/components/ui/PageState';
+import { formatDateTime } from '@/lib/utils/format';
 import {
   PieChart,
   Pie,
@@ -20,9 +23,11 @@ import {
 } from 'recharts';
 
 export default function FnOClient() {
-  const { accounts, loading } = useLedger();
+  const { accounts, loading, error, lastUpdatedAt } = useLedger();
   const { fnoTrades, addFnoTrade, updateFnoTrade, deleteFnoTrade } = usePortfolio();
   const { showNotification, confirm: customConfirm } = useNotifications();
+  const { settings } = useSettings();
+  const compactNumbers = settings.compactNumbers ?? false;
 
   const [activeTab, setActiveTab] = useState<'positions' | 'history' | 'lifetime'>('positions');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,21 +174,22 @@ export default function FnOClient() {
 
   if (loading) {
     return (
-      <div
-        className="main-content"
-        style={{
-          background: '#000000',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '1.2rem', color: '#818cf8', fontWeight: '800' }}>
-            Fetching market positions...
-          </div>
-        </div>
+      <div className="page-container">
+        <PageSkeleton cardCount={4} rowCount={4} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <PageState
+          variant="error"
+          title="FnO data is unavailable right now"
+          description={error}
+          actionLabel="Retry"
+          onAction={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -214,6 +220,11 @@ export default function FnOClient() {
           >
             FnO Terminal
           </h1>
+          {lastUpdatedAt ? (
+            <p style={{ margin: '10px 0 0', color: 'var(--muted)', fontSize: '0.82rem' }}>
+              As of {formatDateTime(lastUpdatedAt)}
+            </p>
+          ) : null}
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -274,7 +285,7 @@ export default function FnOClient() {
               color: stats.lifetimePnl >= 0 ? '#10b981' : '#f43f5e',
             }}
           >
-            ₹{stats.lifetimePnl.toLocaleString()}
+            <MoneyValue amount={stats.lifetimePnl} compact={compactNumbers} />
           </div>
         </div>
         <div
@@ -546,10 +557,14 @@ export default function FnOClient() {
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <button
+                        className="action-btn"
+                        data-label="Exit"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleExit(trade);
                         }}
+                        aria-label={`Exit ${trade.instrument}`}
+                        title="Exit position"
                         style={{
                           color: '#10b981',
                           background: 'none',
@@ -562,10 +577,14 @@ export default function FnOClient() {
                         <ArrowRight size={18} />
                       </button>
                       <button
+                        className="action-btn action-btn--edit"
+                        data-label="Edit"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEdit(trade);
                         }}
+                        aria-label={`Edit ${trade.instrument}`}
+                        title="Edit trade"
                         style={{
                           color: '#64748b',
                           background: 'none',
@@ -578,6 +597,8 @@ export default function FnOClient() {
                         <Edit3 size={18} />
                       </button>
                       <button
+                        className="action-btn action-btn--delete"
+                        data-label="Delete"
                         onClick={async (e) => {
                           e.stopPropagation();
                           if (
@@ -590,6 +611,8 @@ export default function FnOClient() {
                             deleteFnoTrade(trade.id);
                           }
                         }}
+                        aria-label={`Delete ${trade.instrument}`}
+                        title="Delete trade"
                         style={{
                           color: '#f43f5e',
                           background: 'none',
@@ -804,8 +827,11 @@ export default function FnOClient() {
                       <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
+                            className="action-btn"
+                            data-label="Exit"
                             onClick={() => handleExit(trade)}
                             title="Exit / Close"
+                            aria-label={`Exit ${trade.instrument}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -822,8 +848,11 @@ export default function FnOClient() {
                             <ArrowRight size={16} strokeWidth={3} />
                           </button>
                           <button
+                            className="action-btn action-btn--edit"
+                            data-label="Edit"
                             onClick={() => handleEdit(trade)}
                             title="Modify"
+                            aria-label={`Edit ${trade.instrument}`}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -839,6 +868,8 @@ export default function FnOClient() {
                             <Edit3 size={16} />
                           </button>
                           <button
+                            className="action-btn action-btn--delete"
+                            data-label="Delete"
                             onClick={async () => {
                               if (
                                 await customConfirm({
@@ -850,6 +881,8 @@ export default function FnOClient() {
                                 deleteFnoTrade(trade.id);
                               }
                             }}
+                            aria-label={`Delete ${trade.instrument}`}
+                            title="Delete trade"
                             style={{
                               background: 'none',
                               border: 'none',
