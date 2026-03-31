@@ -290,7 +290,7 @@ export default function AccountsClient() {
               fontWeight: '900',
               margin: 0,
               letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
+              background: 'linear-gradient(135deg, #fff 0%, #43c08a 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -377,7 +377,7 @@ export default function AccountsClient() {
             style={{
               padding: '10px 18px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+              background: 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)',
               color: 'white',
               border: 'none',
               fontWeight: '800',
@@ -386,7 +386,7 @@ export default function AccountsClient() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
+              boxShadow: '0 8px 16px rgba(30, 166, 114, 0.25)',
               transition: '0.2s',
               flexShrink: 0,
             }}
@@ -423,7 +423,7 @@ export default function AccountsClient() {
               right: '-10%',
               width: '400px',
               height: '400px',
-              background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(30, 166, 114, 0.15) 0%, transparent 70%)',
               filter: 'blur(60px)',
               animation: 'float 6s ease-in-out infinite',
             }}
@@ -1198,7 +1198,7 @@ export default function AccountsClient() {
                 type="submit"
                 style={{
                   marginTop: '12px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                  background: 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)',
                   color: '#fff',
                   padding: '18px',
                   borderRadius: '18px',
@@ -1206,7 +1206,7 @@ export default function AccountsClient() {
                   fontWeight: '900',
                   cursor: 'pointer',
                   fontSize: 'clamp(0.9rem, 2vw, 1rem)',
-                  boxShadow: '0 10px 20px rgba(99, 102, 241, 0.3)',
+                  boxShadow: '0 10px 20px rgba(30, 166, 114, 0.25)',
                   minHeight: '44px',
                 }}
                 aria-label={editId ? 'Update account' : 'Create account'}
@@ -1434,7 +1434,7 @@ export default function AccountsClient() {
                 type="submit"
                 style={{
                   marginTop: '12px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                  background: 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)',
                   color: '#ffffff',
                   padding: '18px',
                   borderRadius: '18px',
@@ -1442,6 +1442,7 @@ export default function AccountsClient() {
                   fontWeight: '900',
                   cursor: 'pointer',
                   fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                  boxShadow: '0 10px 20px rgba(30, 166, 114, 0.25)',
                   minHeight: '44px',
                 }}
                 aria-label="Execute transfer"
