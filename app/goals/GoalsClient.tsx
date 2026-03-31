@@ -5,8 +5,95 @@ import { useNotifications } from '../components/NotificationContext';
 import { useLedger } from '../components/FinanceContext';
 import { Goal } from '@/lib/types';
 import { exportGoalsToCSV } from '../../lib/utils/export';
-import { Plus, X, Trophy, Trash2, Edit3, CheckCircle2, Clock, Flame, Download } from 'lucide-react';
+import {
+  Plus,
+  X,
+  Trophy,
+  Trash2,
+  Edit3,
+  CheckCircle2,
+  Clock,
+  Download,
+  Target,
+  PiggyBank,
+  TrendingUp,
+  Shield,
+  Plane,
+  ShoppingBag,
+  Wallet,
+} from 'lucide-react';
 import { EmptyGoalsVisual } from '../components/Visuals';
+
+interface CategoryConfig {
+  color: string;
+  bgColor: string;
+  icon: React.ReactNode;
+}
+
+const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
+  Savings: { color: '#10b981', bgColor: 'rgba(16,185,129,0.1)', icon: <PiggyBank size={14} /> },
+  Investment: {
+    color: '#6366f1',
+    bgColor: 'rgba(99,102,241,0.1)',
+    icon: <TrendingUp size={14} />,
+  },
+  Emergency: { color: '#f59e0b', bgColor: 'rgba(245,158,11,0.1)', icon: <Shield size={14} /> },
+  Travel: { color: '#0ea5e9', bgColor: 'rgba(14,165,233,0.1)', icon: <Plane size={14} /> },
+  Purchase: { color: '#f43f5e', bgColor: 'rgba(244,63,94,0.1)', icon: <ShoppingBag size={14} /> },
+};
+
+const getCategoryConfig = (category: string): CategoryConfig =>
+  CATEGORY_CONFIG[category] ?? {
+    color: '#64748b',
+    bgColor: 'rgba(100,116,139,0.1)',
+    icon: <Wallet size={14} />,
+  };
+
+function ProgressRing({
+  progress,
+  color,
+  size = 72,
+}: {
+  progress: number;
+  color: string;
+  size?: number;
+}) {
+  const strokeWidth = 6;
+  const radius = (size - strokeWidth * 2) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.min(progress, 100) / 100) * circumference;
+  const center = size / 2;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}
+      aria-hidden="true"
+    >
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth={strokeWidth}
+      />
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={strokeDashoffset}
+        strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 1s ease' }}
+      />
+    </svg>
+  );
+}
 
 export default function GoalsClient() {
   const { accounts, goals, addGoal, updateGoal, deleteGoal, loading } = useLedger();
@@ -72,7 +159,25 @@ export default function GoalsClient() {
 
   const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
   const totalCurrent = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const completedGoals = goals.filter(
+    (g) => (g.currentAmount / g.targetAmount) * 100 >= 100
+  ).length;
   const overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
+
+  const getDaysRemaining = (deadlineStr: string): number | null => {
+    if (!deadlineStr) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(deadlineStr);
+    d.setHours(0, 0, 0, 0);
+    return Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getDeadlineBadgeStyle = (days: number): { background: string; color: string } => {
+    if (days < 0) return { background: 'rgba(244,63,94,0.1)', color: '#f43f5e' };
+    if (days < 30) return { background: 'rgba(245,158,11,0.1)', color: '#f59e0b' };
+    return { background: 'rgba(99,102,241,0.1)', color: '#818cf8' };
+  };
 
   if (loading) {
     return (
@@ -107,13 +212,13 @@ export default function GoalsClient() {
       }}
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header Section */}
+        {/* Header */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '24px',
+            marginBottom: '28px',
             flexWrap: 'wrap',
             gap: '12px',
           }}
@@ -136,7 +241,7 @@ export default function GoalsClient() {
                 marginTop: '6px',
               }}
             >
-              Track savings targets and progress over time
+              Set targets, track savings, achieve dreams
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -186,7 +291,6 @@ export default function GoalsClient() {
                 cursor: 'pointer',
                 fontWeight: '800',
                 fontSize: '0.85rem',
-                boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -201,177 +305,158 @@ export default function GoalsClient() {
           </div>
         </div>
 
-        {/* Achievement Statistics */}
+        {/* Stats Row */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
-            padding: '28px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-            marginBottom: '24px',
-            position: 'relative',
-            overflow: 'hidden',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+            gap: '16px',
+            marginBottom: '20px',
           }}
         >
-          <div
-            style={{
-              position: 'relative',
-              zIndex: 1,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
-              gap: '40px',
-              alignItems: 'center',
-            }}
-          >
-            <div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-              >
-                <div
-                  style={{
-                    background: 'rgba(52, 211, 153, 0.1)',
-                    padding: '8px',
-                    borderRadius: '10px',
-                    color: '#34d399',
-                  }}
-                >
-                  <Trophy size={20} />
-                </div>
-                <span
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '800',
-                    color: '#43c08a',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1.5px',
-                  }}
-                >
-                  Overall progress
-                </span>
-              </div>
-              <h2
-                style={{
-                  fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
-                  fontWeight: '950',
-                  color: '#fff',
-                  margin: '0 0 16px 0',
-                  letterSpacing: '-2px',
-                }}
-              >
-                {overallProgress.toFixed(1)}%{' '}
-                <span
-                  style={{
-                    color: '#64748b',
-                    fontSize: 'clamp(0.9rem, 2.5vw, 1.25rem)',
-                    fontWeight: '700',
-                    letterSpacing: '0',
-                  }}
-                >
-                  funded
-                </span>
-              </h2>
-              <div
-                style={{
-                  width: '100%',
-                  height: '12px',
-                  background: 'rgba(255,255,255,0.03)',
-                  borderRadius: '100px',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${overallProgress}%`,
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #6366f1 0%, #34d399 100%)',
-                    borderRadius: '100px',
-                    transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                />
-              </div>
-            </div>
+          {(
+            [
+              {
+                label: 'Total Goals',
+                value: goals.length.toString(),
+                icon: <Target size={18} />,
+                color: '#6366f1',
+              },
+              {
+                label: 'Completed',
+                value: `${completedGoals} / ${goals.length}`,
+                icon: <CheckCircle2 size={18} />,
+                color: '#10b981',
+              },
+              {
+                label: 'Total Saved',
+                value: `₹${totalCurrent.toLocaleString()}`,
+                icon: <PiggyBank size={18} />,
+                color: '#34d399',
+              },
+              {
+                label: 'Total Target',
+                value: `₹${totalTarget.toLocaleString()}`,
+                icon: <Trophy size={18} />,
+                color: '#f59e0b',
+              },
+            ] as { label: string; value: string; icon: React.ReactNode; color: string }[]
+          ).map((stat, i) => (
             <div
+              key={i}
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-                gap: '20px',
+                background: '#050505',
+                border: '1px solid #111111',
+                borderRadius: '20px',
+                padding: '20px 24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
               }}
             >
               <div
                 style={{
-                  textAlign: 'left',
-                  padding: '20px',
-                  background: 'rgba(255,255,255,0.02)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(255,255,255,0.03)',
+                  background: `${stat.color}1a`,
+                  padding: '10px',
+                  borderRadius: '12px',
+                  color: stat.color,
+                  flexShrink: 0,
                 }}
               >
-                <div
-                  style={{
-                    color: '#94a3b8',
-                    fontSize: '0.7rem',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    marginBottom: '6px',
-                    letterSpacing: '0.8px',
-                  }}
-                >
-                  Saved
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)',
-                    fontWeight: '900',
-                    color: '#34d399',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  ₹{totalCurrent.toLocaleString()}
-                </div>
+                {stat.icon}
               </div>
-              <div
-                style={{
-                  textAlign: 'left',
-                  padding: '20px',
-                  background: 'rgba(255,255,255,0.02)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(255,255,255,0.03)',
-                }}
-              >
+              <div>
                 <div
                   style={{
-                    color: '#94a3b8',
+                    color: '#64748b',
                     fontSize: '0.7rem',
                     fontWeight: '800',
                     textTransform: 'uppercase',
-                    marginBottom: '6px',
                     letterSpacing: '0.8px',
+                    marginBottom: '4px',
                   }}
                 >
-                  Target
+                  {stat.label}
                 </div>
                 <div
                   style={{
-                    fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)',
-                    fontWeight: '900',
                     color: '#fff',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                    fontWeight: '900',
                   }}
                 >
-                  ₹{totalTarget.toLocaleString()}
+                  {stat.value}
                 </div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
+
+        {/* Overall Progress Strip */}
+        {goals.length > 0 && (
+          <div
+            style={{
+              background: '#050505',
+              border: '1px solid #111111',
+              borderRadius: '16px',
+              padding: '16px 24px',
+              marginBottom: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <span
+              style={{
+                color: '#94a3b8',
+                fontSize: '0.75rem',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Overall Progress
+            </span>
+            <div
+              style={{
+                flex: 1,
+                minWidth: '80px',
+                height: '8px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '100px',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${overallProgress}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #6366f1, #10b981)',
+                  borderRadius: '100px',
+                  transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+            </div>
+            <span
+              style={{
+                color: '#fff',
+                fontSize: '0.85rem',
+                fontWeight: '900',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {overallProgress.toFixed(1)}% funded
+            </span>
+          </div>
+        )}
 
         {/* Goals Grid */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
             gap: '20px',
           }}
         >
@@ -379,40 +464,42 @@ export default function GoalsClient() {
             goals.map((goal) => {
               const progress = (goal.currentAmount / goal.targetAmount) * 100;
               const isCompleted = progress >= 100;
+              const daysRemaining = getDaysRemaining(goal.deadline);
+              const catConfig = getCategoryConfig(goal.category);
+              const remaining = Math.max(goal.targetAmount - goal.currentAmount, 0);
 
               return (
                 <div
                   key={goal.id}
                   style={{
-                    background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
+                    background: '#050505',
                     borderRadius: '24px',
                     border: '1px solid #111111',
+                    borderLeft: `4px solid ${catConfig.color}`,
                     padding: '24px',
                     transition: 'all 0.3s',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '16px',
+                    gap: '20px',
                     position: 'relative',
                     overflow: 'hidden',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px)';
-                    e.currentTarget.style.borderColor = '#1a1a1a';
-                    e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(0, 0, 0, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = `0 20px 40px -10px ${catConfig.color}22`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = '#111111';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
+                  {/* Card Header */}
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'flex-start',
-                      gap: '10px',
-                      flexWrap: 'wrap',
+                      gap: '12px',
                     }}
                   >
                     <div
@@ -424,27 +511,35 @@ export default function GoalsClient() {
                         minWidth: 0,
                       }}
                     >
-                      <div
-                        style={{
-                          background: isCompleted
-                            ? 'rgba(52, 211, 153, 0.1)'
-                            : 'rgba(99, 102, 241, 0.1)',
-                          padding: '10px',
-                          borderRadius: '14px',
-                          color: isCompleted ? '#34d399' : '#818cf8',
-                          display: 'flex',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      >
-                        {isCompleted ? <CheckCircle2 size={20} /> : <Flame size={20} />}
+                      {/* Progress Ring */}
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <ProgressRing
+                          progress={progress}
+                          color={isCompleted ? '#10b981' : catConfig.color}
+                          size={72}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            color: isCompleted ? '#10b981' : catConfig.color,
+                            fontSize: '0.65rem',
+                            fontWeight: '900',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {progress.toFixed(0)}%
+                        </div>
                       </div>
-                      <div style={{ minWidth: 0 }}>
+
+                      <div style={{ minWidth: 0, flex: 1 }}>
                         <h3
                           style={{
                             fontSize: 'clamp(0.95rem, 1.8vw, 1.1rem)',
                             fontWeight: '800',
-                            margin: 0,
+                            margin: '0 0 6px 0',
                             color: '#fff',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -453,30 +548,53 @@ export default function GoalsClient() {
                         >
                           {goal.name}
                         </h3>
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            color: '#43c08a',
-                            fontWeight: '800',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.8px',
-                          }}
-                        >
-                          {goal.category}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            style={{
+                              background: catConfig.bgColor,
+                              color: catConfig.color,
+                              padding: '3px 10px',
+                              borderRadius: '20px',
+                              fontSize: '0.65rem',
+                              fontWeight: '800',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.6px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            {catConfig.icon}
+                            {goal.category}
+                          </span>
+                          {isCompleted && (
+                            <CheckCircle2 size={15} color="#10b981" aria-label="Goal achieved" />
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Action Buttons */}
                     <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                       <button
                         onClick={() => handleEdit(goal)}
                         aria-label={`Edit goal ${goal.name}`}
                         style={{
-                          background: 'rgba(255,255,255,0.03)',
+                          background: 'rgba(255,255,255,0.04)',
                           border: 'none',
                           color: '#64748b',
                           cursor: 'pointer',
                           padding: '8px',
                           borderRadius: '10px',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#fff';
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#64748b';
+                          e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
                         }}
                       >
                         <Edit3 size={15} />
@@ -496,162 +614,151 @@ export default function GoalsClient() {
                         }}
                         aria-label={`Delete goal ${goal.name}`}
                         style={{
-                          background: 'rgba(244, 63, 94, 0.1)',
+                          background: 'rgba(244,63,94,0.08)',
                           border: 'none',
                           color: '#f43f5e',
                           cursor: 'pointer',
-                          padding: '10px',
-                          borderRadius: '12px',
+                          padding: '8px',
+                          borderRadius: '10px',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(244,63,94,0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(244,63,94,0.08)';
                         }}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
 
-                  <div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '12px',
-                        fontSize: '0.9rem',
-                        gap: '12px',
-                      }}
-                    >
-                      <span
-                        style={{ color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}
-                      >
-                        Progress
-                      </span>
-                      <span style={{ color: isCompleted ? '#34d399' : '#fff', fontWeight: '900' }}>
-                        {progress.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '10px',
-                        background: '#000000',
-                        borderRadius: '100px',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${Math.min(progress, 100)}%`,
-                          height: '100%',
-                          background: isCompleted ? '#34d399' : '#6366f1',
-                          borderRadius: '100px',
-                          transition: 'width 1s ease',
-                        }}
-                      />
-                    </div>
-                  </div>
-
+                  {/* Amount Row */}
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 120px), 1fr))',
-                      gap: '20px',
-                      padding: '24px',
-                      background: 'rgba(0, 0, 0, 0.3)',
-                      borderRadius: '20px',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '10px',
                     }}
                   >
-                    <div>
-                      <div
-                        style={{
-                          color: '#94a3b8',
-                          fontSize: '0.7rem',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        Target
-                      </div>
-                      <div
-                        style={{
+                    {(
+                      [
+                        {
+                          label: 'Saved',
+                          value: `₹${goal.currentAmount.toLocaleString()}`,
+                          color: catConfig.color,
+                        },
+                        {
+                          label: 'Target',
+                          value: `₹${goal.targetAmount.toLocaleString()}`,
                           color: '#fff',
-                          fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                          fontWeight: '900',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        ₹{goal.targetAmount.toLocaleString()}
-                      </div>
-                    </div>
-                    <div>
+                        },
+                        {
+                          label: 'Remaining',
+                          value: isCompleted ? '—' : `₹${remaining.toLocaleString()}`,
+                          color: isCompleted ? '#10b981' : '#64748b',
+                        },
+                      ] as { label: string; value: string; color: string }[]
+                    ).map((item) => (
                       <div
+                        key={item.label}
                         style={{
-                          color: '#94a3b8',
-                          fontSize: '0.7rem',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                          marginBottom: '4px',
+                          background: 'rgba(255,255,255,0.02)',
+                          borderRadius: '14px',
+                          padding: '12px 8px',
+                          textAlign: 'center',
                         }}
                       >
-                        Saved
+                        <div
+                          style={{
+                            color: '#64748b',
+                            fontSize: '0.6rem',
+                            fontWeight: '800',
+                            textTransform: 'uppercase',
+                            marginBottom: '4px',
+                            letterSpacing: '0.5px',
+                          }}
+                        >
+                          {item.label}
+                        </div>
+                        <div
+                          style={{
+                            color: item.color,
+                            fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
+                            fontWeight: '900',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {item.value}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          color: '#34d399',
-                          fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                          fontWeight: '900',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        ₹{goal.currentAmount.toLocaleString()}
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
+                  {/* Deadline / Status Footer */}
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      paddingTop: '20px',
-                      borderTop: '1px solid rgba(255,255,255,0.03)',
+                      justifyContent: 'space-between',
+                      paddingTop: '16px',
+                      borderTop: '1px solid rgba(255,255,255,0.04)',
+                      gap: '8px',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    <Clock size={16} aria-hidden="true" />
-                    <span style={{ fontWeight: '700' }}>
-                      Deadline:{' '}
-                      {goal.deadline
-                        ? new Date(goal.deadline).toLocaleDateString(undefined, {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : 'No target date'}
-                    </span>
-                  </div>
-
-                  {isCompleted && (
                     <div
                       style={{
-                        position: 'absolute',
-                        top: '25px',
-                        right: '-45px',
-                        background: '#34d399',
-                        color: '#000000',
-                        padding: '8px 50px',
-                        transform: 'rotate(45deg)',
-                        fontSize: '0.75rem',
-                        fontWeight: '950',
-                        letterSpacing: '2px',
-                        boxShadow: '0 5px 15px rgba(52, 211, 153, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: '#64748b',
+                        fontSize: '0.78rem',
                       }}
                     >
-                      COMPLETE
+                      <Clock size={13} aria-hidden="true" />
+                      <span>
+                        {goal.deadline
+                          ? new Date(goal.deadline).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
+                          : 'No deadline'}
+                      </span>
                     </div>
-                  )}
+                    {isCompleted ? (
+                      <span
+                        style={{
+                          background: 'rgba(16,185,129,0.12)',
+                          color: '#10b981',
+                          padding: '3px 10px',
+                          borderRadius: '20px',
+                          fontSize: '0.7rem',
+                          fontWeight: '800',
+                        }}
+                      >
+                        ✓ Achieved
+                      </span>
+                    ) : daysRemaining !== null ? (
+                      <span
+                        style={{
+                          ...getDeadlineBadgeStyle(daysRemaining),
+                          padding: '3px 10px',
+                          borderRadius: '20px',
+                          fontSize: '0.7rem',
+                          fontWeight: '800',
+                        }}
+                      >
+                        {daysRemaining < 0
+                          ? `${Math.abs(daysRemaining)}d overdue`
+                          : `${daysRemaining}d left`}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               );
             })
