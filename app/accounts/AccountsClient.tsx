@@ -275,12 +275,14 @@ export default function AccountsClient() {
   return (
     <div className="page-container">
       <div
-        className="flex-col-mobile"
+        className="mobile-page-header"
         style={{
+          display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '24px',
-          gap: '20px',
+          gap: '16px',
+          width: '100%',
         }}
       >
         <div style={{ flex: 1 }}>
@@ -298,22 +300,23 @@ export default function AccountsClient() {
             Accounts
           </h1>
           <p
-            style={{ color: '#94a3b8', fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', marginTop: '8px' }}
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
+              marginTop: '8px',
+            }}
           >
             Securely manage your assets and financial entities
           </p>
         </div>
 
         <div
-          className="hide-scrollbar"
+          className="mobile-page-header__actions"
           style={{
             display: 'flex',
-            justifyContent: 'flex-end',
             gap: '10px',
-            overflowX: 'auto',
-            width: 'auto',
-            paddingBottom: '4px',
-            WebkitOverflowScrolling: 'touch',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
           }}
         >
           <button
@@ -405,16 +408,12 @@ export default function AccountsClient() {
         <div
           className="premium-card"
           style={{
-            background: 'linear-gradient(135deg, #111111 0%, #050505 100%)',
             padding: 'clamp(20px, 5vw, 32px)',
-            borderRadius: '24px',
-            border: '1px solid #111111',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
           }}
         >
-          {/* Enhanced animated gradient background */}
+          {/* Animated gradient background */}
           <div
             className="hide-mobile"
             style={{
@@ -425,25 +424,24 @@ export default function AccountsClient() {
               height: '400px',
               background: 'radial-gradient(circle, rgba(30, 166, 114, 0.15) 0%, transparent 70%)',
               filter: 'blur(60px)',
-              animation: 'float 6s ease-in-out infinite',
+              animation: 'floating 6s ease-in-out infinite',
             }}
           />
 
           <div
+            className="flex-col-mobile"
             style={{
               position: 'relative',
               zIndex: 1,
-              display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
+              alignItems: 'flex-start',
               gap: '24px',
             }}
           >
             <div style={{ flex: '1', minWidth: '240px' }}>
               <div
                 style={{
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary)',
                   fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                   fontWeight: '800',
                   textTransform: 'uppercase',
@@ -487,22 +485,6 @@ export default function AccountsClient() {
                 >
                   ₹{totalBalanceINR.toLocaleString()}
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(52, 211, 153, 0.12)',
-                    color: '#34d399',
-                    padding: '4px 12px',
-                    borderRadius: '100px',
-                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
-                  }}
-                >
-                  <TrendingUp size={14} aria-hidden="true" /> +5.2%
-                </div>
               </div>
 
               <div
@@ -513,7 +495,7 @@ export default function AccountsClient() {
                   marginTop: '24px',
                 }}
               >
-                {accounts.slice(0, 3).map((acc) => (
+                {liquidityChartAccounts.slice(0, 3).map((acc) => (
                   <div
                     key={acc.id}
                     style={{
@@ -544,14 +526,13 @@ export default function AccountsClient() {
             <div
               style={{
                 width: 'clamp(190px, 24vw, 240px)',
-                height: 'clamp(190px, 24vw, 240px)',
                 position: 'relative',
               }}
             >
               <div
                 style={{
                   width: '100%',
-                  height: '100%',
+                  height: 'clamp(190px, 24vw, 240px)',
                   position: 'relative',
                 }}
               >
@@ -767,14 +748,11 @@ export default function AccountsClient() {
           {accounts.map((account, idx) => (
             <div
               key={account.id}
+              className="premium-card"
               style={{
-                background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
-                borderRadius: '16px',
-                border: '1px solid #111111',
                 padding: '24px',
                 position: 'relative',
                 overflow: 'hidden',
-                transition: 'all 0.3s ease',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -791,8 +769,8 @@ export default function AccountsClient() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = '#111111';
-                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.borderColor = '';
+                e.currentTarget.style.boxShadow = '';
               }}
               onClick={() => handleEditClick(account)}
             >
@@ -1609,14 +1587,15 @@ export default function AccountsClient() {
                 type="submit"
                 style={{
                   marginTop: '12px',
-                  background: '#34d399',
-                  color: '#000000',
+                  background: 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)',
+                  color: '#fff',
                   padding: '18px',
                   borderRadius: '18px',
                   border: 'none',
                   fontWeight: '900',
                   cursor: 'pointer',
                   fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                  boxShadow: '0 10px 20px rgba(30, 166, 114, 0.25)',
                   minHeight: '44px',
                 }}
                 aria-label="Confirm add funds"
