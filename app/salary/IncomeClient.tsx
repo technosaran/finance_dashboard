@@ -6,7 +6,6 @@ import { useLedger, useSettings } from '../components/FinanceContext';
 import { Transaction, TransactionCategory } from '@/lib/types';
 import {
   TrendingUp,
-  Calendar as CalendarIcon,
   Plus,
   X,
   Briefcase,
@@ -14,25 +13,29 @@ import {
   Edit3,
   Trash2,
   TrendingDown,
-  BarChart3,
-  PieChart,
+  ArrowUpRight,
   HandCoins,
   Gem,
   LineChart,
   Home,
   Waves,
+  Banknote,
+  Layers,
+  ListFilter,
 } from 'lucide-react';
 
 // Help map categories to icons and colors
 const categoryConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  Salary: { icon: <Briefcase size={18} />, color: '#10b981', label: 'Salary' },
-  Business: { icon: <HandCoins size={18} />, color: '#6366f1', label: 'Business' },
-  Investment: { icon: <LineChart size={18} />, color: '#f59e0b', label: 'Investment' },
-  Dividend: { icon: <Gem size={18} />, color: '#ec4899', label: 'Dividend' },
-  Rent: { icon: <Home size={18} />, color: '#8b5cf6', label: 'Rent' },
-  Bonus: { icon: <Waves size={18} />, color: '#06b6d4', label: 'Bonus' },
-  Other: { icon: <DollarSign size={18} />, color: '#94a3b8', label: 'Other' },
+  Salary: { icon: <Briefcase size={16} />, color: '#10b981', label: 'Salary' },
+  Business: { icon: <HandCoins size={16} />, color: '#6366f1', label: 'Business' },
+  Investment: { icon: <LineChart size={16} />, color: '#f59e0b', label: 'Investment' },
+  Dividend: { icon: <Gem size={16} />, color: '#ec4899', label: 'Dividend' },
+  Rent: { icon: <Home size={16} />, color: '#8b5cf6', label: 'Rent' },
+  Bonus: { icon: <Waves size={16} />, color: '#06b6d4', label: 'Bonus' },
+  Other: { icon: <DollarSign size={16} />, color: '#94a3b8', label: 'Other' },
 };
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function IncomeClient() {
   const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } =
@@ -68,7 +71,7 @@ export default function IncomeClient() {
           );
         });
         break;
-      case 'quarter':
+      case 'quarter': {
         const currentQuarter = Math.floor(now.getMonth() / 3);
         filteredItems = incomeItems.filter((item) => {
           const itemDate = new Date(item.date);
@@ -76,6 +79,7 @@ export default function IncomeClient() {
           return itemQuarter === currentQuarter && itemDate.getFullYear() === now.getFullYear();
         });
         break;
+      }
       case 'year':
         filteredItems = incomeItems.filter((item) => {
           const itemDate = new Date(item.date);
@@ -129,6 +133,23 @@ export default function IncomeClient() {
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => b.total - a.total);
   }, [stats.filteredItems]);
+
+  // Monthly breakdown for the current year (used in chart)
+  const monthlyData = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    return MONTHS.map((label, monthIndex) => {
+      const total = incomeItems
+        .filter((item) => {
+          const d = new Date(item.date);
+          return d.getFullYear() === year && d.getMonth() === monthIndex;
+        })
+        .reduce((sum, item) => sum + item.amount, 0);
+      return { label, total, isCurrentMonth: monthIndex === now.getMonth() };
+    });
+  }, [incomeItems]);
+
+  const maxMonthly = Math.max(...monthlyData.map((m) => m.total), 1);
 
   // Form State
   const [amount, setAmount] = useState('');
@@ -199,40 +220,82 @@ export default function IncomeClient() {
       style={{ backgroundColor: '#000000', minHeight: '100vh', paddingBottom: '100px' }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
-        {/* Header Section */}
-        <div className="page-header" style={{ marginBottom: '40px' }}>
-          <div>
-            <h1
-              className="page-title"
+        {/* ── Header ── */}
+        <div className="page-header" style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                width: '52px',
+                height: '52px',
+                borderRadius: '16px',
+                background:
+                  'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(52,211,153,0.1) 100%)',
+                border: '1px solid rgba(16,185,129,0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#10b981',
+                flexShrink: 0,
               }}
             >
-              Income Tracker
-            </h1>
-            <p className="page-subtitle">Manage and track your earnings across all sources</p>
+              <Banknote size={24} />
+            </div>
+            <div>
+              <h1
+                className="page-title"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  marginBottom: '2px',
+                }}
+              >
+                Income
+              </h1>
+              <p className="page-subtitle" style={{ margin: 0 }}>
+                Track all your earnings in one place
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
             className="header-add-btn header-add-btn--green pulse-on-hover"
           >
-            <Plus size={20} strokeWidth={3} /> Add income
+            <Plus size={18} strokeWidth={3} /> Log Income
           </button>
         </div>
 
-        {/* Period Selector & Quick Filters */}
+        {/* ── Period Selector ── */}
         <div
-          className="mobile-tab-scroll"
-          style={{ marginBottom: '32px', display: 'flex', gap: '8px', paddingBottom: '8px' }}
+          style={{
+            display: 'inline-flex',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '14px',
+            padding: '4px',
+            gap: '4px',
+            marginBottom: '32px',
+          }}
         >
           {(['month', 'quarter', 'year', 'all'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setSelectedPeriod(period)}
-              className={selectedPeriod === period ? 'period-btn period-btn--active' : 'period-btn'}
-              style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+              style={{
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: 'none',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background:
+                  selectedPeriod === period
+                    ? 'linear-gradient(135deg, rgba(16,185,129,0.25) 0%, rgba(16,185,129,0.1) 100%)'
+                    : 'transparent',
+                color: selectedPeriod === period ? '#10b981' : '#64748b',
+                boxShadow: selectedPeriod === period ? '0 0 0 1px rgba(16,185,129,0.3)' : 'none',
+              }}
             >
               {period === 'month'
                 ? 'Month'
@@ -245,274 +308,514 @@ export default function IncomeClient() {
           ))}
         </div>
 
-        {/* Stats Row */}
+        {/* ── Hero Stats ── */}
         <div
-          className="section-fade-in"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-            gap: '20px',
-            marginBottom: '40px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+            gap: '16px',
+            marginBottom: '32px',
           }}
         >
-          <div className="stat-card stat-card--green">
-            <div className="stat-card__glow" style={{ background: 'rgba(16, 185, 129, 0.15)' }} />
+          {/* Total Earned */}
+          <div
+            className="premium-card"
+            style={{
+              background:
+                'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.04) 100%)',
+              border: '1px solid rgba(16,185,129,0.2)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
             <div
-              className="stat-card__icon-box"
-              style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}
-            >
-              <DollarSign size={24} />
-            </div>
-            <div className="stat-card__meta">Total Earned ({getPeriodLabel()})</div>
-            <div className="stat-card__value">₹{stats.total.toLocaleString()}</div>
-            {selectedPeriod === 'month' && stats.trend !== 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.85rem',
-                  color: stats.trend > 0 ? '#10b981' : '#ef4444',
-                  fontWeight: '800',
-                  marginTop: '4px',
-                }}
-              >
-                {stats.trend > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {Math.abs(stats.trend).toFixed(1)}% vs last month
-              </div>
-            )}
-          </div>
-
-          <div className="stat-card stat-card--indigo">
-            <div className="stat-card__glow" style={{ background: 'rgba(99, 102, 241, 0.15)' }} />
-            <div
-              className="stat-card__icon-box"
-              style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}
-            >
-              <BarChart3 size={24} />
-            </div>
-            <div className="stat-card__meta">Average credit</div>
-            <div className="stat-card__value">
-              ₹{stats.average.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </div>
-            <div
-              style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', fontWeight: '600' }}
-            >
-              From {stats.count} entr{stats.count !== 1 ? 'ies' : 'y'}
-            </div>
-          </div>
-
-          <div className="stat-card stat-card--amber">
-            <div className="stat-card__glow" style={{ background: 'rgba(245, 158, 11, 0.15)' }} />
-            <div
-              className="stat-card__icon-box"
-              style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}
-            >
-              <Briefcase size={24} />
-            </div>
-            <div className="stat-card__meta">Income Sources</div>
-            <div className="stat-card__value">{stats.sourcesCount}</div>
-            <div
-              style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', fontWeight: '600' }}
-            >
-              Active {getPeriodLabel().toLowerCase()}
-            </div>
-          </div>
-        </div>
-
-        {/* Major Content Row */}
-        <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
-            gap: '32px',
-          }}
-        >
-          {/* Category & Source Breakdown */}
-          <div className="premium-card">
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '-40px',
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                background: 'rgba(16,185,129,0.08)',
+              }}
+            />
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '24px',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                paddingBottom: '16px',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                marginBottom: '16px',
               }}
             >
               <div
                 style={{
-                  padding: '10px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '12px',
-                  background: 'rgba(168, 85, 247, 0.1)',
-                  color: '#a855f7',
+                  background: 'rgba(16,185,129,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#10b981',
                 }}
               >
-                <PieChart size={20} />
+                <TrendingUp size={20} />
               </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0 }}>
-                Breakdown by Type
+              {selectedPeriod === 'month' && stats.trend !== 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.78rem',
+                    color: stats.trend > 0 ? '#10b981' : '#ef4444',
+                    fontWeight: '700',
+                    background: stats.trend > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                  }}
+                >
+                  {stats.trend > 0 ? <ArrowUpRight size={12} /> : <TrendingDown size={12} />}
+                  {Math.abs(stats.trend).toFixed(1)}%
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: '0.8rem',
+                color: '#64748b',
+                fontWeight: '700',
+                marginBottom: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Total Earned · {getPeriodLabel()}
+            </div>
+            <div
+              style={{
+                fontSize: 'clamp(1.8rem, 4vw, 2.4rem)',
+                fontWeight: '900',
+                color: '#fff',
+                lineHeight: 1,
+              }}
+            >
+              ₹{stats.total.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Avg per Entry */}
+          <div
+            className="premium-card"
+            style={{
+              background: 'rgba(99,102,241,0.06)',
+              border: '1px solid rgba(99,102,241,0.18)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '-40px',
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                background: 'rgba(99,102,241,0.06)',
+              }}
+            />
+            <div style={{ marginBottom: '16px' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'rgba(99,102,241,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6366f1',
+                }}
+              >
+                <Layers size={20} />
+              </div>
+            </div>
+            <div
+              style={{
+                fontSize: '0.8rem',
+                color: '#64748b',
+                fontWeight: '700',
+                marginBottom: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Avg per Entry
+            </div>
+            <div
+              style={{
+                fontSize: 'clamp(1.8rem, 4vw, 2.4rem)',
+                fontWeight: '900',
+                color: '#fff',
+                lineHeight: 1,
+                marginBottom: '6px',
+              }}
+            >
+              ₹{stats.average.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
+              From {stats.count} entr{stats.count !== 1 ? 'ies' : 'y'}
+            </div>
+          </div>
+
+          {/* Active Sources */}
+          <div
+            className="premium-card"
+            style={{
+              background: 'rgba(245,158,11,0.06)',
+              border: '1px solid rgba(245,158,11,0.18)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '-40px',
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                background: 'rgba(245,158,11,0.06)',
+              }}
+            />
+            <div style={{ marginBottom: '16px' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'rgba(245,158,11,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#f59e0b',
+                }}
+              >
+                <ListFilter size={20} />
+              </div>
+            </div>
+            <div
+              style={{
+                fontSize: '0.8rem',
+                color: '#64748b',
+                fontWeight: '700',
+                marginBottom: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Active Sources
+            </div>
+            <div
+              style={{
+                fontSize: 'clamp(1.8rem, 4vw, 2.4rem)',
+                fontWeight: '900',
+                color: '#fff',
+                lineHeight: 1,
+                marginBottom: '6px',
+              }}
+            >
+              {stats.sourcesCount}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
+              {getPeriodLabel()}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Monthly Bar Chart ── */}
+        <div className="premium-card" style={{ marginBottom: '32px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '24px',
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+                Monthly Overview
               </h3>
+              <p
+                style={{
+                  fontSize: '0.8rem',
+                  color: '#64748b',
+                  margin: '4px 0 0',
+                  fontWeight: '600',
+                }}
+              >
+                {new Date().getFullYear()} earnings month by month
+              </p>
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '700' }}>
+              {MONTHS[new Date().getMonth()]} {new Date().getFullYear()}
+            </div>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: 'clamp(4px, 1.2vw, 12px)',
+              height: '120px',
+              overflowX: 'auto',
+              paddingBottom: '8px',
+            }}
+          >
+            {monthlyData.map((m) => {
+              const pct = maxMonthly > 0 ? (m.total / maxMonthly) * 100 : 0;
+              return (
+                <div
+                  key={m.label}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flex: '1 0 auto',
+                    minWidth: '32px',
+                  }}
+                >
+                  <div
+                    title={`₹${m.total.toLocaleString()}`}
+                    style={{
+                      width: '100%',
+                      height: `${Math.max(pct, m.total > 0 ? 4 : 0)}%`,
+                      minHeight: m.total > 0 ? '4px' : '0',
+                      borderRadius: '6px 6px 3px 3px',
+                      background: m.isCurrentMonth
+                        ? 'linear-gradient(180deg, #34d399 0%, #10b981 100%)'
+                        : m.total > 0
+                          ? 'rgba(16,185,129,0.35)'
+                          : 'rgba(255,255,255,0.05)',
+                      transition: 'height 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: m.isCurrentMonth ? '0 0 12px rgba(16,185,129,0.4)' : 'none',
+                      alignSelf: 'flex-end',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      color: m.isCurrentMonth ? '#10b981' : '#475569',
+                      fontWeight: m.isCurrentMonth ? '800' : '600',
+                    }}
+                  >
+                    {m.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Bottom Grid: Category Breakdown + Transactions ── */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+            gap: '24px',
+          }}
+        >
+          {/* Category Breakdown */}
+          <div className="premium-card">
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}
+            >
+              <div
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '10px',
+                  background: 'rgba(168,85,247,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#a855f7',
+                  flexShrink: 0,
+                }}
+              >
+                <Layers size={16} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+                  By Category
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, fontWeight: '600' }}>
+                  {getPeriodLabel()}
+                </p>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {categoryData.length > 0 ? (
-                categoryData.map((cat) => {
+            {categoryData.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {categoryData.map((cat) => {
                   const config = categoryConfig[cat.name] || categoryConfig.Other;
-                  const percentage = (cat.total / stats.total) * 100;
+                  const pct = stats.total > 0 ? (cat.total / stats.total) * 100 : 0;
                   return (
-                    <div
-                      key={cat.name}
-                      style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        padding: '16px',
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
+                    <div key={cat.name}>
                       <div
                         style={{
                           display: 'flex',
-                          justifyContent: 'space-between',
                           alignItems: 'center',
-                          marginBottom: '12px',
+                          justifyContent: 'space-between',
+                          marginBottom: '6px',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div
                             style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '10px',
-                              background: `${config.color}20`,
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '8px',
+                              background: `${config.color}18`,
                               color: config.color,
                               display: 'flex',
                               alignItems: 'center',
-                              justifySelf: 'center',
                               justifyContent: 'center',
+                              flexShrink: 0,
                             }}
                           >
                             {config.icon}
                           </div>
-                          <div>
-                            <div style={{ fontWeight: '800', color: '#fff', fontSize: '1rem' }}>
-                              {config.label}
-                            </div>
-                            <div
-                              style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}
-                            >
-                              {percentage.toFixed(1)}% of total
-                            </div>
-                          </div>
+                          <span style={{ fontWeight: '700', color: '#e2e8f0', fontSize: '0.9rem' }}>
+                            {config.label}
+                          </span>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div
-                            style={{ fontWeight: '900', color: config.color, fontSize: '1.1rem' }}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span
+                            style={{ fontSize: '0.75rem', color: '#475569', fontWeight: '600' }}
+                          >
+                            {pct.toFixed(1)}%
+                          </span>
+                          <span
+                            style={{
+                              fontWeight: '800',
+                              color: config.color,
+                              fontSize: '0.95rem',
+                              minWidth: '80px',
+                              textAlign: 'right',
+                            }}
                           >
                             ₹{cat.total.toLocaleString()}
-                          </div>
+                          </span>
                         </div>
                       </div>
                       <div
                         style={{
-                          width: '100%',
-                          height: '6px',
+                          height: '4px',
                           background: 'rgba(255,255,255,0.05)',
-                          borderRadius: '10px',
+                          borderRadius: '4px',
                           overflow: 'hidden',
                         }}
                       >
                         <div
                           style={{
-                            width: `${percentage}%`,
+                            width: `${pct}%`,
                             height: '100%',
-                            background: config.color,
-                            borderRadius: '10px',
-                            transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)',
+                            background: `linear-gradient(90deg, ${config.color}90, ${config.color})`,
+                            borderRadius: '4px',
+                            transition: 'width 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
                           }}
                         />
                       </div>
                     </div>
                   );
-                })
-              ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                  <HandCoins size={40} style={{ opacity: 0.2, marginBottom: '16px' }} />
-                  <p>No income data for this period</p>
-                </div>
-              )}
-            </div>
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#475569' }}>
+                <HandCoins size={36} style={{ opacity: 0.2, marginBottom: '12px' }} />
+                <p style={{ fontWeight: '600', margin: 0 }}>No data for this period</p>
+              </div>
+            )}
           </div>
 
-          {/* History / Timeline */}
+          {/* Transactions List */}
           <div className="premium-card">
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                marginBottom: '24px',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                paddingBottom: '16px',
+                justifyContent: 'space-between',
+                marginBottom: '20px',
               }}
             >
-              <div
-                style={{
-                  padding: '10px',
-                  borderRadius: '12px',
-                  background: 'rgba(6, 182, 212, 0.1)',
-                  color: '#06b6d4',
-                }}
-              >
-                <CalendarIcon size={20} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '10px',
+                    background: 'rgba(6,182,212,0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#06b6d4',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Banknote size={16} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+                    Transactions
+                  </h3>
+                  <p
+                    style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, fontWeight: '600' }}
+                  >
+                    {stats.filteredItems.length} entr
+                    {stats.filteredItems.length !== 1 ? 'ies' : 'y'}
+                  </p>
+                </div>
               </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0 }}>
-                Recent income
-              </h3>
             </div>
 
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px',
-                maxHeight: '550px',
+                gap: '8px',
+                maxHeight: '460px',
                 overflowY: 'auto',
-                paddingRight: '8px',
+                paddingRight: '4px',
               }}
             >
               {stats.filteredItems.length > 0 ? (
-                stats.filteredItems.slice(0, 15).map((item) => {
-                  const config = categoryConfig[item.category as string] || categoryConfig.Other;
-                  return (
-                    <div
-                      key={item.id}
-                      className="tx-row"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '14px',
-                        borderRadius: '14px',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
+                [...stats.filteredItems]
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((item) => {
+                    const config = categoryConfig[item.category as string] || categoryConfig.Other;
+                    return (
                       <div
+                        key={item.id}
+                        className="tx-row"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '14px',
-                          flex: 1,
-                          minWidth: 0,
+                          gap: '12px',
+                          padding: '12px 14px',
+                          borderRadius: '12px',
+                          background: 'rgba(255,255,255,0.025)',
+                          border: '1px solid rgba(255,255,255,0.05)',
                         }}
                       >
                         <div
                           style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
                             background: `${config.color}15`,
                             color: config.color,
                             display: 'flex',
@@ -523,12 +826,12 @@ export default function IncomeClient() {
                         >
                           {config.icon}
                         </div>
-                        <div style={{ minWidth: 0 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div
                             style={{
                               fontWeight: '700',
-                              color: '#fff',
-                              fontSize: '0.95rem',
+                              color: '#e2e8f0',
+                              fontSize: '0.9rem',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
@@ -536,7 +839,15 @@ export default function IncomeClient() {
                           >
                             {item.description}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
+                          <div
+                            style={{
+                              fontSize: '0.72rem',
+                              color: '#475569',
+                              fontWeight: '600',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {config.label} ·{' '}
                             {new Date(item.date).toLocaleDateString('en-IN', {
                               month: 'short',
                               day: 'numeric',
@@ -544,25 +855,22 @@ export default function IncomeClient() {
                             })}
                           </div>
                         </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ fontWeight: '900', color: '#10b981', fontSize: '1rem' }}>
+                        <div
+                          style={{
+                            fontWeight: '800',
+                            color: '#10b981',
+                            fontSize: '0.95rem',
+                            flexShrink: 0,
+                          }}
+                        >
                           +₹{item.amount.toLocaleString()}
                         </div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
+                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                           <button
                             onClick={() => handleEdit(item)}
-                            className="mobile-action-btn"
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              border: 'none',
-                              color: '#94a3b8',
-                              padding: '8px',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                            }}
+                            className="mobile-action-btn mobile-action-btn--edit"
                           >
-                            <Edit3 size={14} />
+                            <Edit3 size={13} />
                           </button>
                           <button
                             onClick={async () => {
@@ -577,43 +885,67 @@ export default function IncomeClient() {
                                 showNotification('success', 'Income deleted');
                               }
                             }}
-                            className="mobile-action-btn"
-                            style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: 'none',
-                              color: '#ef4444',
-                              padding: '8px',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                            }}
+                            className="mobile-action-btn mobile-action-btn--delete"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
               ) : (
-                <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
-                  <TrendingUp size={48} style={{ opacity: 0.1, marginBottom: '20px' }} />
-                  <p style={{ fontWeight: '700', fontSize: '1.1rem', color: '#94a3b8' }}>
-                    No income history found
+                <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '20px',
+                      background: 'rgba(16,185,129,0.08)',
+                      border: '1px solid rgba(16,185,129,0.12)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 20px',
+                      color: '#10b981',
+                      opacity: 0.5,
+                    }}
+                  >
+                    <TrendingUp size={28} />
+                  </div>
+                  <p
+                    style={{
+                      fontWeight: '700',
+                      fontSize: '1rem',
+                      color: '#94a3b8',
+                      margin: '0 0 6px',
+                    }}
+                  >
+                    No income found
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.82rem',
+                      color: '#475569',
+                      margin: '0 0 20px',
+                      fontWeight: '600',
+                    }}
+                  >
+                    Start logging your earnings
                   </p>
                   <button
                     onClick={() => setIsModalOpen(true)}
                     style={{
-                      marginTop: '20px',
-                      padding: '12px 24px',
-                      borderRadius: '12px',
+                      padding: '10px 22px',
+                      borderRadius: '10px',
                       background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                       color: '#fff',
                       border: 'none',
                       fontWeight: '800',
                       cursor: 'pointer',
+                      fontSize: '0.85rem',
                     }}
                   >
-                    Add first income
+                    + Add first income
                   </button>
                 </div>
               )}
@@ -622,10 +954,10 @@ export default function IncomeClient() {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* ── Add / Edit Modal ── */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '500px' }}>
+          <div className="modal-card" style={{ maxWidth: '480px', width: '100%' }}>
             <button
               onClick={() => {
                 setIsModalOpen(false);
@@ -636,30 +968,53 @@ export default function IncomeClient() {
               <X size={20} />
             </button>
 
-            <h2 className="modal-title">{editId ? 'Edit income' : 'Add income'}</h2>
-            <p className="modal-subtitle">
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: 'rgba(16,185,129,0.12)',
+                  border: '1px solid rgba(16,185,129,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#10b981',
+                }}
+              >
+                <Banknote size={20} />
+              </div>
+              <div>
+                <h2 className="modal-title" style={{ margin: 0 }}>
+                  {editId ? 'Edit Income' : 'Log Income'}
+                </h2>
+              </div>
+            </div>
+            <p className="modal-subtitle" style={{ marginBottom: '24px' }}>
               {editId
-                ? 'Modify your earning details'
-                : 'Add a salary, freelance payment, or another incoming amount'}
+                ? 'Update the details of this income entry'
+                : 'Record a salary, freelance payment, dividend, or any other credit'}
             </p>
 
             <form
               onSubmit={handleLogIncome}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
               <div>
-                <label className="form-label">Source</label>
+                <label className="form-label">Source Name</label>
                 <input
                   value={sourceName}
                   onChange={(e) => setSourceName(e.target.value)}
-                  placeholder="e.g. Google, Fiverr, Rental"
+                  placeholder="e.g. Acme Corp, Fiverr, Rental"
                   required
                   className="form-input form-input--green"
                   autoFocus
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <label className="form-label">Amount (₹)</label>
                   <input
@@ -677,7 +1032,6 @@ export default function IncomeClient() {
                     value={category}
                     onChange={(e) => setCategory(e.target.value as TransactionCategory)}
                     className="form-input form-input--green"
-                    style={{ padding: '16px' }}
                   >
                     {Object.keys(categoryConfig).map((cat) => (
                       <option key={cat} value={cat}>
@@ -688,7 +1042,7 @@ export default function IncomeClient() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <label className="form-label">Date</label>
                   <input
@@ -699,7 +1053,7 @@ export default function IncomeClient() {
                   />
                 </div>
                 <div>
-                  <label className="form-label">Credit account</label>
+                  <label className="form-label">Credit Account</label>
                   <select
                     value={selectedAccountId}
                     onChange={(e) =>
@@ -720,9 +1074,9 @@ export default function IncomeClient() {
               <button
                 type="submit"
                 className="btn-primary btn-primary--green"
-                style={{ marginTop: '10px' }}
+                style={{ marginTop: '8px' }}
               >
-                {editId ? 'Update Record' : 'Save Income Entry'}
+                {editId ? 'Update Entry' : 'Save Income'}
               </button>
             </form>
           </div>
