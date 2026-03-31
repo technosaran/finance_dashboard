@@ -1,4 +1,5 @@
 export type SupportedExchange = 'NSE' | 'BSE';
+export type StockChargeMode = 'delivery' | 'intraday';
 
 type StockTradeType = 'BUY' | 'SELL';
 type MutualFundTradeType = 'BUY' | 'SELL' | 'SIP';
@@ -9,13 +10,26 @@ const SEBI_TURNOVER_RATE = 0.0001;
 
 const STOCK_DELIVERY_RATES = {
   brokerage: 0,
-  stt: 0.1,
+  sttBuy: 0.1,
+  sttSell: 0.1,
   transactionCharges: {
     NSE: 0.00307,
     BSE: 0.00375,
   } satisfies Record<SupportedExchange, number>,
   stampDuty: 0.015,
   dpCharges: 15.34,
+};
+
+const STOCK_INTRADAY_RATES = {
+  brokeragePercent: 0.03,
+  brokerageCap: 20,
+  sttSell: 0.025,
+  transactionCharges: {
+    NSE: 0.00307,
+    BSE: 0.00375,
+  } satisfies Record<SupportedExchange, number>,
+  stampDuty: 0.003,
+  dpCharges: 0,
 };
 
 const MUTUAL_FUND_RATES = {
@@ -51,17 +65,21 @@ const isOptionInstrument = (instrument: string): boolean => {
   );
 };
 
-export const getStockChargeMeta = (exchange?: string) => {
+export const getStockChargeMeta = (exchange?: string, mode: StockChargeMode = 'delivery') => {
   const normalizedExchange = normalizeExchange(exchange);
+  const isIntraday = mode === 'intraday';
 
   return {
+    mode,
     exchange: normalizedExchange,
-    brokerageLabel: '₹0 delivery brokerage',
-    sttRate: STOCK_DELIVERY_RATES.stt,
-    transactionChargeRate: STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange],
-    stampDutyRate: STOCK_DELIVERY_RATES.stampDuty,
+    brokerageLabel: isIntraday ? '0.03% or ₹20 per executed order' : '₹0 delivery brokerage',
+    sttRate: isIntraday ? STOCK_INTRADAY_RATES.sttSell : STOCK_DELIVERY_RATES.sttSell,
+    transactionChargeRate: isIntraday
+      ? STOCK_INTRADAY_RATES.transactionCharges[normalizedExchange]
+      : STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange],
+    stampDutyRate: isIntraday ? STOCK_INTRADAY_RATES.stampDuty : STOCK_DELIVERY_RATES.stampDuty,
     sebiChargeRate: SEBI_TURNOVER_RATE,
-    dpCharges: STOCK_DELIVERY_RATES.dpCharges,
+    dpCharges: isIntraday ? STOCK_INTRADAY_RATES.dpCharges : STOCK_DELIVERY_RATES.dpCharges,
     gstRate: GST_RATE,
   };
 };
@@ -70,21 +88,48 @@ export const calculateStockCharges = (
   type: StockTradeType,
   quantity: number,
   price: number,
-  exchange?: string
+  exchange?: string,
+  mode: StockChargeMode = 'delivery'
 ) => {
   const normalizedExchange = normalizeExchange(exchange);
+  const isIntraday = mode === 'intraday';
   const turnover = quantity * price;
-  const brokerage = STOCK_DELIVERY_RATES.brokerage;
-  const stt = Math.round(turnover * (STOCK_DELIVERY_RATES.stt / 100));
+  const brokerage = isIntraday
+    ? Math.min(
+        STOCK_INTRADAY_RATES.brokerageCap,
+        turnover * (STOCK_INTRADAY_RATES.brokeragePercent / 100)
+      )
+    : STOCK_DELIVERY_RATES.brokerage;
+  const sttRate =
+    type === 'BUY'
+      ? isIntraday
+        ? 0
+        : STOCK_DELIVERY_RATES.sttBuy
+      : isIntraday
+        ? STOCK_INTRADAY_RATES.sttSell
+        : STOCK_DELIVERY_RATES.sttSell;
+  const stt = Math.round(turnover * (sttRate / 100));
   const transactionCharges =
-    turnover * (STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange] / 100);
+    turnover *
+    ((isIntraday
+      ? STOCK_INTRADAY_RATES.transactionCharges[normalizedExchange]
+      : STOCK_DELIVERY_RATES.transactionCharges[normalizedExchange]) /
+      100);
   const sebiCharges = turnover * (SEBI_TURNOVER_RATE / 100);
-  const stampDuty = type === 'BUY' ? turnover * (STOCK_DELIVERY_RATES.stampDuty / 100) : 0;
+  const stampDuty =
+    type === 'BUY'
+      ? turnover *
+        ((isIntraday ? STOCK_INTRADAY_RATES.stampDuty : STOCK_DELIVERY_RATES.stampDuty) / 100)
+      : 0;
   const gst = (brokerage + transactionCharges + sebiCharges) * (GST_RATE / 100);
-  const dpCharges = type === 'SELL' ? STOCK_DELIVERY_RATES.dpCharges : 0;
+  const dpCharges =
+    type === 'SELL' && !isIntraday
+      ? STOCK_DELIVERY_RATES.dpCharges
+      : STOCK_INTRADAY_RATES.dpCharges;
   const total = brokerage + stt + transactionCharges + sebiCharges + stampDuty + gst + dpCharges;
 
   return {
+    mode,
     exchange: normalizedExchange,
     turnover: round2(turnover),
     brokerage: round2(brokerage),

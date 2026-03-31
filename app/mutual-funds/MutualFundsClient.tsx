@@ -41,6 +41,20 @@ import { logError } from '@/lib/utils/logger';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 2,
+});
+
+const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+const formatInr = (value: number) => inrFormatter.format(value);
+
 export default function MutualFundsClient() {
   const { accounts, loading } = useLedger();
   const {
@@ -62,7 +76,7 @@ export default function MutualFundsClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'fund' | 'transaction'>('fund');
   const [editId, setEditId] = useState<number | null>(null);
-  const [viewingCharges, setViewingCharges] = useState<MutualFund | null>(null);
+  const [viewingHolding, setViewingHolding] = useState<MutualFund | null>(null);
 
   // Group mutual funds by scheme code to avoid duplicate entries in the UI (e.g. from different accounts)
   const groupedMutualFunds = useMemo(() => {
@@ -156,6 +170,19 @@ export default function MutualFundsClient() {
 
     return calculateMfCharges(transactionType, unitsValue * navValue);
   }, [transactionType, txUnits, txNav]);
+
+  const viewingHoldingTransactions = useMemo(() => {
+    if (!viewingHolding) return [];
+
+    const holdingIds = mutualFunds
+      .filter((fund) => fund.schemeCode.toUpperCase() === viewingHolding.schemeCode.toUpperCase())
+      .map((fund) => fund.id);
+
+    return mutualFundTransactions
+      .filter((transaction) => holdingIds.includes(transaction.mutualFundId))
+      .sort((left, right) => right.transactionDate.localeCompare(left.transactionDate))
+      .slice(0, 6);
+  }, [viewingHolding, mutualFunds, mutualFundTransactions]);
 
   // Portfolio Metrics
   const totalInvestment = activeMutualFunds.reduce((sum, mf) => sum + mf.investmentAmount, 0);
@@ -738,7 +765,7 @@ export default function MutualFundsClient() {
                     background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
                     borderLeft: `4px solid ${COLORS[idx % COLORS.length]}`,
                   }}
-                  onClick={() => handleEditFund(mf)}
+                  onClick={() => setViewingHolding(mf)}
                 >
                   <div
                     style={{
@@ -885,7 +912,7 @@ export default function MutualFundsClient() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setViewingCharges(mf);
+                          setViewingHolding(mf);
                         }}
                         style={{
                           color: '#6366f1',
@@ -1094,7 +1121,9 @@ export default function MutualFundsClient() {
                       style={{
                         borderBottom: '1px solid rgba(255,255,255,0.02)',
                         transition: 'background 0.2s',
+                        cursor: 'pointer',
                       }}
+                      onClick={() => setViewingHolding(mf)}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background = 'rgba(255,255,255,0.01)')
                       }
@@ -1201,7 +1230,7 @@ export default function MutualFundsClient() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setViewingCharges(mf);
+                              setViewingHolding(mf);
                             }}
                             title="Estimated Sell Charges"
                             style={{
@@ -1943,11 +1972,12 @@ export default function MutualFundsClient() {
           aria-modal="true"
         >
           <div
-            className="modal-card"
+            className="modal-card entry-sheet entry-sheet--wide"
             style={{
-              maxWidth: '520px',
+              maxWidth: '820px',
             }}
           >
+            <div className="entry-sheet__handle" />
             <div
               style={{
                 display: 'flex',
@@ -1996,10 +2026,7 @@ export default function MutualFundsClient() {
             </div>
 
             {modalType === 'fund' ? (
-              <form
-                onSubmit={handleFundSubmit}
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-              >
+              <form onSubmit={handleFundSubmit} className="entry-form">
                 <div style={{ position: 'relative' }}>
                   <label
                     style={{
@@ -2311,10 +2338,7 @@ export default function MutualFundsClient() {
                 </button>
               </form>
             ) : (
-              <form
-                onSubmit={handleTransactionSubmit}
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-              >
+              <form onSubmit={handleTransactionSubmit} className="entry-form">
                 <div>
                   <label
                     style={{
@@ -2605,21 +2629,22 @@ export default function MutualFundsClient() {
           </div>
         </div>
       )}
-      {viewingCharges &&
+      {viewingHolding &&
         (() => {
           return (
             <div
               className="modal-overlay"
-              onClick={() => setViewingCharges(null)}
+              onClick={() => setViewingHolding(null)}
               role="dialog"
               aria-modal="true"
             >
               <div
-                className="modal-card"
+                className="modal-card entry-sheet"
                 style={{
-                  maxWidth: '400px',
+                  maxWidth: '560px',
                 }}
               >
+                <div className="entry-sheet__handle" />
                 <div
                   style={{
                     display: 'flex',
@@ -2644,11 +2669,11 @@ export default function MutualFundsClient() {
                       <Eye size={20} />
                     </div>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0 }}>
-                      Coin Charge Guide
+                      Fund Details
                     </h2>
                   </div>
                   <button
-                    onClick={() => setViewingCharges(null)}
+                    onClick={() => setViewingHolding(null)}
                     style={{
                       background: 'rgba(255,255,255,0.05)',
                       border: 'none',
@@ -2683,55 +2708,127 @@ export default function MutualFundsClient() {
                       fontWeight: '700',
                     }}
                   >
-                    {viewingCharges.category}
+                    {viewingHolding.category}
                   </div>
                   <div style={{ fontSize: '1rem', fontWeight: '900', color: '#fff' }}>
-                    {viewingCharges.schemeName}
+                    {viewingHolding.schemeName}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Entry/Exit Load</span>
-                      <span style={{ color: '#475569', fontSize: '0.7rem' }}>
-                        Direct plans are commission-free on Coin
-                      </span>
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  <div className="detail-grid">
+                    <div className="detail-stat">
+                      <div className="detail-stat__label">Units</div>
+                      <div className="detail-stat__value">{viewingHolding.units.toFixed(3)}</div>
                     </div>
-                    <span style={{ color: '#fff', fontWeight: '700' }}>₹0.00</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Stamp Duty</span>
-                      <span style={{ color: '#475569', fontSize: '0.7rem' }}>
-                        0.005% on BUY and SIP orders
-                      </span>
+                    <div className="detail-stat">
+                      <div className="detail-stat__label">Average NAV</div>
+                      <div className="detail-stat__value">{formatInr(viewingHolding.avgNav)}</div>
                     </div>
-                    <span style={{ color: '#fbbf24', fontWeight: '700' }}>Shown during entry</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Expense Ratio</span>
-                      <span style={{ color: '#475569', fontSize: '0.7rem' }}>
-                        Already adjusted in NAV
-                      </span>
+                    <div className="detail-stat">
+                      <div className="detail-stat__label">Current Value</div>
+                      <div className="detail-stat__value">
+                        {formatInr(viewingHolding.currentValue)}
+                      </div>
                     </div>
-                    <span style={{ color: '#10b981', fontWeight: '700' }}>Included</span>
+                    <div className="detail-stat">
+                      <div className="detail-stat__label">Total Return</div>
+                      <div
+                        className={`detail-stat__value ${
+                          viewingHolding.pnl >= 0
+                            ? 'entry-summary__value--positive'
+                            : 'entry-summary__value--negative'
+                        }`}
+                      >
+                        {viewingHolding.pnl >= 0 ? '+' : '-'}
+                        {formatInr(Math.abs(viewingHolding.pnl))}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ height: '1px', background: '#111111', margin: '8px 0' }} />
+
                   <div
+                    className="entry-summary"
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      background: 'rgba(245, 158, 11, 0.08)',
+                      border: '1px solid rgba(245, 158, 11, 0.18)',
                     }}
                   >
-                    <span style={{ color: '#fff', fontWeight: '800' }}>
-                      Order-time charge preview
-                    </span>
-                    <span style={{ color: '#f59e0b', fontSize: '1.25rem', fontWeight: '950' }}>
-                      Live in form
-                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '900',
+                        color: '#f59e0b',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                      }}
+                    >
+                      Zerodha Coin Charge Guide
+                    </div>
+                    <div className="entry-summary__row">
+                      <span className="entry-summary__label">Entry/exit load</span>
+                      <span className="entry-summary__value">{formatInr(0)}</span>
+                    </div>
+                    <div className="entry-summary__row">
+                      <span className="entry-summary__label">Stamp duty</span>
+                      <span className="entry-summary__value">0.005% on BUY and SIP only</span>
+                    </div>
+                    <div className="entry-summary__row">
+                      <span className="entry-summary__label">Expense ratio</span>
+                      <span className="entry-summary__value">Already in NAV</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                      Direct Coin orders do not add brokerage or DP charges. The order form shows
+                      the stamp-duty impact live while you enter the amount.
+                    </div>
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      <div style={{ fontWeight: '800', color: '#fff' }}>Recent Transactions</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                        {viewingHoldingTransactions.length} latest
+                      </div>
+                    </div>
+                    {viewingHoldingTransactions.length > 0 ? (
+                      <div className="detail-timeline">
+                        {viewingHoldingTransactions.map((transaction) => (
+                          <div key={transaction.id} className="detail-timeline__item">
+                            <div>
+                              <strong>{transaction.transactionType}</strong>
+                              <span>
+                                {transaction.units.toFixed(3)} units @ {formatInr(transaction.nav)}
+                              </span>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <strong>{formatInr(transaction.totalAmount)}</strong>
+                              <span>
+                                {dateFormatter.format(new Date(transaction.transactionDate))}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          padding: '16px',
+                          borderRadius: '16px',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.05)',
+                          color: '#64748b',
+                          fontSize: '0.85rem',
+                        }}
+                      >
+                        No transaction history found for this fund yet.
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2750,7 +2847,7 @@ export default function MutualFundsClient() {
                 </p>
 
                 <button
-                  onClick={() => setViewingCharges(null)}
+                  onClick={() => setViewingHolding(null)}
                   style={{
                     width: '100%',
                     background: '#f59e0b',

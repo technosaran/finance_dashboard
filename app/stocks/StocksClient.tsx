@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLedger, usePortfolio, useSettings } from '../components/FinanceContext';
-import { Stock } from '@/lib/types';
-import { calculateStockCharges, getStockChargeMeta } from '@/lib/utils/charges';
+import { Stock, StockTransaction } from '@/lib/types';
+import { calculateStockCharges, getStockChargeMeta, StockChargeMode } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
 import {
   TrendingUp,
@@ -42,6 +42,28 @@ const COLORS = [
   '#06b6d4',
 ];
 
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 2,
+});
+
+const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+const formatInr = (value: number) => inrFormatter.format(value);
+
+const formatSignedInr = (value: number) => `${value >= 0 ? '+' : '-'}${formatInr(Math.abs(value))}`;
+
+const getChargeModeLabel = (mode: StockChargeMode | 'mixed') => {
+  if (mode === 'intraday') return 'Intraday';
+  if (mode === 'mixed') return 'Mixed';
+  return 'Delivery';
+};
+
 export default function StocksClient() {
   const { accounts, loading } = useLedger();
   const {
@@ -62,11 +84,7 @@ export default function StocksClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'stock' | 'transaction'>('stock');
   const [editId, setEditId] = useState<number | null>(null);
-  type ChargeViewData = Pick<Stock, 'symbol' | 'quantity' | 'currentPrice' | 'exchange'>;
-  const [viewingCharges, setViewingCharges] = useState<{
-    type: 'stock' | 'mf';
-    data: ChargeViewData;
-  } | null>(null);
+  const [viewingHolding, setViewingHolding] = useState<Stock | null>(null);
 
   // Search States
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,6 +120,138 @@ export default function StocksClient() {
     [stocks, selectedStockId]
   );
 
+  const selectedTransactionExchange =
+    selectedTransactionStock?.exchange === 'BSE' ? 'BSE' : ('NSE' as const);
+
+  const getHoldingIds = useCallback(
+    (stockId: number) => {
+      const currentStock = stocks.find((stock) => stock.id === stockId);
+      if (!currentStock) return [stockId];
+
+      return stocks
+        .filter(
+          (stock) =>
+            stock.symbol.toUpperCase() === currentStock.symbol.toUpperCase() &&
+            stock.exchange.toUpperCase() === currentStock.exchange.toUpperCase()
+        )
+        .map((stock) => stock.id);
+    },
+    [stocks]
+  );
+
+  const getIntradaySellQuantity = useCallback(
+    (
+      transactionList: StockTransaction[],
+      stockIds: number[],
+      date: string,
+      requestedQuantity: number
+    ) => {
+      const sameDayTransactions = transactionList.filter(
+        (transaction) =>
+          stockIds.includes(transaction.stockId) && transaction.transactionDate === date
+      );
+      const sameDayBuys = sameDayTransactions
+        .filter((transaction) => transaction.transactionType === 'BUY')
+        .reduce((sum, transaction) => sum + transaction.quantity, 0);
+      const sameDaySells = sameDayTransactions
+        .filter((transaction) => transaction.transactionType === 'SELL')
+        .reduce((sum, transaction) => sum + transaction.quantity, 0);
+      const netSameDayBuyQuantity = Math.max(0, sameDayBuys - sameDaySells);
+
+      return Math.max(0, Math.min(requestedQuantity, netSameDayBuyQuantity));
+    },
+    []
+  );
+
+  const aggregateStockCharges = useCallback(
+    (
+      type: 'BUY' | 'SELL',
+      quantityValue: number,
+      priceValue: number,
+      exchangeValue: 'NSE' | 'BSE',
+      stockId?: number,
+      dateValue?: string
+    ) => {
+      if (type === 'BUY') {
+        const charges = calculateStockCharges(type, quantityValue, priceValue, exchangeValue);
+        return {
+          mode: 'delivery' as const,
+          intradayQuantity: 0,
+          deliveryQuantity: quantityValue,
+          deliveryCharges: charges,
+          intradayCharges: null,
+          total: charges,
+        };
+      }
+
+      const relatedHoldingIds = stockId ? getHoldingIds(stockId) : [];
+      const intradayQuantity =
+        relatedHoldingIds.length > 0 && dateValue
+          ? getIntradaySellQuantity(stockTransactions, relatedHoldingIds, dateValue, quantityValue)
+          : 0;
+      const deliveryQuantity = Math.max(0, quantityValue - intradayQuantity);
+      const intradayCharges =
+        intradayQuantity > 0
+          ? calculateStockCharges(type, intradayQuantity, priceValue, exchangeValue, 'intraday')
+          : null;
+      const deliveryCharges =
+        deliveryQuantity > 0
+          ? calculateStockCharges(type, deliveryQuantity, priceValue, exchangeValue, 'delivery')
+          : null;
+
+      const mode: 'delivery' | 'intraday' | 'mixed' =
+        intradayQuantity > 0 && deliveryQuantity > 0
+          ? 'mixed'
+          : intradayQuantity > 0
+            ? 'intraday'
+            : 'delivery';
+
+      const total = {
+        mode,
+        exchange: exchangeValue,
+        turnover: Number(
+          ((intradayCharges?.turnover ?? 0) + (deliveryCharges?.turnover ?? 0)).toFixed(2)
+        ),
+        brokerage: Number(
+          ((intradayCharges?.brokerage ?? 0) + (deliveryCharges?.brokerage ?? 0)).toFixed(2)
+        ),
+        stt: Number(((intradayCharges?.stt ?? 0) + (deliveryCharges?.stt ?? 0)).toFixed(2)),
+        transactionCharges: Number(
+          (
+            (intradayCharges?.transactionCharges ?? 0) + (deliveryCharges?.transactionCharges ?? 0)
+          ).toFixed(2)
+        ),
+        sebiCharges: Number(
+          ((intradayCharges?.sebiCharges ?? 0) + (deliveryCharges?.sebiCharges ?? 0)).toFixed(2)
+        ),
+        stampDuty: Number(
+          ((intradayCharges?.stampDuty ?? 0) + (deliveryCharges?.stampDuty ?? 0)).toFixed(2)
+        ),
+        gst: Number(((intradayCharges?.gst ?? 0) + (deliveryCharges?.gst ?? 0)).toFixed(2)),
+        dpCharges: Number(
+          ((intradayCharges?.dpCharges ?? 0) + (deliveryCharges?.dpCharges ?? 0)).toFixed(2)
+        ),
+        taxes: Number(((intradayCharges?.taxes ?? 0) + (deliveryCharges?.taxes ?? 0)).toFixed(2)),
+        total: Number(((intradayCharges?.total ?? 0) + (deliveryCharges?.total ?? 0)).toFixed(2)),
+        settlementAmount: Number(
+          (
+            (intradayCharges?.settlementAmount ?? 0) + (deliveryCharges?.settlementAmount ?? 0)
+          ).toFixed(2)
+        ),
+      };
+
+      return {
+        mode,
+        intradayQuantity,
+        deliveryQuantity,
+        intradayCharges,
+        deliveryCharges,
+        total,
+      };
+    },
+    [getHoldingIds, getIntradaySellQuantity, stockTransactions]
+  );
+
   const initialBuyChargePreview = useMemo(() => {
     const qty = Number(quantity);
     const avg = Number(avgPrice);
@@ -119,13 +269,78 @@ export default function StocksClient() {
       return null;
     }
 
-    return calculateStockCharges(
+    return aggregateStockCharges(
       transactionType,
       qty,
       price,
-      selectedTransactionStock?.exchange === 'BSE' ? 'BSE' : 'NSE'
+      selectedTransactionExchange,
+      selectedTransactionStock?.id,
+      transactionDate
     );
-  }, [transactionQuantity, transactionPrice, transactionType, selectedTransactionStock]);
+  }, [
+    aggregateStockCharges,
+    transactionQuantity,
+    transactionPrice,
+    transactionType,
+    selectedTransactionExchange,
+    selectedTransactionStock,
+    transactionDate,
+  ]);
+
+  const viewingHoldingTransactions = useMemo(() => {
+    if (!viewingHolding) return [];
+
+    const holdingIds = stocks
+      .filter(
+        (stock) =>
+          stock.symbol.toUpperCase() === viewingHolding.symbol.toUpperCase() &&
+          stock.exchange.toUpperCase() === viewingHolding.exchange.toUpperCase()
+      )
+      .map((stock) => stock.id);
+
+    return stockTransactions
+      .filter((transaction) => holdingIds.includes(transaction.stockId))
+      .sort((left, right) => right.transactionDate.localeCompare(left.transactionDate))
+      .slice(0, 6);
+  }, [viewingHolding, stocks, stockTransactions]);
+
+  const viewingHoldingChargePreview = useMemo(() => {
+    if (!viewingHolding) return null;
+
+    return aggregateStockCharges(
+      'SELL',
+      viewingHolding.quantity,
+      viewingHolding.currentPrice,
+      viewingHolding.exchange === 'BSE' ? 'BSE' : 'NSE',
+      viewingHolding.id,
+      new Date().toISOString().split('T')[0]
+    );
+  }, [aggregateStockCharges, viewingHolding]);
+
+  const openHoldingFromTransaction = (transaction: StockTransaction) => {
+    const linkedStock =
+      stocks.find((stock) => stock.id === transaction.stockId) ||
+      groupedStocks.find((stock) => stock.id === transaction.stockId);
+
+    if (linkedStock) {
+      setViewingHolding(linkedStock);
+      return;
+    }
+
+    setViewingHolding({
+      id: transaction.stockId,
+      symbol: 'STOCK',
+      companyName: transaction.notes || 'Historical stock entry',
+      quantity: transaction.quantity,
+      avgPrice: transaction.price,
+      currentPrice: transaction.price,
+      exchange: 'NSE',
+      investmentAmount: transaction.totalAmount,
+      currentValue: transaction.totalAmount,
+      pnl: 0,
+      pnlPercentage: 0,
+    });
+  };
 
   // Debounced search
   useEffect(() => {
@@ -305,11 +520,13 @@ export default function StocksClient() {
     const qty = Number(transactionQuantity);
     const price = Number(transactionPrice);
     const total = qty * price;
-    const calculatedCharges = calculateStockCharges(
+    const calculatedCharges = aggregateStockCharges(
       transactionType,
       qty,
       price,
-      selectedTransactionStock?.exchange === 'BSE' ? 'BSE' : 'NSE'
+      selectedTransactionExchange,
+      selectedTransactionStock?.id,
+      transactionDate
     );
 
     try {
@@ -319,10 +536,18 @@ export default function StocksClient() {
         quantity: qty,
         price,
         totalAmount: total,
-        brokerage: calculatedCharges.brokerage,
-        taxes: calculatedCharges.taxes,
+        brokerage: calculatedCharges.total.brokerage,
+        taxes: calculatedCharges.total.taxes,
         transactionDate,
-        notes: notes || undefined,
+        notes:
+          notes ||
+          (transactionType === 'SELL'
+            ? `Auto charge mode: ${calculatedCharges.mode}${
+                calculatedCharges.mode === 'mixed'
+                  ? ` | intraday ${calculatedCharges.intradayQuantity}, delivery ${calculatedCharges.deliveryQuantity}`
+                  : ''
+              }`
+            : undefined),
         accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
       });
       showNotification('success', `Transaction recorded: ${transactionType} ${qty} shares`);
@@ -826,7 +1051,7 @@ export default function StocksClient() {
                     background: 'linear-gradient(145deg, #050505 0%, #111111 100%)',
                     borderLeft: `4px solid ${COLORS[idx % COLORS.length]}`,
                   }}
-                  onClick={() => handleEditStock(stock)}
+                  onClick={() => setViewingHolding(stock)}
                 >
                   <div
                     style={{
@@ -974,7 +1199,7 @@ export default function StocksClient() {
                         className="mobile-action-btn mobile-action-btn--view"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setViewingCharges({ type: 'stock', data: stock });
+                          setViewingHolding(stock);
                         }}
                         aria-label="View charges"
                       >
@@ -1164,7 +1389,9 @@ export default function StocksClient() {
                       style={{
                         borderBottom: '1px solid rgba(255,255,255,0.02)',
                         transition: 'background 0.2s',
+                        cursor: 'pointer',
                       }}
+                      onClick={() => setViewingHolding(stock)}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background = 'rgba(255,255,255,0.01)')
                       }
@@ -1281,7 +1508,7 @@ export default function StocksClient() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setViewingCharges({ type: 'stock', data: stock });
+                              setViewingHolding(stock);
                             }}
                             title="Estimated Exit Charges"
                             style={{
@@ -1755,19 +1982,7 @@ export default function StocksClient() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setViewingCharges({
-                                type: 'stock',
-                                data: {
-                                  symbol:
-                                    stocks.find((s) => s.id === transaction.stockId)?.symbol ||
-                                    'STOCK',
-                                  quantity: transaction.quantity,
-                                  currentPrice: transaction.price,
-                                  exchange:
-                                    stocks.find((s) => s.id === transaction.stockId)?.exchange ||
-                                    'NSE',
-                                },
-                              });
+                              openHoldingFromTransaction(transaction);
                             }}
                             style={{
                               background: 'none',
@@ -1979,16 +2194,15 @@ export default function StocksClient() {
           }}
         >
           <div
-            className="modal-card"
+            className="modal-card entry-sheet entry-sheet--wide"
             style={{
               background: '#050505',
               border: '1px solid #1a1a1a',
               width: '100%',
-              maxWidth: '500px',
+              maxWidth: '820px',
             }}
           >
-            {/* Mobile handle indicator */}
-            <div className="mobile-modal-sheet__handle hide-desktop" />
+            <div className="entry-sheet__handle" />
             <div
               style={{
                 display: 'flex',
@@ -2037,10 +2251,7 @@ export default function StocksClient() {
             </div>
 
             {modalType === 'stock' && (
-              <form
-                onSubmit={handleStockSubmit}
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-              >
+              <form onSubmit={handleStockSubmit} className="entry-form">
                 <div style={{ position: 'relative' }}>
                   <label
                     style={{
@@ -2324,7 +2535,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Trade value</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        ₹{initialBuyChargePreview.turnover.toFixed(2)}
+                        {formatInr(initialBuyChargePreview.turnover)}
                       </span>
                     </div>
                     <div
@@ -2336,7 +2547,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
                       <span style={{ color: '#fff', fontWeight: '800' }}>
-                        ₹{initialBuyChargePreview.taxes.toFixed(2)}
+                        {formatInr(initialBuyChargePreview.taxes)}
                       </span>
                     </div>
                     <div
@@ -2348,7 +2559,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Estimated bank debit</span>
                       <span style={{ color: '#34d399', fontWeight: '900' }}>
-                        ₹{initialBuyChargePreview.settlementAmount.toFixed(2)}
+                        {formatInr(initialBuyChargePreview.settlementAmount)}
                       </span>
                     </div>
                   </div>
@@ -2410,10 +2621,7 @@ export default function StocksClient() {
             )}
 
             {modalType === 'transaction' && (
-              <form
-                onSubmit={handleTransactionSubmit}
-                style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-              >
+              <form onSubmit={handleTransactionSubmit} className="entry-form">
                 <div>
                   <label
                     style={{
@@ -2603,7 +2811,7 @@ export default function StocksClient() {
                       step="0.01"
                       value={
                         transactionChargePreview
-                          ? transactionChargePreview.brokerage.toFixed(2)
+                          ? transactionChargePreview.total.brokerage.toFixed(2)
                           : ''
                       }
                       readOnly
@@ -2635,7 +2843,9 @@ export default function StocksClient() {
                       type="number"
                       step="0.01"
                       value={
-                        transactionChargePreview ? transactionChargePreview.taxes.toFixed(2) : ''
+                        transactionChargePreview
+                          ? transactionChargePreview.total.taxes.toFixed(2)
+                          : ''
                       }
                       readOnly
                       placeholder="Calculated automatically"
@@ -2670,8 +2880,55 @@ export default function StocksClient() {
                         marginBottom: '12px',
                       }}
                     >
-                      Zerodha Delivery Estimate
+                      Zerodha {getChargeModeLabel(transactionChargePreview.mode)} Estimate
                     </div>
+                    {transactionType === 'SELL' && (
+                      <>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: '8px',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          <span style={{ color: '#94a3b8' }}>Charge mode</span>
+                          <span style={{ fontWeight: '800', color: '#fff' }}>
+                            {getChargeModeLabel(transactionChargePreview.mode)}
+                          </span>
+                        </div>
+                        {transactionChargePreview.intradayQuantity > 0 && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              marginBottom: '8px',
+                              fontSize: '0.85rem',
+                            }}
+                          >
+                            <span style={{ color: '#94a3b8' }}>Same-day sell qty</span>
+                            <span style={{ fontWeight: '800', color: '#fff' }}>
+                              {transactionChargePreview.intradayQuantity}
+                            </span>
+                          </div>
+                        )}
+                        {transactionChargePreview.deliveryQuantity > 0 && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              marginBottom: '8px',
+                              fontSize: '0.85rem',
+                            }}
+                          >
+                            <span style={{ color: '#94a3b8' }}>Delivery sell qty</span>
+                            <span style={{ fontWeight: '800', color: '#fff' }}>
+                              {transactionChargePreview.deliveryQuantity}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     <div
                       style={{
                         display: 'flex',
@@ -2682,7 +2939,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Trade value</span>
                       <span style={{ fontWeight: '800', color: '#fff' }}>
-                        ₹{transactionChargePreview.turnover.toFixed(2)}
+                        {formatInr(transactionChargePreview.total.turnover)}
                       </span>
                     </div>
                     <div
@@ -2695,7 +2952,7 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Brokerage</span>
                       <span style={{ fontWeight: '800', color: '#fff' }}>
-                        ₹{transactionChargePreview.brokerage.toFixed(2)}
+                        {formatInr(transactionChargePreview.total.brokerage)}
                       </span>
                     </div>
                     <div
@@ -2708,7 +2965,20 @@ export default function StocksClient() {
                     >
                       <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
                       <span style={{ fontWeight: '800', color: '#fff' }}>
-                        ₹{transactionChargePreview.taxes.toFixed(2)}
+                        {formatInr(transactionChargePreview.total.taxes)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#94a3b8' }}>DP charges</span>
+                      <span style={{ fontWeight: '800', color: '#fff' }}>
+                        {formatInr(transactionChargePreview.total.dpCharges)}
                       </span>
                     </div>
                     <div
@@ -2722,7 +2992,7 @@ export default function StocksClient() {
                         {transactionType === 'BUY' ? 'Estimated debit' : 'Estimated credit'}
                       </span>
                       <span style={{ fontWeight: '900', color: '#34d399' }}>
-                        ₹{transactionChargePreview.settlementAmount.toFixed(2)}
+                        {formatInr(transactionChargePreview.total.settlementAmount)}
                       </span>
                     </div>
                   </div>
@@ -2787,23 +3057,24 @@ export default function StocksClient() {
           </div>
         </div>
       )}
-      {viewingCharges && (
+      {viewingHolding && (
         <div
           className="modal-overlay"
           style={{ zIndex: 1100 }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setViewingCharges(null);
+            if (e.target === e.currentTarget) setViewingHolding(null);
           }}
         >
           <div
-            className="modal-card"
+            className="modal-card entry-sheet"
             style={{
               background: '#050505',
               border: '1px solid #1a1a1a',
               width: '100%',
-              maxWidth: '450px',
+              maxWidth: '560px',
             }}
           >
+            <div className="entry-sheet__handle" />
             <div
               style={{
                 display: 'flex',
@@ -2828,11 +3099,11 @@ export default function StocksClient() {
                   <Eye size={20} />
                 </div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0 }}>
-                  Charge Breakdown
+                  Holding Details
                 </h2>
               </div>
               <button
-                onClick={() => setViewingCharges(null)}
+                onClick={() => setViewingHolding(null)}
                 style={{
                   background: 'rgba(255,255,255,0.05)',
                   border: 'none',
@@ -2850,140 +3121,191 @@ export default function StocksClient() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {viewingCharges.type === 'stock' &&
-                (() => {
-                  const stock = viewingCharges.data;
-                  const chargeMeta = getStockChargeMeta(stock.exchange);
-                  const charges = calculateStockCharges(
-                    'SELL',
-                    stock.quantity,
-                    stock.currentPrice,
-                    stock.exchange
-                  );
-                  return (
-                    <>
+            <div style={{ display: 'grid', gap: '16px' }}>
+              {(() => {
+                const deliveryMeta = getStockChargeMeta(viewingHolding.exchange, 'delivery');
+                return (
+                  <>
+                    <div
+                      style={{
+                        padding: '16px',
+                        borderRadius: '20px',
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700' }}>
+                        {viewingHolding.exchange} holding
+                      </div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>
+                        {viewingHolding.symbol}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '4px' }}>
+                        {viewingHolding.companyName}
+                      </div>
+                    </div>
+
+                    <div className="detail-grid">
+                      <div className="detail-stat">
+                        <div className="detail-stat__label">Quantity</div>
+                        <div className="detail-stat__value">{viewingHolding.quantity}</div>
+                      </div>
+                      <div className="detail-stat">
+                        <div className="detail-stat__label">Average Cost</div>
+                        <div className="detail-stat__value">
+                          {formatInr(viewingHolding.avgPrice)}
+                        </div>
+                      </div>
+                      <div className="detail-stat">
+                        <div className="detail-stat__label">Current Value</div>
+                        <div className="detail-stat__value">
+                          {formatInr(viewingHolding.currentValue)}
+                        </div>
+                      </div>
+                      <div className="detail-stat">
+                        <div className="detail-stat__label">Live P&L</div>
+                        <div
+                          className={`detail-stat__value ${
+                            viewingHolding.pnl >= 0
+                              ? 'entry-summary__value--positive'
+                              : 'entry-summary__value--negative'
+                          }`}
+                        >
+                          {formatSignedInr(viewingHolding.pnl)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {viewingHoldingChargePreview && (
                       <div
+                        className="entry-summary"
                         style={{
-                          padding: '16px',
-                          borderRadius: '16px',
-                          background: 'rgba(255,255,255,0.02)',
-                          border: '1px solid rgba(255,255,255,0.05)',
-                          marginBottom: '8px',
+                          background: 'rgba(99, 102, 241, 0.08)',
+                          border: '1px solid rgba(99, 102, 241, 0.16)',
                         }}
                       >
                         <div
                           style={{
-                            fontSize: '0.8rem',
-                            color: '#64748b',
-                            marginBottom: '4px',
-                            fontWeight: '700',
+                            fontSize: '0.72rem',
+                            fontWeight: '900',
+                            color: '#818cf8',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
                           }}
                         >
-                          Estimating for Selling
+                          Zerodha Exit Estimate
                         </div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                          {stock.symbol} - {stock.quantity} shares @ ₹
-                          {stock.currentPrice.toFixed(2)}
+                        <div className="entry-summary__row">
+                          <span className="entry-summary__label">Mode</span>
+                          <span className="entry-summary__value">
+                            {getChargeModeLabel(viewingHoldingChargePreview.mode)}
+                          </span>
                         </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {[
-                          {
-                            label: 'Brokerage',
-                            value: charges.brokerage,
-                            sub: chargeMeta.brokerageLabel,
-                          },
-                          {
-                            label: 'STT/CTT',
-                            value: charges.stt,
-                            sub: `${chargeMeta.sttRate}% delivery STT`,
-                          },
-                          {
-                            label: 'Transaction Charges',
-                            value: charges.transactionCharges,
-                            sub: `${chargeMeta.transactionChargeRate}% (${chargeMeta.exchange})`,
-                          },
-                          {
-                            label: 'SEBI Charges',
-                            value: charges.sebiCharges,
-                            sub: '₹10 per crore turnover',
-                          },
-                          {
-                            label: 'Stamp Duty',
-                            value: charges.stampDuty,
-                            sub: '0.015% (Buy only)',
-                          },
-                          { label: 'GST', value: charges.gst, sub: '18% on fees' },
-                          {
-                            label: 'DP Charges',
-                            value: charges.dpCharges,
-                            sub: '₹13 plus GST on sell delivery',
-                          },
-                        ].map((item, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <div>
-                              <div
-                                style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '600' }}
-                              >
-                                {item.label}
-                              </div>
-                              <div style={{ fontSize: '0.65rem', color: '#475569' }}>
-                                {item.sub}
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                fontWeight: '800',
-                                color: item.value > 0 ? '#fff' : '#475569',
-                              }}
-                            >
-                              ₹{item.value.toFixed(2)}
-                            </div>
+                        {viewingHoldingChargePreview.intradayQuantity > 0 && (
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">Intraday quantity</span>
+                            <span className="entry-summary__value">
+                              {viewingHoldingChargePreview.intradayQuantity}
+                            </span>
                           </div>
-                        ))}
+                        )}
+                        {viewingHoldingChargePreview.deliveryQuantity > 0 && (
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">Delivery quantity</span>
+                            <span className="entry-summary__value">
+                              {viewingHoldingChargePreview.deliveryQuantity}
+                            </span>
+                          </div>
+                        )}
+                        <div className="entry-summary__row">
+                          <span className="entry-summary__label">Brokerage</span>
+                          <span className="entry-summary__value">
+                            {formatInr(viewingHoldingChargePreview.total.brokerage)}
+                          </span>
+                        </div>
+                        <div className="entry-summary__row">
+                          <span className="entry-summary__label">Taxes and charges</span>
+                          <span className="entry-summary__value">
+                            {formatInr(viewingHoldingChargePreview.total.taxes)}
+                          </span>
+                        </div>
+                        <div className="entry-summary__row">
+                          <span className="entry-summary__label">DP charges</span>
+                          <span className="entry-summary__value">
+                            {formatInr(viewingHoldingChargePreview.total.dpCharges)}
+                          </span>
+                        </div>
+                        <div className="entry-summary__row">
+                          <span className="entry-summary__label">Expected credit after sell</span>
+                          <span className="entry-summary__value entry-summary__value--positive">
+                            {formatInr(viewingHoldingChargePreview.total.settlementAmount)}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                          Brokerage follows {deliveryMeta.exchange} market rules, with same-day sell
+                          quantity treated as intraday and DP shown only for demat-delivery debit.
+                        </div>
                       </div>
+                    )}
 
+                    <div>
                       <div
                         style={{
-                          marginTop: '20px',
-                          paddingTop: '20px',
-                          borderTop: '1px solid #111111',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          marginBottom: '12px',
                         }}
                       >
-                        <div style={{ fontWeight: '900', color: '#fff' }}>Total Charges</div>
-                        <div style={{ fontSize: '1.25rem', fontWeight: '950', color: '#6366f1' }}>
-                          ₹{charges.total.toFixed(2)}
+                        <div style={{ fontWeight: '800', color: '#fff' }}>Recent Transactions</div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          {viewingHoldingTransactions.length} latest
                         </div>
                       </div>
-                      <p
-                        style={{
-                          fontSize: '0.7rem',
-                          color: '#64748b',
-                          marginTop: '12px',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        * Estimates use Zerodha delivery charges for the selected exchange.
-                      </p>
-                    </>
-                  );
-                })()}
+                      {viewingHoldingTransactions.length > 0 ? (
+                        <div className="detail-timeline">
+                          {viewingHoldingTransactions.map((transaction) => (
+                            <div key={transaction.id} className="detail-timeline__item">
+                              <div>
+                                <strong>{transaction.transactionType}</strong>
+                                <span>
+                                  {transaction.quantity} @ {formatInr(transaction.price)}
+                                </span>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <strong>
+                                  {transaction.transactionType === 'BUY' ? '-' : '+'}
+                                  {formatInr(transaction.totalAmount)}
+                                </strong>
+                                <span>
+                                  {dateFormatter.format(new Date(transaction.transactionDate))}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            padding: '16px',
+                            borderRadius: '16px',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            color: '#64748b',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          No transaction history found for this holding yet.
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             <button
-              onClick={() => setViewingCharges(null)}
+              onClick={() => setViewingHolding(null)}
               style={{
                 width: '100%',
                 background: '#111111',

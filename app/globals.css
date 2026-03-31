@@ -2307,6 +2307,232 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
+.entry-sheet {
+  width: 100%;
+  max-width: 560px;
+}
+
+.entry-sheet--wide {
+  max-width: 920px;
+}
+
+.entry-sheet__handle {
+  display: none;
+  width: 54px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  margin: 0 auto 16px;
+}
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.entry-summary {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.entry-summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.85rem;
+}
+
+.entry-summary__label {
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.entry-summary__value {
+  color: #fff;
+  font-weight: 800;
+  text-align: right;
+}
+
+.entry-summary__value--positive {
+  color: #34d399;
+}
+
+.entry-summary__value--negative {
+  color: #fb7185;
+}
+
+.entry-inline-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #000000;
+  border: 1px solid #111111;
+}
+
+.entry-inline-toggle--triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.entry-inline-toggle button,
+.entry-inline-toggle select {
+  min-height: 42px;
+}
+
+.entry-toggle-btn {
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 10px 8px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.entry-toggle-btn--active {
+  background: rgba(99, 102, 241, 0.12);
+  color: #fff;
+}
+
+.entry-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.entry-actions .btn-primary,
+.entry-actions button {
+  margin-top: 0;
+}
+
+.entry-secondary-btn {
+  min-height: 52px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.detail-stat {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detail-stat__label {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.detail-stat__value {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.detail-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-timeline__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-timeline__item strong {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.detail-timeline__item span {
+  color: #64748b;
+  font-size: 0.74rem;
+}
+
+@media (min-width: 640px) {
+  .entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entry-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .entry-sheet {
+    max-width: none;
+  }
+
+  .entry-sheet__handle {
+    display: block;
+  }
+
+  .modal-card.entry-sheet,
+  .modal-card.entry-sheet--wide {
+    padding-top: 12px;
+  }
+
+  .form-input {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .modal-title {
+    margin-bottom: 8px;
+  }
+
+  .modal-subtitle {
+    margin-bottom: 18px;
+    font-size: 0.85rem;
+  }
+}
+
 /* Primary action button */
 .btn-primary {
   margin-top: 12px;

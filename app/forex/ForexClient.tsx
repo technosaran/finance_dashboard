@@ -1,13 +1,35 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/config/supabase';
 import { useAuth } from '@/app/components/AuthContext';
 import { useNotifications } from '@/app/components/NotificationContext';
-import { Plus, Trash2, Edit3 } from 'lucide-react';
+import { useLedger } from '@/app/components/FinanceContext';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
+  Calendar,
+  DollarSign,
+  Edit3,
+  History,
+  LineChart,
+  Plus,
+  Trash2,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 
-// Simplified type based on database schema for local use
 export interface ForexTrade {
   id: number;
   transaction_type: string;
@@ -17,19 +39,35 @@ export interface ForexTrade {
   transaction_date: string | null;
 }
 
+const formatUsd = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(value);
+
+const formatDate = (value: string | null) =>
+  value
+    ? new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(
+        new Date(value)
+      )
+    : 'N/A';
+
 export default function ForexClient() {
   const { user } = useAuth();
+  const { accounts } = useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
   const [trades, setTrades] = useState<ForexTrade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'lifetime'>('overview');
 
-  // Form states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [amount, setAmount] = useState('');
-  const [transactionType, setTransactionType] = useState('BUY');
+  const [transactionType, setTransactionType] = useState<'BUY' | 'SELL'>('BUY');
   const [notes, setNotes] = useState('');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [accountId, setAccountId] = useState<number | ''>('');
 
   const fetchTrades = useCallback(async () => {
     if (!user) return;
@@ -38,84 +76,72 @@ export default function ForexClient() {
       const { data, error } = await supabase
         .from('forex_transactions')
         .select('*')
+        .order('transaction_date', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setTrades(data as ForexTrade[]);
+      setTrades((data || []) as ForexTrade[]);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch forex trades';
-      showNotification('error', errorMessage);
+      showNotification(
+        'error',
+        error instanceof Error ? error.message : 'Failed to load forex trades'
+      );
     } finally {
       setLoading(false);
     }
-  }, [user, showNotification]);
+  }, [showNotification, user]);
 
   useEffect(() => {
     fetchTrades();
   }, [fetchTrades]);
 
   const stats = useMemo(() => {
-    const totalTraded = trades.reduce((sum, t) => sum + (t.amount || 0), 0);
-    const buyCount = trades.filter((t) => t.transaction_type === 'BUY').length;
-    const sellCount = trades.filter((t) => t.transaction_type === 'SELL').length;
-
-    return { totalTraded, buyCount, sellCount, totalTrades: trades.length };
+    const buyVolume = trades
+      .filter((trade) => trade.transaction_type === 'BUY')
+      .reduce((sum, trade) => sum + trade.amount, 0);
+    const sellVolume = trades
+      .filter((trade) => trade.transaction_type === 'SELL')
+      .reduce((sum, trade) => sum + trade.amount, 0);
+    return {
+      totalVolume: buyVolume + sellVolume,
+      buyVolume,
+      sellVolume,
+      averageTicket: trades.length ? (buyVolume + sellVolume) / trades.length : 0,
+    };
   }, [trades]);
 
-  const handleAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !amount) return;
+  const monthlyFlow = useMemo(() => {
+    const grouped = trades.reduce(
+      (acc, trade) => {
+        const baseDate = new Date(trade.transaction_date || new Date().toISOString());
+        const key = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}`;
+        if (!acc[key]) {
+          acc[key] = {
+            key,
+            label: baseDate.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
+            buy: 0,
+            sell: 0,
+          };
+        }
+        if (trade.transaction_type === 'BUY') acc[key].buy += trade.amount;
+        else acc[key].sell += trade.amount;
+        return acc;
+      },
+      {} as Record<string, { key: string; label: string; buy: number; sell: number }>
+    );
 
-    const tradeData = {
-      user_id: user.id,
-      amount: parseFloat(amount),
-      transaction_type: transactionType,
-      notes: notes || null,
-      transaction_date: transactionDate || null,
-    };
+    return Object.values(grouped)
+      .sort((left, right) => left.key.localeCompare(right.key))
+      .slice(-6)
+      .map((item) => ({ ...item, net: item.sell - item.buy, volume: item.buy + item.sell }));
+  }, [trades]);
 
-    try {
-      if (editId) {
-        const { error } = await supabase
-          .from('forex_transactions')
-          .update(tradeData)
-          .eq('id', editId);
-        if (error) throw error;
-        showNotification('success', 'Trade updated successfully');
-      } else {
-        const { error } = await supabase.from('forex_transactions').insert([tradeData]);
-        if (error) throw error;
-        showNotification('success', 'Trade logged successfully');
-      }
-      resetForm();
-      fetchTrades();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error saving trade';
-      showNotification('error', errorMessage);
-    }
-  };
-
-  const handleEdit = (t: ForexTrade) => {
-    setEditId(t.id);
-    setAmount(t.amount?.toString() || '');
-    setTransactionType(t.transaction_type || 'BUY');
-    setNotes(t.notes || '');
-    setTransactionDate(t.transaction_date || '');
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (await customConfirm({ title: 'Delete Trade', message: 'Are you sure?', type: 'warning' })) {
-      try {
-        const { error } = await supabase.from('forex_transactions').delete().eq('id', id);
-        if (error) throw error;
-        showNotification('success', 'Trade removed');
-        fetchTrades();
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Error';
-        showNotification('error', errorMessage);
-      }
-    }
-  };
+  const sideMix = useMemo(
+    () => [
+      { name: 'BUY', value: stats.buyVolume, color: '#10b981' },
+      { name: 'SELL', value: stats.sellVolume, color: '#f97316' },
+    ],
+    [stats.buyVolume, stats.sellVolume]
+  );
 
   const resetForm = () => {
     setEditId(null);
@@ -123,7 +149,74 @@ export default function ForexClient() {
     setTransactionType('BUY');
     setNotes('');
     setTransactionDate(new Date().toISOString().split('T')[0]);
-    setIsModalOpen(false);
+    setAccountId('');
+  };
+
+  const handleEdit = (trade: ForexTrade) => {
+    setEditId(trade.id);
+    setAmount(trade.amount.toString());
+    setTransactionType((trade.transaction_type as 'BUY' | 'SELL') || 'BUY');
+    setNotes(trade.notes || '');
+    setTransactionDate(trade.transaction_date || new Date().toISOString().split('T')[0]);
+    setAccountId(trade.account_id || '');
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!user || !amount) return;
+
+    const payload = {
+      user_id: user.id,
+      amount: Number(amount),
+      transaction_type: transactionType,
+      notes: notes || null,
+      transaction_date: transactionDate || null,
+      account_id: accountId ? Number(accountId) : null,
+    };
+
+    try {
+      if (editId) {
+        const { error } = await supabase
+          .from('forex_transactions')
+          .update(payload)
+          .eq('id', editId);
+        if (error) throw error;
+        showNotification('success', 'Forex trade updated');
+      } else {
+        const { error } = await supabase.from('forex_transactions').insert([payload]);
+        if (error) throw error;
+        showNotification('success', 'Forex trade added');
+      }
+      setIsModalOpen(false);
+      resetForm();
+      fetchTrades();
+    } catch (error: unknown) {
+      showNotification(
+        'error',
+        error instanceof Error ? error.message : 'Unable to save forex trade'
+      );
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    const confirmed = await customConfirm({
+      title: 'Delete Trade',
+      message: 'Delete this forex transaction?',
+      type: 'warning',
+      confirmLabel: 'Delete',
+    });
+
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('forex_transactions').delete().eq('id', id);
+    if (error) {
+      showNotification('error', error.message);
+      return;
+    }
+
+    showNotification('success', 'Forex trade removed');
+    fetchTrades();
   };
 
   if (loading) {
@@ -137,491 +230,464 @@ export default function ForexClient() {
           minHeight: '80vh',
         }}
       >
-        <div style={{ color: '#f43f5e', fontWeight: 'bold' }}>Loading forex market data...</div>
+        <div style={{ color: '#38bdf8', fontWeight: 800 }}>Loading forex history...</div>
       </div>
     );
   }
 
   return (
     <div className="page-container">
-      {/* Header */}
-      <div
-        className="flex-col-mobile"
-        style={{
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '24px',
-          gap: '20px',
-        }}
-      >
+      <div className="page-header" style={{ marginBottom: '28px' }}>
         <div>
           <h1
+            className="page-title"
             style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
+              background: 'linear-gradient(135deg, #38bdf8 0%, #2dd4bf 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
           >
             Forex Terminal
           </h1>
-          <p style={{ color: '#64748b', marginTop: '8px' }}>
-            Log and manage your global currency exchange transactions.
+          <p className="page-subtitle">
+            USD-first tracking with overview, history, and lifetime flow.
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          style={{
-            background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '16px',
-            fontWeight: '900',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            boxShadow: '0 8px 16px rgba(225, 29, 72, 0.2)',
-            transition: 'all 0.3s',
+          onClick={() => {
+            resetForm();
+            setIsModalOpen(true);
           }}
+          className="header-add-btn"
+          style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%)' }}
         >
-          <Plus size={20} /> Record Trade
+          <Plus size={18} /> Record Trade
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '32px' }}>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Total Volume
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))',
+          gap: '16px',
+          marginBottom: '24px',
+        }}
+      >
+        {[
+          {
+            label: 'Total Volume',
+            value: formatUsd(stats.totalVolume),
+            sub: `${trades.length} trades`,
+            icon: <DollarSign size={20} />,
+            color: '#38bdf8',
+          },
+          {
+            label: 'Buy Volume',
+            value: formatUsd(stats.buyVolume),
+            sub: 'USD outflow',
+            icon: <TrendingUp size={20} />,
+            color: '#10b981',
+          },
+          {
+            label: 'Sell Volume',
+            value: formatUsd(stats.sellVolume),
+            sub: 'USD inflow',
+            icon: <LineChart size={20} />,
+            color: '#f97316',
+          },
+          {
+            label: 'Average Ticket',
+            value: formatUsd(stats.averageTicket),
+            sub: 'Per trade',
+            icon: <Calendar size={20} />,
+            color: '#2dd4bf',
+          },
+        ].map((card) => (
+          <div key={card.label} className="premium-card" style={{ padding: '20px' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: `${card.color}18`,
+                  color: card.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {card.icon}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.74rem',
+                  color: '#64748b',
+                  textTransform: 'uppercase',
+                  fontWeight: 800,
+                }}
+              >
+                {card.label}
+              </div>
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 900 }}>{card.value}</div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
+              {card.sub}
+            </div>
           </div>
-          <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#fff' }}>
-            ₹{stats.totalTraded.toLocaleString()}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Buy Trades
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#10b981' }}
-          >
-            {stats.buyCount}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Sell Trades
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#f43f5e' }}
-          >
-            {stats.sellCount}
-          </div>
-        </div>
-        <div
-          className="premium-card"
-          style={{
-            background: '#050505',
-            padding: '20px',
-            borderRadius: '24px',
-            border: '1px solid #111111',
-          }}
-        >
-          <div
-            style={{
-              color: '#64748b',
-              fontSize: '0.65rem',
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '10px',
-            }}
-          >
-            Total Trades
-          </div>
-          <div
-            style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', fontWeight: '950', color: '#f43f5e' }}
-          >
-            {stats.totalTrades}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Trade List */}
-      <div className="premium-card" style={{ padding: 0, overflow: 'hidden' }}>
-        {trades.length > 0 ? (
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              textAlign: 'left',
-              fontSize: '0.9rem',
-            }}
+      <div
+        className="mobile-tab-scroll"
+        style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '20px' }}
+      >
+        {(['overview', 'history', 'lifetime'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={activeTab === tab ? 'period-btn period-btn--active' : 'period-btn'}
+            style={
+              activeTab === tab
+                ? {
+                    borderColor: '#38bdf8',
+                    color: '#38bdf8',
+                    background: 'rgba(56, 189, 248, 0.08)',
+                  }
+                : {}
+            }
           >
-            <thead>
-              <tr
-                style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid #111111' }}
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab !== 'history' && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+            gap: '24px',
+            marginBottom: '24px',
+          }}
+        >
+          <div className="premium-card" style={{ padding: '22px' }}>
+            <div style={{ fontWeight: 800, color: '#fff', marginBottom: '14px' }}>
+              {activeTab === 'overview' ? 'Monthly Flow' : 'Lifetime Volume Trend'}
+            </div>
+            <div style={{ height: '260px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyFlow}>
+                  <defs>
+                    <linearGradient id="forexFlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.36} />
+                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b' }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#64748b' }}
+                    tickFormatter={(value) => `$${Math.round(value / 1000)}k`}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{
+                      background: '#020617',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '14px',
+                    }}
+                    formatter={(value) => formatUsd(Number(value || 0))}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey={activeTab === 'overview' ? 'net' : 'volume'}
+                    stroke="#38bdf8"
+                    strokeWidth={3}
+                    fill="url(#forexFlow)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="premium-card" style={{ padding: '22px' }}>
+            <div style={{ fontWeight: 800, color: '#fff', marginBottom: '14px' }}>Buy vs Sell</div>
+            <div style={{ height: '260px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sideMix.filter((item) => item.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={56}
+                    outerRadius={90}
+                    paddingAngle={3}
+                  >
+                    {sideMix
+                      .filter((item) => item.value > 0)
+                      .map((item) => (
+                        <Cell key={item.name} fill={item.color} />
+                      ))}
+                  </Pie>
+                  <RechartsTooltip
+                    contentStyle={{
+                      background: '#020617',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '14px',
+                    }}
+                    formatter={(value) => formatUsd(Number(value || 0))}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="premium-card" style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <History size={18} color="#38bdf8" />
+          <div style={{ fontWeight: 800, color: '#fff' }}>
+            {activeTab === 'history' ? 'Trade History' : 'Latest Forex Entries'}
+          </div>
+        </div>
+        {trades.length > 0 ? (
+          <div style={{ display: 'grid', gap: '8px' }}>
+            {trades.map((trade) => (
+              <div
+                key={trade.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  padding: '14px',
+                  borderRadius: '18px',
+                  background: 'rgba(255,255,255,0.03)',
+                }}
               >
-                <th
+                <div
                   style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '14px',
+                    background:
+                      trade.transaction_type === 'BUY'
+                        ? 'rgba(16,185,129,0.12)'
+                        : 'rgba(249,115,22,0.12)',
+                    color: trade.transaction_type === 'BUY' ? '#10b981' : '#f97316',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  Type
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                  }}
-                >
-                  Amount
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Date
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Notes
-                </th>
-                <th
-                  style={{
-                    padding: '16px',
-                    color: '#64748b',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    textAlign: 'center',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {trades.map((trade) => (
-                <tr key={trade.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                  <td style={{ padding: '16px' }}>
-                    <span
-                      style={{
-                        fontSize: '0.75rem',
-                        fontWeight: '900',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        background:
-                          trade.transaction_type === 'BUY'
-                            ? 'rgba(16, 185, 129, 0.1)'
-                            : 'rgba(244, 63, 94, 0.1)',
-                        color: trade.transaction_type === 'BUY' ? '#10b981' : '#f43f5e',
-                      }}
-                    >
-                      {trade.transaction_type}
-                    </span>
-                  </td>
-                  <td
+                  <DollarSign size={18} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, color: '#fff' }}>{trade.transaction_type}</div>
+                  <div
                     style={{
-                      padding: '16px',
-                      textAlign: 'right',
-                      fontWeight: '800',
-                      color: '#fff',
+                      fontSize: '0.74rem',
+                      color: '#64748b',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
-                    ₹{trade.amount?.toLocaleString()}
-                  </td>
-                  <td style={{ padding: '16px', color: '#cbd5e1' }}>
-                    {trade.transaction_date
-                      ? new Date(trade.transaction_date).toLocaleDateString()
-                      : 'N/A'}
-                  </td>
-                  <td style={{ padding: '16px', color: '#64748b' }}>{trade.notes || '-'}</td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
+                    {trade.notes || 'No pair/desk note'} • {formatDate(trade.transaction_date)}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      color: trade.transaction_type === 'BUY' ? '#10b981' : '#f97316',
+                    }}
+                  >
+                    {formatUsd(trade.amount)}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: '6px',
+                      marginTop: '6px',
+                    }}
+                  >
                     <button
                       onClick={() => handleEdit(trade)}
+                      className="action-btn action-btn--edit"
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#64748b',
-                        cursor: 'pointer',
-                        marginRight: '12px',
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Edit3 size={18} />
+                      <Edit3 size={14} />
                     </button>
                     <button
                       onClick={() => handleDelete(trade.id)}
+                      className="action-btn action-btn--delete"
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#f43f5e',
-                        cursor: 'pointer',
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={14} />
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
+          <div style={{ padding: '56px 20px', textAlign: 'center', color: '#64748b' }}>
             <EmptyPortfolioVisual />
-            <div style={{ fontWeight: '700', marginTop: '20px' }}>No forex transactions found.</div>
+            <div style={{ marginTop: '16px', fontWeight: 700 }}>No forex transactions found.</div>
           </div>
         )}
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            className="premium-card fade-in"
-            style={{
-              width: '100%',
-              maxWidth: '500px',
-              background: '#050505',
-              padding: '32px',
-              borderRadius: '24px',
-            }}
-          >
-            <h2 style={{ color: '#fff', marginBottom: '24px', fontWeight: '900' }}>
-              {editId ? 'Edit Trade' : 'Record Forex Trade'}
-            </h2>
-            <form
-              onSubmit={handleAction}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+        <div className="modal-overlay">
+          <div className="modal-card entry-sheet">
+            <div className="entry-sheet__handle" />
+            <button
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
+              className="modal-close"
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Action *
-                  </label>
-                  <select
-                    required
-                    value={transactionType}
-                    onChange={(e) => setTransactionType(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  >
-                    <option value="BUY">BUY</option>
-                    <option value="SELL">SELL</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Amount *
-                  </label>
-                  <input
-                    required
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    type="number"
-                    step="any"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Date
-                  </label>
-                  <input
-                    value={transactionDate}
-                    onChange={(e) => setTransactionDate(e.target.value)}
-                    type="date"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      color: '#64748b',
-                      fontSize: '0.8rem',
-                      fontWeight: '700',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Notes
-                  </label>
-                  <input
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    type="text"
-                    placeholder="Currency pair, fees..."
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid #111111',
-                      borderRadius: '12px',
-                      color: '#fff',
-                    }}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+              <X size={20} />
+            </button>
+            <h2 className="modal-title">{editId ? 'Edit Forex Trade' : 'Add Forex Trade'}</h2>
+            <p className="modal-subtitle">
+              USD-focused entry form with account linking and desk notes.
+            </p>
+            <form onSubmit={handleSubmit} className="entry-form">
+              <div className="entry-inline-toggle">
                 <button
                   type="button"
-                  onClick={resetForm}
-                  style={{
-                    flex: 1,
-                    padding: '14px',
-                    background: 'transparent',
-                    border: '1px solid #111111',
-                    color: '#94a3b8',
-                    borderRadius: '12px',
-                    fontWeight: '700',
-                    cursor: 'pointer',
+                  className={
+                    transactionType === 'BUY'
+                      ? 'entry-toggle-btn entry-toggle-btn--active'
+                      : 'entry-toggle-btn'
+                  }
+                  onClick={() => setTransactionType('BUY')}
+                >
+                  BUY
+                </button>
+                <button
+                  type="button"
+                  className={
+                    transactionType === 'SELL'
+                      ? 'entry-toggle-btn entry-toggle-btn--active'
+                      : 'entry-toggle-btn'
+                  }
+                  onClick={() => setTransactionType('SELL')}
+                >
+                  SELL
+                </button>
+              </div>
+              <div className="entry-grid">
+                <div>
+                  <label className="form-label">Amount (USD)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    required
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Trade Date</label>
+                  <input
+                    type="date"
+                    value={transactionDate}
+                    onChange={(event) => setTransactionDate(event.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+              <div className="entry-grid">
+                <div>
+                  <label className="form-label">Pair / Notes</label>
+                  <input
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="USDINR, travel card, remittance..."
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Linked Account</label>
+                  <select
+                    value={accountId}
+                    onChange={(event) =>
+                      setAccountId(event.target.value ? Number(event.target.value) : '')
+                    }
+                    className="form-input"
+                  >
+                    <option value="">No account</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div
+                className="entry-summary"
+                style={{
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.16)',
+                }}
+              >
+                <div className="entry-summary__row">
+                  <span className="entry-summary__label">Side</span>
+                  <span className="entry-summary__value">{transactionType}</span>
+                </div>
+                <div className="entry-summary__row">
+                  <span className="entry-summary__label">Amount</span>
+                  <span className="entry-summary__value">{formatUsd(Number(amount) || 0)}</span>
+                </div>
+              </div>
+              <div className="entry-actions">
+                <button
+                  type="button"
+                  className="entry-secondary-btn"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{
-                    flex: 1,
-                    padding: '14px',
-                    background: '#e11d48',
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '12px',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                  }}
+                  className="btn-primary"
+                  style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%)' }}
                 >
-                  {editId ? 'Save Changes' : 'Record Trade'}
+                  {editId ? 'Update Trade' : 'Save Trade'}
                 </button>
               </div>
             </form>

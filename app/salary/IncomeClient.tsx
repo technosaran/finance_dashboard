@@ -1,37 +1,56 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { useLedger, useSettings } from '../components/FinanceContext';
 import { Transaction, TransactionCategory } from '@/lib/types';
 import {
-  TrendingUp,
-  Calendar as CalendarIcon,
-  Plus,
-  X,
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
   Briefcase,
   DollarSign,
   Edit3,
-  Trash2,
-  TrendingDown,
-  BarChart3,
-  PieChart,
-  HandCoins,
   Gem,
-  LineChart,
+  HandCoins,
   Home,
+  LineChart,
+  Plus,
+  Trash2,
+  TrendingUp,
   Waves,
+  X,
 } from 'lucide-react';
 
-// Help map categories to icons and colors
-const categoryConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  Salary: { icon: <Briefcase size={18} />, color: '#10b981', label: 'Salary' },
-  Business: { icon: <HandCoins size={18} />, color: '#6366f1', label: 'Business' },
-  Investment: { icon: <LineChart size={18} />, color: '#f59e0b', label: 'Investment' },
-  Dividend: { icon: <Gem size={18} />, color: '#ec4899', label: 'Dividend' },
-  Rent: { icon: <Home size={18} />, color: '#8b5cf6', label: 'Rent' },
-  Bonus: { icon: <Waves size={18} />, color: '#06b6d4', label: 'Bonus' },
-  Other: { icon: <DollarSign size={18} />, color: '#94a3b8', label: 'Other' },
+const COLORS = ['#10b981', '#22c55e', '#14b8a6', '#f59e0b', '#ec4899', '#6366f1'];
+const formatInr = (value: number) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(value);
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(
+    new Date(value)
+  );
+
+const categoryConfig: Record<string, { icon: React.ReactNode; color: string }> = {
+  Salary: { icon: <Briefcase size={16} />, color: '#10b981' },
+  Business: { icon: <HandCoins size={16} />, color: '#6366f1' },
+  Investment: { icon: <LineChart size={16} />, color: '#f59e0b' },
+  Dividend: { icon: <Gem size={16} />, color: '#ec4899' },
+  Rent: { icon: <Home size={16} />, color: '#8b5cf6' },
+  Bonus: { icon: <Waves size={16} />, color: '#06b6d4' },
+  Other: { icon: <DollarSign size={16} />, color: '#94a3b8' },
 };
 
 export default function IncomeClient() {
@@ -39,133 +58,92 @@ export default function IncomeClient() {
     useLedger();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'history'>('overview');
   const [selectedPeriod, setSelectedPeriod] = useState<'month' | 'quarter' | 'year' | 'all'>(
     'year'
   );
   const [selectedAccountId, setSelectedAccountId] = useState<number | ''>(
     settings.defaultSalaryAccountId || ''
   );
-
-  // Income Data Filtering (Global Income)
-  const incomeItems = useMemo(
-    () => transactions.filter((t) => t.type === 'Income'),
-    [transactions]
-  );
-
-  // Calculate stats based on selected period
-  const stats = useMemo(() => {
-    const now = new Date();
-    let filteredItems = incomeItems;
-
-    switch (selectedPeriod) {
-      case 'month':
-        filteredItems = incomeItems.filter((item) => {
-          const itemDate = new Date(item.date);
-          return (
-            itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()
-          );
-        });
-        break;
-      case 'quarter':
-        const currentQuarter = Math.floor(now.getMonth() / 3);
-        filteredItems = incomeItems.filter((item) => {
-          const itemDate = new Date(item.date);
-          const itemQuarter = Math.floor(itemDate.getMonth() / 3);
-          return itemQuarter === currentQuarter && itemDate.getFullYear() === now.getFullYear();
-        });
-        break;
-      case 'year':
-        filteredItems = incomeItems.filter((item) => {
-          const itemDate = new Date(item.date);
-          return itemDate.getFullYear() === now.getFullYear();
-        });
-        break;
-      default:
-        filteredItems = incomeItems;
-    }
-
-    const total = filteredItems.reduce((sum, item) => sum + item.amount, 0);
-    const count = filteredItems.length;
-    const average = count > 0 ? total / count : 0;
-
-    // Get unique sources
-    const sourcesSet = new Set(filteredItems.map((item) => item.description || 'Unknown'));
-    const sourcesCount = sourcesSet.size;
-
-    // Calculate trend (comparing to previous period)
-    let previousTotal = 0;
-    if (selectedPeriod === 'month') {
-      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const prevMonthItems = incomeItems.filter((item) => {
-        const itemDate = new Date(item.date);
-        return (
-          itemDate.getMonth() === prevMonth.getMonth() &&
-          itemDate.getFullYear() === prevMonth.getFullYear()
-        );
-      });
-      previousTotal = prevMonthItems.reduce((sum, item) => sum + item.amount, 0);
-    }
-
-    const trend = previousTotal > 0 ? ((total - previousTotal) / previousTotal) * 100 : 0;
-
-    return { total, count, average, sourcesCount, trend, filteredItems };
-  }, [incomeItems, selectedPeriod]);
-
-  // Process Category Breakdown
-  const categoryData = useMemo(() => {
-    const map = stats.filteredItems.reduce(
-      (acc, item) => {
-        const cat = (item.category as string) || 'Other';
-        if (!acc[cat]) acc[cat] = 0;
-        acc[cat] += item.amount;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return Object.entries(map)
-      .map(([name, total]) => ({ name, total }))
-      .sort((a, b) => b.total - a.total);
-  }, [stats.filteredItems]);
-
-  // Form State
   const [amount, setAmount] = useState('');
   const [sourceName, setSourceName] = useState('');
   const [category, setCategory] = useState<TransactionCategory>('Salary');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const handleLogIncome = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || !sourceName) return;
+  const incomeItems = useMemo(
+    () =>
+      transactions
+        .filter((item) => item.type === 'Income')
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    [transactions]
+  );
 
-    const txData = {
-      date,
-      description: sourceName,
-      category,
-      type: 'Income' as const,
-      amount: parseFloat(amount),
-      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
+  const filteredItems = useMemo(() => {
+    if (selectedPeriod === 'all') return incomeItems;
+    const now = new Date();
+    const start =
+      selectedPeriod === 'month'
+        ? new Date(now.getFullYear(), now.getMonth(), 1)
+        : selectedPeriod === 'quarter'
+          ? new Date(now.getFullYear(), now.getMonth() - 2, 1)
+          : new Date(now.getFullYear(), 0, 1);
+
+    return incomeItems.filter((item) => new Date(item.date) >= start);
+  }, [incomeItems, selectedPeriod]);
+
+  const stats = useMemo(() => {
+    const total = filteredItems.reduce((sum, item) => sum + item.amount, 0);
+    return {
+      total,
+      average: filteredItems.length ? total / filteredItems.length : 0,
+      sources: new Set(filteredItems.map((item) => item.description)).size,
+      count: filteredItems.length,
     };
+  }, [filteredItems]);
 
-    if (editId) {
-      await updateTransaction(editId, txData);
-      showNotification('success', 'Income updated successfully');
-    } else {
-      await addTransaction(txData);
-      showNotification('success', 'Income saved');
-    }
+  const categoryData = useMemo(() => {
+    const grouped = filteredItems.reduce(
+      (acc, item) => {
+        const key = item.category || 'Other';
+        acc[key] = (acc[key] || 0) + item.amount;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+  }, [filteredItems]);
 
-    resetForm();
-    setIsModalOpen(false);
-  };
+  const monthlyData = useMemo(() => {
+    const grouped = filteredItems.reduce(
+      (acc, item) => {
+        const current = new Date(item.date);
+        const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+        if (!acc[key]) {
+          acc[key] = {
+            key,
+            label: current.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
+            total: 0,
+          };
+        }
+        acc[key].total += item.amount;
+        return acc;
+      },
+      {} as Record<string, { key: string; label: string; total: number }>
+    );
+    return Object.values(grouped)
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .slice(-6);
+  }, [filteredItems]);
 
   const resetForm = () => {
     setAmount('');
     setSourceName('');
     setCategory('Salary');
     setDate(new Date().toISOString().split('T')[0]);
+    setSelectedAccountId(settings.defaultSalaryAccountId || '');
     setEditId(null);
   };
 
@@ -175,20 +153,32 @@ export default function IncomeClient() {
     setSourceName(item.description);
     setCategory(item.category as TransactionCategory);
     setDate(item.date);
+    setSelectedAccountId(item.accountId || '');
     setIsModalOpen(true);
   };
 
-  const getPeriodLabel = () => {
-    switch (selectedPeriod) {
-      case 'month':
-        return 'This Month';
-      case 'quarter':
-        return 'This Quarter';
-      case 'year':
-        return 'This Year';
-      default:
-        return 'All Time';
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!amount || !sourceName) return;
+    const payload = {
+      date,
+      description: sourceName.trim(),
+      category,
+      type: 'Income' as const,
+      amount: Number(amount),
+      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
+    };
+
+    if (editId) {
+      await updateTransaction(editId, payload);
+      showNotification('success', 'Income updated');
+    } else {
+      await addTransaction(payload);
+      showNotification('success', 'Income added');
     }
+
+    setIsModalOpen(false);
+    resetForm();
   };
 
   if (loading) return null;
@@ -196,11 +186,10 @@ export default function IncomeClient() {
   return (
     <div
       className="main-content"
-      style={{ backgroundColor: '#000000', minHeight: '100vh', paddingBottom: '100px' }}
+      style={{ backgroundColor: '#000000', minHeight: '100vh', padding: '16px' }}
     >
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
-        {/* Header Section */}
-        <div className="page-header" style={{ marginBottom: '40px' }}>
+      <div style={{ maxWidth: '1220px', margin: '0 auto' }}>
+        <div className="page-header" style={{ marginBottom: '28px' }}>
           <div>
             <h1
               className="page-title"
@@ -212,426 +201,402 @@ export default function IncomeClient() {
             >
               Income Tracker
             </h1>
-            <p className="page-subtitle">Manage and track your earnings across all sources</p>
+            <p className="page-subtitle">Family-style overview with fast entry and live charts.</p>
           </div>
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="header-add-btn header-add-btn--green pulse-on-hover"
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="header-add-btn header-add-btn--green"
           >
-            <Plus size={20} strokeWidth={3} /> Add income
+            <Plus size={18} /> Add Income
           </button>
         </div>
 
-        {/* Period Selector & Quick Filters */}
         <div
           className="mobile-tab-scroll"
-          style={{
-            marginBottom: '32px',
-            display: 'flex',
-            width: 'fit-content',
-            gap: '8px',
-            paddingBottom: '8px',
-          }}
+          style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '16px' }}
         >
           {(['month', 'quarter', 'year', 'all'] as const).map((period) => (
             <button
               key={period}
               onClick={() => setSelectedPeriod(period)}
               className={selectedPeriod === period ? 'period-btn period-btn--active' : 'period-btn'}
-              style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+              style={selectedPeriod === period ? { borderColor: '#10b981', color: '#10b981' } : {}}
             >
-              {period === 'month'
-                ? 'Month'
-                : period === 'quarter'
-                  ? 'Quarter'
-                  : period === 'year'
-                    ? 'Year'
-                    : 'All'}
+              {period === 'all' ? 'All' : period}
             </button>
           ))}
         </div>
 
-        {/* Stats Row */}
         <div
-          className="section-fade-in"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-            gap: '20px',
-            marginBottom: '40px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
           }}
         >
-          <div className="stat-card stat-card--green">
-            <div className="stat-card__glow" style={{ background: 'rgba(16, 185, 129, 0.15)' }} />
+          {[
+            {
+              label: 'Total Earned',
+              value: formatInr(stats.total),
+              sub: `${stats.count} entries`,
+              icon: <DollarSign size={20} />,
+              color: '#10b981',
+            },
+            {
+              label: 'Average Credit',
+              value: formatInr(stats.average),
+              sub: 'Per entry',
+              icon: <TrendingUp size={20} />,
+              color: '#22c55e',
+            },
+            {
+              label: 'Income Sources',
+              value: String(stats.sources),
+              sub: 'Active now',
+              icon: <Briefcase size={20} />,
+              color: '#06b6d4',
+            },
+          ].map((card) => (
             <div
-              className="stat-card__icon-box"
-              style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}
+              key={card.label}
+              className="stat-card stat-card--green"
+              style={{ minHeight: 'auto' }}
             >
-              <DollarSign size={24} />
-            </div>
-            <div className="stat-card__meta">Total Earned ({getPeriodLabel()})</div>
-            <div className="stat-card__value">₹{stats.total.toLocaleString()}</div>
-            {selectedPeriod === 'month' && stats.trend !== 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.85rem',
-                  color: stats.trend > 0 ? '#10b981' : '#ef4444',
-                  fontWeight: '800',
-                  marginTop: '4px',
-                }}
-              >
-                {stats.trend > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {Math.abs(stats.trend).toFixed(1)}% vs last month
+              <div className="stat-card__glow" style={{ background: `${card.color}22` }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      background: `${card.color}18`,
+                      color: card.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {card.icon}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.74rem',
+                      fontWeight: '800',
+                      color: '#64748b',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {card.label}
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.7rem', fontWeight: '900' }}>{card.value}</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
+                  {card.sub}
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="stat-card stat-card--indigo">
-            <div className="stat-card__glow" style={{ background: 'rgba(99, 102, 241, 0.15)' }} />
-            <div
-              className="stat-card__icon-box"
-              style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}
-            >
-              <BarChart3 size={24} />
             </div>
-            <div className="stat-card__meta">Average credit</div>
-            <div className="stat-card__value">
-              ₹{stats.average.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </div>
-            <div
-              style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', fontWeight: '600' }}
-            >
-              From {stats.count} entr{stats.count !== 1 ? 'ies' : 'y'}
-            </div>
-          </div>
-
-          <div className="stat-card stat-card--amber">
-            <div className="stat-card__glow" style={{ background: 'rgba(245, 158, 11, 0.15)' }} />
-            <div
-              className="stat-card__icon-box"
-              style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}
-            >
-              <Briefcase size={24} />
-            </div>
-            <div className="stat-card__meta">Income Sources</div>
-            <div className="stat-card__value">{stats.sourcesCount}</div>
-            <div
-              style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', fontWeight: '600' }}
-            >
-              Active {getPeriodLabel().toLowerCase()}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Major Content Row */}
         <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
-            gap: '32px',
-          }}
+          className="mobile-tab-scroll"
+          style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '20px' }}
         >
-          {/* Category & Source Breakdown */}
-          <div className="premium-card">
+          {(['overview', 'history'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={activeTab === tab ? 'period-btn period-btn--active' : 'period-btn'}
+              style={
+                activeTab === tab
+                  ? {
+                      borderColor: '#10b981',
+                      color: '#10b981',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                    }
+                  : {}
+              }
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'overview' ? (
+          <div style={{ display: 'grid', gap: '24px' }}>
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '24px',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                paddingBottom: '16px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+                gap: '24px',
               }}
             >
-              <div
-                style={{
-                  padding: '10px',
-                  borderRadius: '12px',
-                  background: 'rgba(168, 85, 247, 0.1)',
-                  color: '#a855f7',
-                }}
-              >
-                <PieChart size={20} />
-              </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0 }}>
-                Breakdown by Type
-              </h3>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {categoryData.length > 0 ? (
-                categoryData.map((cat) => {
-                  const config = categoryConfig[cat.name] || categoryConfig.Other;
-                  const percentage = (cat.total / stats.total) * 100;
-                  return (
-                    <div
-                      key={cat.name}
-                      style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        padding: '16px',
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div
-                            style={{
-                              width: '36px',
-                              height: '36px',
-                              borderRadius: '10px',
-                              background: `${config.color}20`,
-                              color: config.color,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifySelf: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {config.icon}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: '800', color: '#fff', fontSize: '1rem' }}>
-                              {config.label}
-                            </div>
-                            <div
-                              style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}
-                            >
-                              {percentage.toFixed(1)}% of total
-                            </div>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div
-                            style={{ fontWeight: '900', color: config.color, fontSize: '1.1rem' }}
-                          >
-                            ₹{cat.total.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '6px',
-                          background: 'rgba(255,255,255,0.05)',
-                          borderRadius: '10px',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${percentage}%`,
-                            height: '100%',
-                            background: config.color,
-                            borderRadius: '10px',
-                            transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)',
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                  <HandCoins size={40} style={{ opacity: 0.2, marginBottom: '16px' }} />
-                  <p>No income data for this period</p>
+              <div className="premium-card" style={{ padding: '22px' }}>
+                <div style={{ fontWeight: '800', color: '#fff', marginBottom: '16px' }}>
+                  Income Trend
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* History / Timeline */}
-          <div className="premium-card">
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '24px',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                paddingBottom: '16px',
-              }}
-            >
-              <div
-                style={{
-                  padding: '10px',
-                  borderRadius: '12px',
-                  background: 'rgba(6, 182, 212, 0.1)',
-                  color: '#06b6d4',
-                }}
-              >
-                <CalendarIcon size={20} />
+                <div style={{ height: '260px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlyData}>
+                      <defs>
+                        <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.38} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b' }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b' }}
+                        tickFormatter={(value) => `₹${Math.round(value / 1000)}k`}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          background: '#020617',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '14px',
+                        }}
+                        formatter={(value) => formatInr(Number(value || 0))}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        fill="url(#incomeFill)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', margin: 0 }}>
-                Recent income
-              </h3>
+              <div className="premium-card" style={{ padding: '22px' }}>
+                <div style={{ fontWeight: '800', color: '#fff', marginBottom: '16px' }}>
+                  Income Mix
+                </div>
+                <div style={{ height: '260px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={56}
+                        outerRadius={90}
+                        paddingAngle={3}
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={
+                              categoryConfig[entry.name]?.color || COLORS[index % COLORS.length]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        contentStyle={{
+                          background: '#020617',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '14px',
+                        }}
+                        formatter={(value) => formatInr(Number(value || 0))}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                maxHeight: '550px',
-                overflowY: 'auto',
-                paddingRight: '8px',
-              }}
-            >
-              {stats.filteredItems.length > 0 ? (
-                stats.filteredItems.slice(0, 15).map((item) => {
+            <div className="premium-card" style={{ padding: '22px' }}>
+              <div style={{ fontWeight: '800', color: '#fff', marginBottom: '14px' }}>
+                Recent Income
+              </div>
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {filteredItems.slice(0, 5).map((item) => {
                   const config = categoryConfig[item.category as string] || categoryConfig.Other;
                   return (
                     <div
                       key={item.id}
-                      className="tx-row"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '14px',
-                        borderRadius: '14px',
+                        gap: '12px',
+                        padding: '12px 14px',
+                        borderRadius: '16px',
                         background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.05)',
                       }}
                     >
                       <div
                         style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '12px',
+                          background: `${config.color}18`,
+                          color: config.color,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '14px',
-                          flex: 1,
-                          minWidth: 0,
+                          justifyContent: 'center',
+                          flexShrink: 0,
                         }}
                       >
+                        {config.icon}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div
                           style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            background: `${config.color}15`,
-                            color: config.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
+                            fontWeight: '800',
+                            color: '#fff',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                           }}
                         >
-                          {config.icon}
+                          {item.description}
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontWeight: '700',
-                              color: '#fff',
-                              fontSize: '0.95rem',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {item.description}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
-                            {new Date(item.date).toLocaleDateString('en-IN', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </div>
+                        <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                          {item.category} • {formatDate(item.date)}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ fontWeight: '900', color: '#10b981', fontSize: '1rem' }}>
-                          +₹{item.amount.toLocaleString()}
-                        </div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="mobile-action-btn"
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              border: 'none',
-                              color: '#94a3b8',
-                              padding: '8px',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button
-                            onClick={async () => {
-                              const ok = await customConfirm({
-                                title: 'Delete Entry',
-                                message: 'Delete this income record?',
-                                type: 'error',
-                                confirmLabel: 'Delete',
-                              });
-                              if (ok) {
-                                await deleteTransaction(item.id);
-                                showNotification('success', 'Income deleted');
-                              }
-                            }}
-                            className="mobile-action-btn"
-                            style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: 'none',
-                              color: '#ef4444',
-                              padding: '8px',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                      <div style={{ fontWeight: '900', color: '#10b981' }}>
+                        {formatInr(item.amount)}
                       </div>
                     </div>
                   );
-                })
-              ) : (
-                <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
-                  <TrendingUp size={48} style={{ opacity: 0.1, marginBottom: '20px' }} />
-                  <p style={{ fontWeight: '700', fontSize: '1.1rem', color: '#94a3b8' }}>
-                    No income history found
-                  </p>
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    style={{
-                      marginTop: '20px',
-                      padding: '12px 24px',
-                      borderRadius: '12px',
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                      color: '#fff',
-                      border: 'none',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Add first income
-                  </button>
-                </div>
-              )}
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="premium-card" style={{ padding: '20px' }}>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {filteredItems.map((item) => {
+                const config = categoryConfig[item.category as string] || categoryConfig.Other;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '14px',
+                      padding: '14px',
+                      borderRadius: '18px',
+                      background: 'rgba(255,255,255,0.03)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '12px',
+                        background: `${config.color}18`,
+                        color: config.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {config.icon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontWeight: '800',
+                          color: '#fff',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {item.description}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                        {item.category} • {formatDate(item.date)}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: '900', color: '#10b981' }}>
+                        {formatInr(item.amount)}
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          gap: '6px',
+                          marginTop: '6px',
+                        }}
+                      >
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="action-btn action-btn--edit"
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const ok = await customConfirm({
+                              title: 'Delete Income',
+                              message: `Delete ${item.description}?`,
+                              type: 'error',
+                              confirmLabel: 'Delete',
+                            });
+                            if (ok) {
+                              await deleteTransaction(item.id);
+                              showNotification('success', 'Income deleted');
+                            }
+                          }}
+                          className="action-btn action-btn--delete"
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '500px' }}>
+          <div className="modal-card entry-sheet">
+            <div className="entry-sheet__handle" />
             <button
               onClick={() => {
                 setIsModalOpen(false);
@@ -641,95 +606,106 @@ export default function IncomeClient() {
             >
               <X size={20} />
             </button>
-
-            <h2 className="modal-title">{editId ? 'Edit income' : 'Add income'}</h2>
-            <p className="modal-subtitle">
-              {editId
-                ? 'Modify your earning details'
-                : 'Add a salary, freelance payment, or another incoming amount'}
-            </p>
-
-            <form
-              onSubmit={handleLogIncome}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-            >
-              <div>
-                <label className="form-label">Source</label>
-                <input
-                  value={sourceName}
-                  onChange={(e) => setSourceName(e.target.value)}
-                  placeholder="e.g. Google, Fiverr, Rental"
-                  required
-                  className="form-input form-input--green"
-                  autoFocus
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <h2 className="modal-title">{editId ? 'Edit Income' : 'Add Income'}</h2>
+            <p className="modal-subtitle">Compact entry form for quick mobile logging.</p>
+            <form onSubmit={handleSubmit} className="entry-form">
+              <div className="entry-grid">
                 <div>
-                  <label className="form-label">Amount (₹)</label>
+                  <label className="form-label">Source</label>
                   <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
+                    value={sourceName}
+                    onChange={(event) => setSourceName(event.target.value)}
                     required
+                    autoFocus
                     className="form-input form-input--green"
                   />
                 </div>
                 <div>
+                  <label className="form-label">Amount</label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    required
+                    className="form-input form-input--green"
+                  />
+                </div>
+              </div>
+              <div className="entry-grid entry-grid--three">
+                <div>
                   <label className="form-label">Category</label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as TransactionCategory)}
+                    onChange={(event) => setCategory(event.target.value as TransactionCategory)}
                     className="form-input form-input--green"
-                    style={{ padding: '16px' }}
                   >
-                    {Object.keys(categoryConfig).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
+                    {Object.keys(categoryConfig).map((item) => (
+                      <option key={item} value={item}>
+                        {item}
                       </option>
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label className="form-label">Date</label>
                   <input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(event) => setDate(event.target.value)}
                     className="form-input form-input--green"
                   />
                 </div>
                 <div>
-                  <label className="form-label">Credit account</label>
+                  <label className="form-label">Account</label>
                   <select
                     value={selectedAccountId}
-                    onChange={(e) =>
-                      setSelectedAccountId(e.target.value ? Number(e.target.value) : '')
+                    onChange={(event) =>
+                      setSelectedAccountId(event.target.value ? Number(event.target.value) : '')
                     }
                     className="form-input form-input--green"
                   >
-                    <option value="">No account link</option>
-                    {accounts.map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} (₹{acc.balance.toLocaleString()})
+                    <option value="">No account</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
-
-              <button
-                type="submit"
-                className="btn-primary btn-primary--green"
-                style={{ marginTop: '10px' }}
+              <div
+                className="entry-summary"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.16)',
+                }}
               >
-                {editId ? 'Update Record' : 'Save Income Entry'}
-              </button>
+                <div className="entry-summary__row">
+                  <span className="entry-summary__label">Source</span>
+                  <span className="entry-summary__value">{sourceName || 'Untitled income'}</span>
+                </div>
+                <div className="entry-summary__row">
+                  <span className="entry-summary__label">Credit</span>
+                  <span className="entry-summary__value entry-summary__value--positive">
+                    {formatInr(Number(amount) || 0)}
+                  </span>
+                </div>
+              </div>
+              <div className="entry-actions">
+                <button
+                  type="button"
+                  className="entry-secondary-btn"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary btn-primary--green">
+                  {editId ? 'Update Income' : 'Save Income'}
+                </button>
+              </div>
             </form>
           </div>
         </div>

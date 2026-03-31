@@ -1182,35 +1182,15 @@ export default function FnOClient() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.85)',
-            backdropFilter: 'blur(12px)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-            padding: 'clamp(12px, 3vw, 20px)',
-          }}
-        >
+        <div className="modal-overlay">
           <div
+            className="modal-card entry-sheet entry-sheet--wide"
             style={{
               background: '#050505',
-              width: '100%',
-              maxWidth: '560px',
-              borderRadius: '40px',
-              border: '1px solid #1a1a1a',
-              padding: 'clamp(24px, 5vw, 48px)',
-              position: 'relative',
-              maxHeight: '95vh',
-              overflowY: 'auto',
+              maxWidth: '760px',
             }}
           >
+            <div className="entry-sheet__handle" />
             <button
               onClick={() => {
                 setIsModalOpen(false);
@@ -1246,10 +1226,7 @@ export default function FnOClient() {
               {editId ? 'Manage Position' : 'Log New Context'}
             </h2>
 
-            <form
-              onSubmit={handleAction}
-              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
-            >
+            <form onSubmit={handleAction} className="entry-form">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label
                   style={{

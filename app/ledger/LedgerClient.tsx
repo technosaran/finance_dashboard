@@ -1,48 +1,85 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useNotifications } from '../components/NotificationContext';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import { useLedger } from '../components/FinanceContext';
+import { CSSProperties, FormEvent, useMemo, useState } from 'react';
 import { Transaction } from '@/lib/types';
-import { exportTransactionsToCSV } from '../../lib/utils/export';
 import {
-  Book,
-  Plus,
-  X,
-  Calendar as CalendarIcon,
-  ArrowUpRight,
   ArrowDownRight,
+  ArrowUpRight,
+  Book,
   Download,
   Edit3,
-  Trash2,
-  ArrowRight,
-  Wallet,
-  Tag,
   History,
-  TrendingUp,
-  TrendingDown,
   Layers,
-  Clock,
+  Plus,
+  Search,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+  X,
 } from 'lucide-react';
+import { useLedger } from '../components/FinanceContext';
+import { useNotifications } from '../components/NotificationContext';
 import { EmptyTransactionsVisual } from '../components/Visuals';
+import { exportTransactionsToCSV } from '../../lib/utils/export';
+
+const currencySymbol = '\u20B9';
+const tableHeaders: Array<{ label: string; align?: CSSProperties['textAlign'] }> = [
+  { label: 'Entry' },
+  { label: 'Category' },
+  { label: 'Type' },
+  { label: 'Account' },
+  { label: 'Date' },
+  { label: 'Amount', align: 'right' },
+  { label: 'Actions', align: 'right' },
+];
+
+const getHeaderCellStyle = (align: CSSProperties['textAlign'] = 'left'): CSSProperties => ({
+  padding: '16px 18px',
+  textAlign: align,
+  color: '#7e928e',
+  fontSize: '0.72rem',
+  fontWeight: 900,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  position: 'sticky',
+  top: 0,
+  background: 'rgba(6, 12, 16, 0.96)',
+  zIndex: 1,
+});
+
+const getBodyCellStyle = (align: CSSProperties['textAlign'] = 'left'): CSSProperties => ({
+  padding: '18px',
+  borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+  verticalAlign: 'middle',
+  textAlign: align,
+});
+
+const getPillStyle = (background: string, color: string): CSSProperties => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '4px 10px',
+  borderRadius: '999px',
+  background,
+  color,
+  fontSize: '0.72rem',
+  fontWeight: 900,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+});
 
 export default function LedgerClient() {
   const { transactions, accounts, addTransaction, updateTransaction, deleteTransaction, loading } =
     useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
-  // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [filterAccount, setFilterAccount] = useState<number | 'All'>('All');
   const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense'>('All');
 
-  // Form State
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -50,33 +87,68 @@ export default function LedgerClient() {
   const [type, setType] = useState<'Income' | 'Expense'>('Expense');
   const [accountId, setAccountId] = useState<string>('');
 
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!description || !amount || !category) return;
+  const accountNameById = useMemo(
+    () => new Map(accounts.map((account) => [account.id, account.name])),
+    [accounts]
+  );
 
-    const transactionData = {
-      date,
-      description,
-      category,
-      type,
-      amount: parseFloat(amount),
-      accountId: accountId ? parseInt(accountId) : undefined,
-    };
+  const categories = useMemo(
+    () =>
+      ['All', ...new Set(transactions.map((transaction) => String(transaction.category)))].sort(),
+    [transactions]
+  );
 
-    try {
-      if (editId) {
-        await updateTransaction(editId, transactionData);
-        showNotification('success', 'Transaction updated successfully');
-      } else {
-        await addTransaction(transactionData);
-        showNotification('success', 'Transaction recorded successfully');
-      }
-      resetForm();
-      setIsModalOpen(false);
-    } catch (_err) {
-      showNotification('error', 'Failed to save transaction');
-    }
-  };
+  const filteredTransactions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return [...transactions]
+      .filter((transaction) => {
+        const accountName = transaction.accountId
+          ? (accountNameById.get(transaction.accountId) ?? '').toLowerCase()
+          : '';
+        const matchesSearch =
+          normalizedQuery.length === 0 ||
+          transaction.description.toLowerCase().includes(normalizedQuery) ||
+          String(transaction.category).toLowerCase().includes(normalizedQuery) ||
+          accountName.includes(normalizedQuery);
+
+        return (
+          matchesSearch &&
+          (filterCategory === 'All' || String(transaction.category) === filterCategory) &&
+          (filterAccount === 'All' || transaction.accountId === filterAccount) &&
+          (filterType === 'All' || transaction.type === filterType)
+        );
+      })
+      .sort((left, right) => {
+        const dateCompare = right.date.localeCompare(left.date);
+        return dateCompare !== 0 ? dateCompare : right.id - left.id;
+      });
+  }, [transactions, searchQuery, filterCategory, filterAccount, filterType, accountNameById]);
+
+  const stats = useMemo(() => {
+    const income = filteredTransactions
+      .filter((transaction) => transaction.type === 'Income')
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+    const expense = filteredTransactions
+      .filter((transaction) => transaction.type === 'Expense')
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    return { income, expense, balance: income - expense };
+  }, [filteredTransactions]);
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    filterType !== 'All' ||
+    filterCategory !== 'All' ||
+    filterAccount !== 'All';
+
+  const formatCurrency = (value: number) => `${currencySymbol}${value.toLocaleString()}`;
+  const formatDate = (value: string) =>
+    new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
 
   const resetForm = () => {
     setDescription('');
@@ -88,59 +160,52 @@ export default function LedgerClient() {
     setEditId(null);
   };
 
-  const handleEdit = (tx: Transaction) => {
-    setEditId(tx.id);
-    setDescription(tx.description);
-    setCategory(tx.category as string);
-    setAmount(tx.amount.toString());
-    setType(tx.type);
-    setDate(tx.date);
-    setAccountId(tx.accountId ? tx.accountId.toString() : '');
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFilterType('All');
+    setFilterCategory('All');
+    setFilterAccount('All');
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditId(transaction.id);
+    setDescription(transaction.description);
+    setCategory(String(transaction.category));
+    setAmount(transaction.amount.toString());
+    setType(transaction.type);
+    setDate(transaction.date);
+    setAccountId(transaction.accountId ? transaction.accountId.toString() : '');
     setIsModalOpen(true);
   };
 
-  const getAccountName = (id?: number) => {
-    if (!id) return null;
-    const account = accounts.find((a) => a.id === id);
-    return account ? account.name : null;
+  const handleAddTransaction = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!description || !amount || !category) return;
+
+    const transactionData = {
+      date,
+      description,
+      category,
+      type,
+      amount: parseFloat(amount),
+      accountId: accountId ? parseInt(accountId, 10) : undefined,
+    };
+
+    try {
+      if (editId) {
+        await updateTransaction(editId, transactionData);
+        showNotification('success', 'Transaction updated successfully');
+      } else {
+        await addTransaction(transactionData);
+        showNotification('success', 'Transaction recorded successfully');
+      }
+
+      resetForm();
+      setIsModalOpen(false);
+    } catch (_error) {
+      showNotification('error', 'Failed to save transaction');
+    }
   };
-
-  const categories = ['All', ...new Set(transactions.map((t) => t.category))].sort() as string[];
-
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((t) => {
-      const matchesSearch =
-        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (typeof t.category === 'string' &&
-          t.category.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesCategory = filterCategory === 'All' || t.category === filterCategory;
-      const matchesAccount = filterAccount === 'All' || t.accountId === filterAccount;
-      const matchesType = filterType === 'All' || t.type === filterType;
-      const matchesDate = !selectedDate || t.date === selectedDate.toISOString().split('T')[0];
-
-      return matchesSearch && matchesCategory && matchesAccount && matchesType && matchesDate;
-    });
-  }, [transactions, searchQuery, filterCategory, filterAccount, filterType, selectedDate]);
-
-  // Grouping by date
-  const groupedTransactions = useMemo(() => {
-    const groups: { [key: string]: Transaction[] } = {};
-    filteredTransactions.forEach((t) => {
-      if (!groups[t.date]) groups[t.date] = [];
-      groups[t.date].push(t);
-    });
-    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [filteredTransactions]);
-
-  const stats = useMemo(() => {
-    const income = filteredTransactions
-      .filter((t) => t.type === 'Income')
-      .reduce((s, t) => s + t.amount, 0);
-    const expense = filteredTransactions
-      .filter((t) => t.type === 'Expense')
-      .reduce((s, t) => s + t.amount, 0);
-    return { income, expense, balance: income - expense };
-  }, [filteredTransactions]);
 
   if (loading) {
     return (
@@ -186,14 +251,7 @@ export default function LedgerClient() {
       }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Header Section */}
-        <div
-          className="page-header"
-          style={{
-            alignItems: 'flex-start',
-            gap: '24px',
-          }}
-        >
+        <div className="page-header" style={{ alignItems: 'flex-start', gap: '24px' }}>
           <div>
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
@@ -222,11 +280,7 @@ export default function LedgerClient() {
             </div>
             <p
               className="page-subtitle"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <History size={16} /> Transaction history across your accounts
             </p>
@@ -257,7 +311,10 @@ export default function LedgerClient() {
               <Download size={18} /> Export
             </button>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
               className="header-add-btn"
               style={{
                 background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
@@ -269,7 +326,6 @@ export default function LedgerClient() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div
           className="section-fade-in"
           style={{
@@ -322,7 +378,7 @@ export default function LedgerClient() {
               </span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              ₹{stats.income.toLocaleString()}
+              {formatCurrency(stats.income)}
             </div>
           </div>
 
@@ -369,7 +425,7 @@ export default function LedgerClient() {
               </span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              ₹{stats.expense.toLocaleString()}
+              {formatCurrency(stats.expense)}
             </div>
           </div>
 
@@ -416,817 +472,444 @@ export default function LedgerClient() {
               </span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              ₹{stats.balance.toLocaleString()}
+              {formatCurrency(stats.balance)}
             </div>
           </div>
         </div>
 
-        {/* Main Content Area */}
         <div
-          className="flex-col-mobile"
+          className="premium-card fade-in"
           style={{
-            display: 'flex',
-            gap: '32px',
-            alignItems: 'start',
+            width: '100%',
+            padding: 'clamp(16px, 3vw, 24px)',
+            background: 'rgba(11, 21, 25, 0.45)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(32px)',
           }}
         >
-          {/* Left Sidebar: Calendar + Filters */}
           <div
-            style={{
-              flex: '0 0 300px',
-              width: '300px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              position: 'sticky',
-              top: '24px',
-            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}
           >
-            {/* Calendar Component */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                padding: '20px',
-                borderRadius: '20px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '16px',
-                  color: '#818cf8',
-                }}
-              >
-                <CalendarIcon size={14} strokeWidth={2.5} />
-                <span
-                  style={{
-                    fontWeight: '900',
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Date Filter
-                </span>
-                {selectedDate && (
-                  <span
-                    style={{
-                      marginLeft: 'auto',
-                      fontSize: '0.65rem',
-                      fontWeight: '800',
-                      color: '#6366f1',
-                      background: 'rgba(99, 102, 241, 0.15)',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(99, 102, 241, 0.25)',
-                    }}
-                  >
-                    {selectedDate.toLocaleDateString(undefined, {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </span>
-                )}
-              </div>
-              <style>{`
-                .custom-calendar {
-                  width: 100% !important;
-                  background: transparent !important;
-                  border: none !important;
-                  color: var(--text-primary) !important;
-                  font-family: inherit !important;
-                  font-size: 0.78rem !important;
-                }
-                .custom-calendar .react-calendar__tile {
-                  padding: 10px 4px !important;
-                  font-size: 0.72rem !important;
-                  font-weight: 700 !important;
-                  border-radius: 8px !important;
-                  color: var(--text-secondary) !important;
-                  transition: all 0.2s;
-                }
-                .custom-calendar .react-calendar__tile:hover {
-                  background: rgba(99, 102, 241, 0.12) !important;
-                  color: #c7d2fe !important;
-                }
-                .custom-calendar .react-calendar__month-view__days__day--weekend {
-                  color: var(--text-secondary) !important;
-                }
-                .custom-calendar .react-calendar__tile--now {
-                  background: rgba(99, 102, 241, 0.15) !important;
-                  color: #818cf8 !important;
-                  font-weight: 900 !important;
-                  border: 1px solid rgba(99, 102, 241, 0.3) !important;
-                }
-                .custom-calendar .react-calendar__tile--active {
-                  background: #6366f1 !important;
-                  color: white !important;
-                  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
-                }
-                .custom-calendar .react-calendar__tile--active:hover {
-                  background: #4f46e5 !important;
-                  color: white !important;
-                }
-                .custom-calendar .react-calendar__navigation {
-                  margin-bottom: 12px !important;
-                  display: flex;
-                  gap: 4px;
-                  align-items: center;
-                }
-                .custom-calendar .react-calendar__navigation button {
-                  color: var(--text-primary) !important;
-                  font-weight: 800 !important;
-                  border-radius: 8px;
-                  font-size: 0.78rem;
-                  min-width: 32px !important;
-                  padding: 6px 4px !important;
-                  background: rgba(255,255,255,0.04);
-                  transition: background 0.2s;
-                }
-                .custom-calendar .react-calendar__navigation button:hover {
-                  background: rgba(99, 102, 241, 0.12) !important;
-                  color: #c7d2fe !important;
-                }
-                .custom-calendar .react-calendar__navigation__label {
-                  flex-grow: 1 !important;
-                  font-weight: 900 !important;
-                  font-size: 0.8rem !important;
-                  color: var(--text-primary) !important;
-                }
-                .custom-calendar .react-calendar__month-view__weekdays {
-                  margin-bottom: 4px;
-                }
-                .custom-calendar .react-calendar__month-view__weekdays__weekday abbr {
-                  text-decoration: none !important;
-                  color: #475569 !important;
-                  font-weight: 900 !important;
-                  font-size: 0.65rem;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                }
-                .custom-calendar .react-calendar__month-view__days {
-                  gap: 2px;
-                }
-                .custom-calendar .react-calendar__tile:disabled {
-                  color: #1e293b !important;
-                }
-              `}</style>
-              <Calendar
-                onChange={(val) => setSelectedDate(val as Date)}
-                value={selectedDate}
-                className="custom-calendar"
-              />
-              {selectedDate && (
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  style={{
-                    width: '100%',
-                    marginTop: '16px',
-                    background: 'rgba(244, 63, 94, 0.08)',
-                    color: '#f43f5e',
-                    border: '1px solid rgba(244, 63, 94, 0.2)',
-                    padding: '10px',
-                    borderRadius: '12px',
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    transition: 'background 0.2s',
-                    letterSpacing: '0.5px',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.15)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.08)')
-                  }
-                >
-                  <X size={13} /> CLEAR DATE
-                </button>
-              )}
-            </div>
-
-            {/* Search */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                padding: '16px 20px',
-                borderRadius: '20px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '12px',
-                  color: '#818cf8',
-                }}
-              >
-                <Tag size={13} strokeWidth={2.5} />
-                <span
-                  style={{
-                    fontWeight: '900',
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Search
-                </span>
-              </div>
-              <input
-                className="form-input"
-                type="text"
-                placeholder="Description or category…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ fontSize: '0.82rem' }}
-              />
-            </div>
-
-            {/* Type Filter */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                padding: '16px 20px',
-                borderRadius: '20px',
-                border: '1px solid var(--surface-border)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '12px',
-                  color: '#818cf8',
-                }}
-              >
-                <Layers size={13} strokeWidth={2.5} />
-                <span
-                  style={{
-                    fontWeight: '900',
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Type
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {(['All', 'Income', 'Expense'] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setFilterType(t)}
-                    style={{
-                      flex: 1,
-                      padding: '9px 4px',
-                      borderRadius: '10px',
-                      border: '1px solid',
-                      borderColor:
-                        filterType === t
-                          ? t === 'Income'
-                            ? 'rgba(16, 185, 129, 0.4)'
-                            : t === 'Expense'
-                              ? 'rgba(244, 63, 94, 0.4)'
-                              : 'rgba(99, 102, 241, 0.4)'
-                          : '#1a1a1a',
-                      background:
-                        filterType === t
-                          ? t === 'Income'
-                            ? 'rgba(16, 185, 129, 0.12)'
-                            : t === 'Expense'
-                              ? 'rgba(244, 63, 94, 0.12)'
-                              : 'rgba(99, 102, 241, 0.12)'
-                          : 'transparent',
-                      color:
-                        filterType === t
-                          ? t === 'Income'
-                            ? '#34d399'
-                            : t === 'Expense'
-                              ? '#fb7185'
-                              : '#a5b4fc'
-                          : '#475569',
-                      fontSize: '0.65rem',
-                      fontWeight: '900',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {t.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            {categories.length > 2 && (
-              <div
-                style={{
-                  background: 'var(--surface)',
-                  padding: '16px 20px',
-                  borderRadius: '20px',
-                  border: '1px solid var(--surface-border)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px',
-                    color: '#818cf8',
-                  }}
-                >
-                  <Tag size={13} strokeWidth={2.5} />
-                  <span
-                    style={{
-                      fontWeight: '900',
-                      fontSize: '0.7rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                    }}
-                  >
-                    Category
-                  </span>
-                </div>
-                <select
-                  className="form-input"
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  style={{ fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Account Filter */}
-            {accounts.length > 0 && (
-              <div
-                style={{
-                  background: 'var(--surface)',
-                  padding: '16px 20px',
-                  borderRadius: '20px',
-                  border: '1px solid var(--surface-border)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '12px',
-                    color: '#818cf8',
-                  }}
-                >
-                  <Wallet size={13} strokeWidth={2.5} />
-                  <span
-                    style={{
-                      fontWeight: '900',
-                      fontSize: '0.7rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                    }}
-                  >
-                    Account
-                  </span>
-                </div>
-                <select
-                  className="form-input"
-                  value={filterAccount}
-                  onChange={(e) =>
-                    setFilterAccount(
-                      e.target.value === 'All' ? 'All' : parseInt(e.target.value, 10)
-                    )
-                  }
-                  style={{ fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  <option value="All">All Accounts</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Right Side: Timeline of Transactions */}
-          <div style={{ flex: '1 1 500px', minWidth: 0 }}>
-            {/* Results bar */}
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '24px',
-                padding: '12px 20px',
-                background: 'var(--surface)',
-                borderRadius: '16px',
-                border: '1px solid var(--surface-border)',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '16px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
                   style={{
-                    fontSize: '0.75rem',
-                    fontWeight: '900',
-                    color: '#475569',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    color: '#6366f1',
                   }}
                 >
-                  Showing
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.82rem',
-                    fontWeight: '900',
-                    color: '#fff',
-                  }}
-                >
-                  {filteredTransactions.length}
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: '700',
-                    color: '#475569',
-                  }}
-                >
-                  of {transactions.length} entries
-                </span>
-                {(searchQuery ||
-                  filterCategory !== 'All' ||
-                  filterType !== 'All' ||
-                  filterAccount !== 'All' ||
-                  selectedDate) && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setFilterCategory('All');
-                      setFilterAccount('All');
-                      setFilterType('All');
-                      setSelectedDate(null);
-                    }}
+                  <Layers size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '950', color: '#fff', margin: 0 }}>
+                    All Data Window
+                  </h3>
+                  <span
                     style={{
-                      fontSize: '0.68rem',
-                      fontWeight: '800',
-                      color: '#f43f5e',
-                      background: 'rgba(244, 63, 94, 0.08)',
-                      border: '1px solid rgba(244, 63, 94, 0.2)',
-                      padding: '3px 10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      letterSpacing: '0.3px',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      color: '#64748b',
+                      textTransform: 'uppercase',
                     }}
                   >
-                    CLEAR ALL
-                  </button>
-                )}
+                    {filteredTransactions.length} of {transactions.length} records visible
+                  </span>
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#475569',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Clock size={12} />
-                {groupedTransactions.length} {groupedTransactions.length === 1 ? 'DAY' : 'DAYS'}
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <span
+                  style={{
+                    ...getPillStyle('rgba(255, 255, 255, 0.05)', '#9fb0ac'),
+                    padding: '7px 12px',
+                  }}
+                >
+                  Combined view
+                </span>
+                <span
+                  style={{
+                    ...getPillStyle('rgba(30, 166, 114, 0.12)', '#86d4ad'),
+                    padding: '7px 12px',
+                  }}
+                >
+                  Click a row to edit
+                </span>
               </div>
             </div>
-            {groupedTransactions.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-                {groupedTransactions.map(([dateString, group]) => {
-                  const dateObj = new Date(dateString);
-                  const isToday = new Date().toISOString().split('T')[0] === dateString;
 
-                  return (
-                    <div key={dateString}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '16px',
-                          marginBottom: '20px',
-                          position: 'sticky',
-                          top: '0',
-                          zIndex: 10,
-                          background: 'rgba(0, 0, 0, 0.8)',
-                          backdropFilter: 'blur(12px)',
-                          padding: '10px 0',
-                        }}
-                      >
-                        <div
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                background: 'rgba(0, 0, 0, 0.2)',
+                padding: '12px',
+                borderRadius: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
+                <Search
+                  size={14}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#475569',
+                  }}
+                />
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="Description or category..."
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  style={{
+                    fontSize: '0.82rem',
+                    paddingLeft: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    width: '100%',
+                    margin: 0,
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  background: '#0a0a0a',
+                  padding: '3px',
+                  borderRadius: '10px',
+                  border: '1px solid #111111',
+                }}
+              >
+                {(['All', 'Income', 'Expense'] as const).map((filterValue) => (
+                  <button
+                    key={filterValue}
+                    type="button"
+                    onClick={() => setFilterType(filterValue)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background:
+                        filterType === filterValue
+                          ? filterValue === 'Income'
+                            ? '#10b981'
+                            : filterValue === 'Expense'
+                              ? '#f43f5e'
+                              : '#6366f1'
+                          : 'transparent',
+                      color: filterType === filterValue ? '#fff' : '#475569',
+                      fontSize: '0.65rem',
+                      fontWeight: '900',
+                      cursor: 'pointer',
+                      transition: '0.2s',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {filterValue}
+                  </button>
+                ))}
+              </div>
+
+              <select
+                className="form-input"
+                name="categoryFilter"
+                value={filterCategory}
+                onChange={(event) => setFilterCategory(event.target.value)}
+                style={{
+                  fontSize: '0.8rem',
+                  minWidth: '160px',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  margin: 0,
+                }}
+              >
+                {categories.map((categoryName) => (
+                  <option key={categoryName} value={categoryName}>
+                    {categoryName === 'All' ? 'All Categories' : categoryName}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="form-input"
+                name="accountFilter"
+                value={filterAccount}
+                onChange={(event) =>
+                  setFilterAccount(
+                    event.target.value === 'All' ? 'All' : parseInt(event.target.value, 10)
+                  )
+                }
+                style={{
+                  fontSize: '0.8rem',
+                  minWidth: '170px',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  margin: 0,
+                }}
+              >
+                <option value="All">All Accounts</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: '900',
+                    color: '#f43f5e',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    background: 'rgba(244, 63, 94, 0.1)',
+                    border: '1px solid rgba(244, 63, 94, 0.2)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <X size={12} /> Clear filters
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255, 255, 255, 0.03)',
+              overflow: 'hidden',
+            }}
+          >
+            {filteredTransactions.length > 0 ? (
+              <div style={{ maxHeight: '780px', overflow: 'auto' }}>
+                <table
+                  className="table-stack"
+                  style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}
+                >
+                  <thead>
+                    <tr
+                      style={{ background: 'rgba(6, 12, 16, 0.96)', backdropFilter: 'blur(14px)' }}
+                    >
+                      {tableHeaders.map((header) => (
+                        <th key={header.label} style={getHeaderCellStyle(header.align)}>
+                          {header.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTransactions.map((transaction, index) => {
+                      const accountName = transaction.accountId
+                        ? (accountNameById.get(transaction.accountId) ?? 'Unassigned')
+                        : 'Unassigned';
+                      const isIncome = transaction.type === 'Income';
+
+                      return (
+                        <tr
+                          key={transaction.id}
+                          onClick={() => handleEdit(transaction)}
                           style={{
-                            background: isToday ? '#6366f1' : '#111111',
-                            color: '#fff',
-                            padding: '6px 16px',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
-                            fontWeight: '900',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
+                            cursor: 'pointer',
+                            background:
+                              index % 2 === 0
+                                ? 'rgba(255, 255, 255, 0.018)'
+                                : 'rgba(255, 255, 255, 0.032)',
                           }}
                         >
-                          {isToday
-                            ? 'Today'
-                            : dateObj.toLocaleDateString(undefined, {
-                                day: 'numeric',
-                                month: 'short',
-                              })}
-                        </div>
-                        <div
-                          style={{
-                            height: '1px',
-                            flex: 1,
-                            background: 'linear-gradient(to right, #111111, transparent)',
-                          }}
-                        ></div>
-                        <div style={{ fontSize: '0.75rem', fontWeight: '800', color: '#475569' }}>
-                          {group.length} {group.length === 1 ? 'RECORD' : 'RECORDS'}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {group.map((tx) => (
-                          <div
-                            key={tx.id}
-                            onClick={() => handleEdit(tx)}
-                            className="ledger-tx-card"
-                          >
-                            {/* Color side indicator */}
-                            <div
-                              style={{
-                                position: 'absolute',
-                                left: 0,
-                                top: 0,
-                                bottom: 0,
-                                width: '4px',
-                                background: tx.type === 'Income' ? '#10b981' : '#f43f5e',
-                              }}
-                            ></div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                          <td data-label="Entry" style={getBodyCellStyle()}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                               <div
                                 style={{
-                                  width: '48px',
-                                  height: '48px',
-                                  borderRadius: '14px',
-                                  background:
-                                    tx.type === 'Income'
-                                      ? 'rgba(16, 185, 129, 0.1)'
-                                      : 'rgba(244, 63, 94, 0.1)',
+                                  width: '42px',
+                                  height: '42px',
+                                  borderRadius: '12px',
+                                  background: isIncome
+                                    ? 'rgba(16, 185, 129, 0.1)'
+                                    : 'rgba(244, 63, 94, 0.1)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  color: tx.type === 'Income' ? '#10b981' : '#f43f5e',
+                                  color: isIncome ? '#10b981' : '#f43f5e',
+                                  flexShrink: 0,
                                 }}
                               >
-                                {tx.type === 'Income' ? (
-                                  <ArrowUpRight size={20} strokeWidth={2.5} />
+                                {isIncome ? (
+                                  <ArrowUpRight size={18} strokeWidth={2.5} />
                                 ) : (
-                                  <ArrowDownRight size={20} strokeWidth={2.5} />
+                                  <ArrowDownRight size={18} strokeWidth={2.5} />
                                 )}
                               </div>
-                              <div>
+                              <div style={{ minWidth: 0 }}>
                                 <div
                                   style={{
-                                    fontWeight: '800',
-                                    fontSize: '1.05rem',
+                                    fontWeight: 800,
+                                    fontSize: '0.95rem',
                                     color: '#fff',
                                     marginBottom: '4px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
                                   }}
                                 >
-                                  {tx.description}
+                                  {transaction.description}
                                 </div>
                                 <div
                                   style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    flexWrap: 'wrap',
+                                    fontSize: '0.74rem',
+                                    color: '#64748b',
+                                    fontWeight: 700,
                                   }}
                                 >
-                                  <span
-                                    style={{
-                                      fontSize: '0.65rem',
-                                      fontWeight: '900',
-                                      textTransform: 'uppercase',
-                                      color: '#6366f1',
-                                      background: 'rgba(99, 102, 241, 0.1)',
-                                      padding: '2px 8px',
-                                      borderRadius: '6px',
-                                      letterSpacing: '0.5px',
-                                    }}
-                                  >
-                                    <Tag
-                                      size={10}
-                                      style={{ marginRight: '4px', verticalAlign: 'middle' }}
-                                    />{' '}
-                                    {tx.category}
-                                  </span>
-                                  {getAccountName(tx.accountId) && (
-                                    <span
-                                      style={{
-                                        fontSize: '0.75rem',
-                                        color: '#475569',
-                                        fontWeight: '700',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                      }}
-                                    >
-                                      <Wallet size={12} /> {getAccountName(tx.accountId)}
-                                    </span>
-                                  )}
-                                  {/* Detect Source (Automated entries usually have keywords) */}
-                                  {['Stock', 'MF:', 'FnO'].some((key) =>
-                                    tx.description.includes(key)
-                                  ) && (
-                                    <span
-                                      style={{
-                                        fontSize: '0.65rem',
-                                        fontWeight: '900',
-                                        color: '#f59e0b',
-                                        background: 'rgba(245, 158, 11, 0.1)',
-                                        padding: '2px 8px',
-                                        borderRadius: '6px',
-                                      }}
-                                    >
-                                      AUTO ENTRY
-                                    </span>
-                                  )}
+                                  Opens the entry editor
                                 </div>
                               </div>
                             </div>
-
-                            <div
-                              style={{
-                                textAlign: 'right',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '24px',
-                              }}
+                          </td>
+                          <td data-label="Category" style={getBodyCellStyle()}>
+                            <span style={getPillStyle('rgba(99, 102, 241, 0.1)', '#a5b4fc')}>
+                              {transaction.category}
+                            </span>
+                          </td>
+                          <td data-label="Type" style={getBodyCellStyle()}>
+                            <span
+                              style={getPillStyle(
+                                isIncome ? 'rgba(16, 185, 129, 0.12)' : 'rgba(244, 63, 94, 0.12)',
+                                isIncome ? '#34d399' : '#fb7185'
+                              )}
                             >
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-end',
+                              {transaction.type}
+                            </span>
+                          </td>
+                          <td
+                            data-label="Account"
+                            style={{ ...getBodyCellStyle(), color: '#d5dfdc', fontWeight: 700 }}
+                          >
+                            <span
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                            >
+                              <Wallet size={14} color="#6b827d" />
+                              {accountName}
+                            </span>
+                          </td>
+                          <td
+                            data-label="Date"
+                            style={{
+                              ...getBodyCellStyle(),
+                              color: '#9fb0ac',
+                              fontWeight: 700,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {formatDate(transaction.date)}
+                          </td>
+                          <td
+                            data-label="Amount"
+                            style={{
+                              ...getBodyCellStyle('right'),
+                              color: isIncome ? '#10b981' : '#f43f5e',
+                              fontWeight: 950,
+                              fontSize: '1rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {isIncome ? '+' : '-'}
+                            {formatCurrency(transaction.amount)}
+                          </td>
+                          <td data-label="Actions" style={getBodyCellStyle('right')}>
+                            <div
+                              style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}
+                            >
+                              <button
+                                className="action-btn action-btn--edit"
+                                type="button"
+                                style={{ padding: '6px', borderRadius: '8px' }}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleEdit(transaction);
                                 }}
                               >
-                                <div
-                                  style={{
-                                    fontSize: '1.25rem',
-                                    fontWeight: '950',
-                                    color: tx.type === 'Income' ? '#10b981' : '#f43f5e',
-                                  }}
-                                >
-                                  {tx.type === 'Income' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: '0.7rem',
-                                    color: '#475569',
-                                    fontWeight: '600',
-                                    textTransform: 'uppercase',
-                                    marginTop: '2px',
-                                  }}
-                                >
-                                  <Clock
-                                    size={10}
-                                    style={{ marginRight: '4px', verticalAlign: 'baseline' }}
-                                  />{' '}
-                                  Saved
-                                </div>
-                              </div>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button
-                                  className="action-btn action-btn--edit"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEdit(tx);
-                                  }}
-                                >
-                                  <Edit3 size={16} />
-                                </button>
-                                <button
-                                  className="action-btn action-btn--delete"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const isConfirmed = await customConfirm({
-                                      title: 'Delete entry?',
-                                      message: 'This ledger entry will be permanently deleted.',
-                                      type: 'error',
-                                      confirmLabel: 'Delete',
-                                    });
-                                    if (isConfirmed) {
-                                      await deleteTransaction(tx.id);
-                                      showNotification('success', 'Entry deleted');
-                                    }
-                                  }}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                className="action-btn action-btn--delete"
+                                type="button"
+                                style={{ padding: '6px', borderRadius: '8px' }}
+                                onClick={async (event) => {
+                                  event.stopPropagation();
+                                  const isConfirmed = await customConfirm({
+                                    title: 'Delete entry?',
+                                    message: 'This ledger entry will be permanently deleted.',
+                                    type: 'error',
+                                    confirmLabel: 'Delete',
+                                  });
+                                  if (isConfirmed) {
+                                    await deleteTransaction(transaction.id);
+                                    showNotification('success', 'Entry deleted');
+                                  }
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
-              <div
-                style={{
-                  padding: '120px 40px',
-                  textAlign: 'center',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  borderRadius: '32px',
-                  border: '1px dashed #111111',
-                }}
-              >
+              <div style={{ padding: '80px 40px', textAlign: 'center' }}>
                 <EmptyTransactionsVisual />
-                <h3
-                  style={{
-                    color: '#fff',
-                    margin: '0 0 12px 0',
-                  }}
-                >
+                <h3 style={{ color: '#fff', margin: '0 0 12px 0', fontSize: '1.1rem' }}>
                   No matching entries
                 </h3>
                 <p
                   style={{
                     color: '#64748b',
                     maxWidth: '300px',
-                    margin: '0 auto 24px',
-                    lineHeight: '1.6',
-                  }}
-                >
-                  No records match the current filters. Try changing the search or clearing one of
-                  the filters.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setFilterCategory('All');
-                    setFilterAccount('All');
-                    setFilterType('All');
-                    setSelectedDate(null);
-                  }}
-                  style={{
-                    background: '#111111',
-                    border: 'none',
-                    color: '#fff',
-                    padding: '12px 24px',
-                    borderRadius: '12px',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
                     margin: '0 auto',
+                    fontSize: '0.85rem',
                   }}
                 >
-                  Reset Filters <ArrowRight size={16} />
-                </button>
+                  No records found in this window. Try clearing your filters.
+                </p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Entry Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div
-            className="modal-card"
-            style={{
-              maxWidth: '540px',
-            }}
-          >
+          <div className="modal-card" style={{ maxWidth: '540px' }}>
             <div
               style={{
                 display: 'flex',
@@ -1238,7 +921,7 @@ export default function LedgerClient() {
               <h2
                 style={{
                   fontSize: 'clamp(1.4rem, 3vw, 1.75rem)',
-                  fontWeight: '950',
+                  fontWeight: 950,
                   margin: 0,
                   letterSpacing: '-0.02em',
                 }}
@@ -1278,7 +961,7 @@ export default function LedgerClient() {
                         border: 'none',
                         background: type === 'Expense' ? '#f43f5e' : 'transparent',
                         color: type === 'Expense' ? '#fff' : '#475569',
-                        fontWeight: '950',
+                        fontWeight: 950,
                         fontSize: '0.7rem',
                         cursor: 'pointer',
                       }}
@@ -1296,7 +979,7 @@ export default function LedgerClient() {
                         border: 'none',
                         background: type === 'Income' ? '#10b981' : 'transparent',
                         color: type === 'Income' ? '#fff' : '#475569',
-                        fontWeight: '950',
+                        fontWeight: 950,
                         fontSize: '0.7rem',
                         cursor: 'pointer',
                       }}
@@ -1311,7 +994,7 @@ export default function LedgerClient() {
                     className="form-input"
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(event) => setDate(event.target.value)}
                   />
                 </div>
               </div>
@@ -1322,7 +1005,7 @@ export default function LedgerClient() {
                   className="form-input"
                   placeholder="e.g. Monthly Rent Payment"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(event) => setDescription(event.target.value)}
                   required
                 />
               </div>
@@ -1340,18 +1023,18 @@ export default function LedgerClient() {
                     className="form-input"
                     placeholder="Food, Rent, etc."
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(event) => setCategory(event.target.value)}
                     required
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Amount (₹)</label>
+                  <label className="form-label">Amount ({currencySymbol})</label>
                   <input
                     className="form-input"
                     type="number"
                     placeholder="0.00"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(event) => setAmount(event.target.value)}
                     required
                   />
                 </div>
@@ -1362,13 +1045,13 @@ export default function LedgerClient() {
                 <select
                   className="form-input"
                   value={accountId}
-                  onChange={(e) => setAccountId(e.target.value)}
+                  onChange={(event) => setAccountId(event.target.value)}
                   style={{ cursor: 'pointer' }}
                 >
                   <option value="">No Account Linked</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} (₹{acc.balance.toLocaleString()})
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name} ({formatCurrency(account.balance)})
                     </option>
                   ))}
                 </select>
