@@ -15,10 +15,13 @@ import {
   Edit3,
   Trash2,
   Car,
-  Home,
+  Tv,
   Heart,
   GraduationCap,
   Zap,
+  ChevronDown,
+  ChevronUp,
+  Trophy,
 } from 'lucide-react';
 import { EmptyTransactionsVisual } from '../components/Visuals';
 
@@ -30,16 +33,70 @@ export default function ExpensesClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'This Year' | 'All Time'>('This Year');
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<number | ''>(
     settings.defaultSalaryAccountId || ''
   );
 
-  // Expense Data Filtering
-  const expenseItems = transactions.filter(
+  // Category colour palette (each category gets a distinct accent colour)
+  const CATEGORY_COLORS: Record<string, { color: string; bg: string; border: string }> = {
+    Food: {
+      color: '#f59e0b',
+      bg: 'rgba(245,158,11,0.12)',
+      border: 'rgba(245,158,11,0.25)',
+    },
+    Transport: {
+      color: '#3b82f6',
+      bg: 'rgba(59,130,246,0.12)',
+      border: 'rgba(59,130,246,0.25)',
+    },
+    Shopping: {
+      color: '#a855f7',
+      bg: 'rgba(168,85,247,0.12)',
+      border: 'rgba(168,85,247,0.25)',
+    },
+    Healthcare: {
+      color: '#ef4444',
+      bg: 'rgba(239,68,68,0.12)',
+      border: 'rgba(239,68,68,0.25)',
+    },
+    Education: {
+      color: '#22c55e',
+      bg: 'rgba(34,197,94,0.12)',
+      border: 'rgba(34,197,94,0.25)',
+    },
+    Utilities: {
+      color: '#eab308',
+      bg: 'rgba(234,179,8,0.12)',
+      border: 'rgba(234,179,8,0.25)',
+    },
+    Entertainment: {
+      color: '#06b6d4',
+      bg: 'rgba(6,182,212,0.12)',
+      border: 'rgba(6,182,212,0.25)',
+    },
+    Other: {
+      color: '#94a3b8',
+      bg: 'rgba(148,163,184,0.10)',
+      border: 'rgba(148,163,184,0.20)',
+    },
+  };
+
+  const getCategoryPalette = (cat: string) => CATEGORY_COLORS[cat] ?? CATEGORY_COLORS['Other'];
+
+  // All expenses (ignoring tab filter) – used for categories aggregation
+  const allExpenseItems = transactions.filter(
     (t) => t.type === 'Expense' && t.category !== 'Investment'
   );
 
-  // Process Categories
+  // Expenses filtered by active tab
+  const currentYear = new Date().getFullYear();
+  const expenseItems =
+    activeTab === 'This Year'
+      ? allExpenseItems.filter((t) => new Date(t.date).getFullYear() === currentYear)
+      : allExpenseItems;
+
+  // Process Categories (based on filtered expenses)
   const categoriesMap = expenseItems.reduce(
     (acc, item) => {
       const category = item.category || 'Other';
@@ -53,6 +110,7 @@ export default function ExpensesClient() {
 
   const categories = Object.entries(categoriesMap).sort((a, b) => b[1].total - a[1].total);
   const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
+  const topCategory = categories[0];
 
   // Calculate average monthly spending
   const avgMonthlySpending = (() => {
@@ -68,6 +126,12 @@ export default function ExpensesClient() {
     }
     return 0;
   })();
+
+  // Transactions shown in the recent list (sorted newest first)
+  const sortedExpenses = [...expenseItems].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  const visibleExpenses = showAllTransactions ? sortedExpenses : sortedExpenses.slice(0, 8);
 
   // Form State
   const [amount, setAmount] = useState('');
@@ -132,7 +196,7 @@ export default function ExpensesClient() {
       case 'Utilities':
         return <Zap size={24} />;
       case 'Entertainment':
-        return <Home size={24} />;
+        return <Tv size={24} />;
       default:
         return <ShoppingBag size={24} />;
     }
@@ -191,10 +255,13 @@ export default function ExpensesClient() {
                 border: '1px solid #111111',
               }}
             >
-              {['This Year', 'All Time'].map((tab) => (
+              {(['This Year', 'All Time'] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab as 'This Year' | 'All Time')}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setShowAllTransactions(false);
+                  }}
                   aria-pressed={activeTab === tab}
                   style={{
                     padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
@@ -231,105 +298,254 @@ export default function ExpensesClient() {
           className="section-fade-in"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
-            gap: '32px',
-            marginBottom: '48px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+            gap: '24px',
+            marginBottom: '40px',
           }}
         >
-          {[
-            {
-              label:
-                activeTab === 'This Year' ? 'Total Expenses (Year)' : 'Total Expenses (All Time)',
-              value: `₹${totalExpenses.toLocaleString()}`,
-              icon: <TrendingDown size={22} />,
-              color: '#ef4444',
-              sub: 'Money spent',
-              gradient: 'linear-gradient(135deg, #ef444420 0%, #dc262610 100%)',
-              cardClass: 'stat-card stat-card--red',
-            },
-            {
-              label: 'Average per Month',
-              value: `₹${avgMonthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-              icon: <Calendar size={22} />,
-              color: '#f59e0b',
-              sub: 'Monthly spending',
-              gradient: 'linear-gradient(135deg, #f59e0b20 0%, #d9770610 100%)',
-              cardClass: 'stat-card stat-card--amber',
-            },
-            {
-              label: 'Expense Categories',
-              value: categories.length,
-              icon: <ShoppingBag size={22} />,
-              color: '#6366f1',
-              sub: 'Tracked categories',
-              gradient: 'linear-gradient(135deg, #6366f120 0%, #4f46e510 100%)',
-              cardClass: 'stat-card stat-card--indigo',
-            },
-          ].map((stat, i) => (
-            <div key={i} className={stat.cardClass}>
+          {/* Total Expenses */}
+          <div className="stat-card stat-card--red">
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, #ef444420 0%, #dc262610 100%)',
+                opacity: 0.5,
+              }}
+              aria-hidden="true"
+            />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}
+              >
+                <div
+                  style={{
+                    background: '#ef444415',
+                    padding: '10px',
+                    borderRadius: '14px',
+                    color: '#ef4444',
+                  }}
+                  aria-hidden="true"
+                >
+                  <TrendingDown size={22} />
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: '#94a3b8',
+                  }}
+                >
+                  {activeTab === 'This Year' ? 'Total (Year)' : 'Total (All Time)'}
+                </span>
+              </div>
               <div
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: stat.gradient,
-                  opacity: 0.5,
+                  fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
+                  fontWeight: '900',
+                  color: '#fff',
+                  marginBottom: '8px',
+                  letterSpacing: '-1px',
                 }}
-                aria-hidden="true"
-              />
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '20px',
-                  }}
-                >
-                  <div
-                    style={{
-                      background: `${stat.color}15`,
-                      padding: '10px',
-                      borderRadius: '14px',
-                      color: stat.color,
-                    }}
-                    aria-hidden="true"
-                  >
-                    {stat.icon}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: '800',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      color: '#94a3b8',
-                    }}
-                  >
-                    {stat.label}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
-                    fontWeight: '900',
-                    color: '#fff',
-                    marginBottom: '8px',
-                    letterSpacing: '-1px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: stat.color, fontWeight: '700' }}>
-                  {stat.sub}
-                </div>
+              >
+                ₹{totalExpenses.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: '700' }}>
+                Money spent
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Average per Month */}
+          <div className="stat-card stat-card--amber">
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, #f59e0b20 0%, #d9770610 100%)',
+                opacity: 0.5,
+              }}
+              aria-hidden="true"
+            />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}
+              >
+                <div
+                  style={{
+                    background: '#f59e0b15',
+                    padding: '10px',
+                    borderRadius: '14px',
+                    color: '#f59e0b',
+                  }}
+                  aria-hidden="true"
+                >
+                  <Calendar size={22} />
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: '#94a3b8',
+                  }}
+                >
+                  Avg / Month
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
+                  fontWeight: '900',
+                  color: '#fff',
+                  marginBottom: '8px',
+                  letterSpacing: '-1px',
+                }}
+              >
+                ₹{avgMonthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: '700' }}>
+                Monthly spending
+              </div>
+            </div>
+          </div>
+
+          {/* Top Category */}
+          <div className="stat-card stat-card--indigo">
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, #6366f120 0%, #4f46e510 100%)',
+                opacity: 0.5,
+              }}
+              aria-hidden="true"
+            />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}
+              >
+                <div
+                  style={{
+                    background: '#6366f115',
+                    padding: '10px',
+                    borderRadius: '14px',
+                    color: '#6366f1',
+                  }}
+                  aria-hidden="true"
+                >
+                  <Trophy size={22} />
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: '#94a3b8',
+                  }}
+                >
+                  Top Category
+                </span>
+              </div>
+              {topCategory ? (
+                <>
+                  <div
+                    title={topCategory[0]}
+                    style={{
+                      fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)',
+                      fontWeight: '900',
+                      color: getCategoryPalette(topCategory[0]).color,
+                      marginBottom: '8px',
+                      letterSpacing: '-0.5px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {topCategory[0]}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: '700' }}>
+                    ₹{topCategory[1].total.toLocaleString()} spent
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)',
+                      fontWeight: '900',
+                      color: '#fff',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    —
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: '700' }}>
+                    No data yet
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Category Count */}
+          <div className="stat-card stat-card--indigo" style={{ borderColor: '#1e1e2e' }}>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(135deg, #a855f720 0%, #7c3aed10 100%)',
+                opacity: 0.5,
+              }}
+              aria-hidden="true"
+            />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}
+              >
+                <div
+                  style={{
+                    background: '#a855f715',
+                    padding: '10px',
+                    borderRadius: '14px',
+                    color: '#a855f7',
+                  }}
+                  aria-hidden="true"
+                >
+                  <ShoppingBag size={22} />
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: '#94a3b8',
+                  }}
+                >
+                  Categories
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
+                  fontWeight: '900',
+                  color: '#fff',
+                  marginBottom: '8px',
+                  letterSpacing: '-1px',
+                }}
+              >
+                {categories.length}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#a855f7', fontWeight: '700' }}>
+                Tracked categories
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -340,7 +556,7 @@ export default function ExpensesClient() {
             gap: '40px',
           }}
         >
-          {/* Categories List */}
+          {/* Categories Breakdown */}
           <div>
             <h3
               style={{
@@ -353,86 +569,111 @@ export default function ExpensesClient() {
                 color: '#fff',
               }}
             >
-              <ShoppingBag size={20} color="#6366f1" aria-hidden="true" /> Expense Categories
+              <ShoppingBag size={20} color="#6366f1" aria-hidden="true" /> Spending Breakdown
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {categories.length > 0 ? (
-                categories.map(([name, stats]) => (
-                  <div key={name} className="expense-category-card">
+                categories.map(([name, stats]) => {
+                  const palette = getCategoryPalette(name);
+                  const pct = totalExpenses > 0 ? (stats.total / totalExpenses) * 100 : 0;
+                  return (
                     <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '20px',
-                        flex: 1,
-                        minWidth: 0,
-                      }}
+                      key={name}
+                      className="expense-category-card"
+                      style={{ borderColor: palette.border, flexDirection: 'column', gap: '14px' }}
                     >
-                      <div
-                        style={{
-                          width: '52px',
-                          height: '52px',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          borderRadius: '16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#f87171',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      >
-                        {getCategoryIcon(name)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
+                      {/* Top row: icon + name + amount */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div
                           style={{
-                            color: '#fff',
-                            fontWeight: '800',
-                            fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
-                            marginBottom: '4px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
+                            width: '48px',
+                            height: '48px',
+                            background: palette.bg,
+                            borderRadius: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: palette.color,
+                            border: `1px solid ${palette.border}`,
+                            flexShrink: 0,
                           }}
+                          aria-hidden="true"
                         >
-                          {name}
+                          {getCategoryIcon(name)}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span
-                            style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600' }}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              color: '#fff',
+                              fontWeight: '800',
+                              fontSize: 'clamp(0.95rem, 2vw, 1.05rem)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
                           >
-                            {stats.count} entries
-                          </span>
+                            {name}
+                          </div>
+                          <div
+                            style={{
+                              color: '#64748b',
+                              fontSize: '0.8rem',
+                              fontWeight: '600',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {stats.count} {stats.count === 1 ? 'entry' : 'entries'}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div
+                            style={{
+                              color: palette.color,
+                              fontSize: 'clamp(1.05rem, 2vw, 1.2rem)',
+                              fontWeight: '900',
+                            }}
+                          >
+                            ₹{stats.total.toLocaleString()}
+                          </div>
+                          <div
+                            style={{
+                              color: '#64748b',
+                              fontSize: '0.75rem',
+                              fontWeight: '700',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {pct.toFixed(1)}%
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
+                      {/* Progress bar */}
                       <div
                         style={{
-                          color: '#ef4444',
-                          fontSize: 'clamp(1.2rem, 2.5vw, 1.4rem)',
-                          fontWeight: '900',
+                          height: '6px',
+                          background: 'rgba(255,255,255,0.05)',
+                          borderRadius: '99px',
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
+                        role="progressbar"
+                        aria-valuenow={Math.round(pct)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${name} spending: ${pct.toFixed(1)}% of total`}
                       >
-                        ₹{stats.total.toLocaleString()}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.75rem',
-                          color: '#64748b',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Total Spent
+                        <div
+                          style={{
+                            height: '100%',
+                            width: `${pct}%`,
+                            background: `linear-gradient(90deg, ${palette.color}cc, ${palette.color})`,
+                            borderRadius: '99px',
+                            transition: 'width 0.6s ease',
+                          }}
+                        />
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div
                   style={{
@@ -474,7 +715,7 @@ export default function ExpensesClient() {
               >
                 <Clock size={20} color="#fff" />
               </div>
-              <span>Recent Expenses</span>
+              <span>{activeTab === 'This Year' ? `${currentYear} Expenses` : 'All Expenses'}</span>
             </h3>
             <div
               style={{
@@ -487,109 +728,173 @@ export default function ExpensesClient() {
                 gap: '12px',
               }}
             >
-              {expenseItems.length > 0 ? (
-                expenseItems.slice(0, 8).map((item) => (
-                  <div
-                    key={item.id}
-                    className="tx-row tx-row--expense"
-                    style={{ flexWrap: 'wrap' }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
+              {sortedExpenses.length > 0 ? (
+                <>
+                  {visibleExpenses.map((item) => {
+                    const palette = getCategoryPalette(item.category);
+                    return (
                       <div
-                        style={{
-                          color: '#ef4444',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          padding: '8px',
-                          borderRadius: '10px',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
+                        key={item.id}
+                        className="tx-row tx-row--expense"
+                        style={{ flexWrap: 'wrap' }}
                       >
-                        {getCategoryIcon(item.category)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
                         <div
                           style={{
-                            fontWeight: '800',
-                            fontSize: '1rem',
-                            color: '#e2e8f0',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '16px',
+                            flex: 1,
+                            minWidth: 0,
                           }}
                         >
-                          {item.description}
+                          <div
+                            style={{
+                              color: palette.color,
+                              background: palette.bg,
+                              padding: '8px',
+                              borderRadius: '10px',
+                              border: `1px solid ${palette.border}`,
+                              flexShrink: 0,
+                            }}
+                            aria-hidden="true"
+                          >
+                            {getCategoryIcon(item.category)}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: '800',
+                                fontSize: '1rem',
+                                color: '#e2e8f0',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {item.description}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '0.8rem',
+                                color: '#94a3b8',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                marginTop: '2px',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '1px 8px',
+                                  borderRadius: '99px',
+                                  background: palette.bg,
+                                  color: palette.color,
+                                  fontWeight: '700',
+                                  fontSize: '0.75rem',
+                                  border: `1px solid ${palette.border}`,
+                                }}
+                              >
+                                {item.category}
+                              </span>
+                              <span>
+                                {new Date(item.date).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>
-                          {item.category} |{' '}
-                          {new Date(item.date).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                        <div
+                          style={{
+                            textAlign: 'right',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              color: '#ef4444',
+                              fontWeight: '900',
+                              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            -₹{item.amount.toLocaleString()}
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(item);
+                              }}
+                              className="action-btn action-btn--edit"
+                              aria-label="Edit expense"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const isConfirmed = await customConfirm({
+                                  title: 'Delete Expense',
+                                  message: 'Are you sure you want to delete this expense record?',
+                                  type: 'error',
+                                  confirmLabel: 'Delete',
+                                });
+                                if (isConfirmed) {
+                                  await deleteTransaction(item.id);
+                                  showNotification('success', 'Expense record removed');
+                                }
+                              }}
+                              className="action-btn action-btn--delete"
+                              aria-label="Delete expense"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div
+                    );
+                  })}
+                  {sortedExpenses.length > 8 && (
+                    <button
+                      onClick={() => setShowAllTransactions((prev) => !prev)}
                       style={{
-                        textAlign: 'right',
+                        marginTop: '8px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '12px',
+                        background: 'transparent',
+                        border: '1px solid #1a1a1a',
+                        borderRadius: '14px',
+                        color: '#64748b',
+                        fontSize: '0.85rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'color 0.2s, border-color 0.2s',
                       }}
+                      aria-expanded={showAllTransactions}
                     >
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontWeight: '950',
-                          fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        -₹{item.amount.toLocaleString()}
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(item);
-                          }}
-                          className="action-btn action-btn--edit"
-                          aria-label="Edit expense"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const isConfirmed = await customConfirm({
-                              title: 'Delete Expense',
-                              message: 'Are you sure you want to delete this expense record?',
-                              type: 'error',
-                              confirmLabel: 'Delete',
-                            });
-                            if (isConfirmed) {
-                              await deleteTransaction(item.id);
-                              showNotification('success', 'Expense record removed');
-                            }
-                          }}
-                          className="action-btn action-btn--delete"
-                          aria-label="Delete expense"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                      {showAllTransactions ? (
+                        <>
+                          Show Less <ChevronUp size={16} />
+                        </>
+                      ) : (
+                        <>
+                          Show All {sortedExpenses.length} Expenses <ChevronDown size={16} />
+                        </>
+                      )}
+                    </button>
+                  )}
+                </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                   <EmptyTransactionsVisual />
