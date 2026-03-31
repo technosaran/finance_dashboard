@@ -2490,6 +2490,141 @@ select:focus {
   font-size: 0.74rem;
 }
 
+.modal-overlay.holding-detail-overlay {
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 24px 20px;
+}
+
+.modal-card.holding-detail-card {
+  max-height: none;
+  overflow: visible;
+  margin: auto;
+}
+
+.history-table-shell {
+  background: linear-gradient(135deg, #050505 0%, #111111 100%);
+  border: 1px solid #111111;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.history-table-scroll {
+  max-height: 540px;
+  overflow: auto;
+}
+
+.history-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.history-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(5, 5, 5, 0.96);
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 16px 20px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.history-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.history-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.history-table tbody td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #dbe4ec;
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+
+.history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.history-table__symbol-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.history-table__symbol {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.history-table__company {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.history-table__type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.history-table__type-badge--buy {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.history-table__type-badge--sell {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.history-table__value {
+  font-weight: 800;
+}
+
+.history-table__value--buy {
+  color: #f87171;
+}
+
+.history-table__value--sell {
+  color: #34d399;
+}
+
+.history-table__delete-btn {
+  background: rgba(244, 63, 94, 0.1);
+  border: none;
+  color: #f43f5e;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (min-width: 640px) {
   .entry-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2505,6 +2640,18 @@ select:focus {
 }
 
 @media (max-width: 767px) {
+  .modal-overlay.holding-detail-overlay {
+    padding: 16px;
+  }
+
+  .history-table-scroll {
+    max-height: 62vh;
+  }
+
+  .history-table {
+    min-width: 760px;
+  }
+
   .entry-sheet {
     max-width: none;
   }

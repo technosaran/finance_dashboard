@@ -22,7 +22,6 @@ import {
   Star,
   Loader2,
   History,
-  Calendar,
   Edit3,
   Trash2,
   ArrowRight,
@@ -57,6 +56,194 @@ const dateFormatter = new Intl.DateTimeFormat('en-IN', {
 const formatInr = (value: number) => inrFormatter.format(value);
 
 const formatSignedInr = (value: number) => `${value >= 0 ? '+' : '-'}${formatInr(Math.abs(value))}`;
+
+const normalizeStockSymbol = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+const STOCK_SECTOR_BY_SYMBOL: Record<string, string> = {
+  INFY: 'Technology',
+  TCS: 'Technology',
+  WIPRO: 'Technology',
+  HCLTECH: 'Technology',
+  TECHM: 'Technology',
+  LTIM: 'Technology',
+  PERSISTENT: 'Technology',
+  COFORGE: 'Technology',
+  HDFCBANK: 'Financial Services',
+  ICICIBANK: 'Financial Services',
+  SBIN: 'Financial Services',
+  AXISBANK: 'Financial Services',
+  KOTAKBANK: 'Financial Services',
+  BAJFINANCE: 'Financial Services',
+  JIOFIN: 'Financial Services',
+  IRFC: 'Financial Services',
+  RELIANCE: 'Energy',
+  ONGC: 'Energy',
+  IOC: 'Energy',
+  BPCL: 'Energy',
+  HINDPETRO: 'Energy',
+  NTPC: 'Energy',
+  POWERGRID: 'Energy',
+  SUNPHARMA: 'Healthcare',
+  CIPLA: 'Healthcare',
+  DRREDDY: 'Healthcare',
+  DIVISLAB: 'Healthcare',
+  APOLLOHOSP: 'Healthcare',
+  TATAMOTORS: 'Automobile',
+  MARUTI: 'Automobile',
+  EICHERMOT: 'Automobile',
+  BAJAJAUTO: 'Automobile',
+  HEROMOTOCO: 'Automobile',
+  LT: 'Industrials',
+  BEL: 'Industrials',
+  HAL: 'Industrials',
+  SIEMENS: 'Industrials',
+  TATASTEEL: 'Materials',
+  JSWSTEEL: 'Materials',
+  HINDALCO: 'Materials',
+  ULTRACEMCO: 'Materials',
+  GRASIM: 'Materials',
+  ITC: 'Consumer',
+  HINDUNILVR: 'Consumer',
+  NESTLEIND: 'Consumer',
+  BRITANNIA: 'Consumer',
+  TATACONSUM: 'Consumer',
+  ASIANPAINT: 'Consumer',
+  BHARTIARTL: 'Telecom',
+  INDUSTOWER: 'Telecom',
+  DLF: 'Real Estate',
+  GODREJPROP: 'Real Estate',
+};
+
+const STOCK_SECTOR_RULES: Array<{ sector: string; patterns: RegExp[] }> = [
+  {
+    sector: 'Financial Services',
+    patterns: [
+      /\bBANK\b/,
+      /\bFINANCE\b/,
+      /\bINSURANCE\b/,
+      /\bCAPITAL\b/,
+      /\bSECURITIES\b/,
+      /\bBROKING\b/,
+      /\bAMC\b/,
+      /\bWEALTH\b/,
+      /\bHOUSING\b/,
+      /\bNBFC\b/,
+    ],
+  },
+  {
+    sector: 'Technology',
+    patterns: [
+      /\bTECH(?:NOLOG(?:Y|IES)?)?\b/,
+      /\bSOFTWARE\b/,
+      /\bINFOTECH\b/,
+      /\bDIGITAL\b/,
+      /\bSYSTEMS?\b/,
+      /\bCOMPUTERS?\b/,
+      /\bIT SERVICES\b/,
+    ],
+  },
+  {
+    sector: 'Healthcare',
+    patterns: [
+      /\bPHARMA\b/,
+      /\bLABS?\b/,
+      /\bMEDICAL\b/,
+      /\bHEALTH(?:CARE)?\b/,
+      /\bHOSP(?:ITAL)?\b/,
+      /\bBIO(?:TECH)?\b/,
+      /\bDIAGNOSTIC\b/,
+    ],
+  },
+  {
+    sector: 'Automobile',
+    patterns: [
+      /\bAUTO\b/,
+      /\bMOTORS?\b/,
+      /\bTYRE\b/,
+      /\bTRACTOR\b/,
+      /\bVEHICLE\b/,
+      /\bBATTER(?:Y|IES)\b/,
+    ],
+  },
+  {
+    sector: 'Energy',
+    patterns: [
+      /\bENERGY\b/,
+      /\bPOWER\b/,
+      /\bOIL\b/,
+      /\bGAS\b/,
+      /\bPETRO(?:LEUM|CHEMICALS?)?\b/,
+      /\bRENEWABLE\b/,
+      /\bSOLAR\b/,
+      /\bGRID\b/,
+    ],
+  },
+  {
+    sector: 'Industrials',
+    patterns: [
+      /\bINFRA\b/,
+      /\bENGINEER(?:ING)?\b/,
+      /\bINDUSTR(?:IAL|IES|Y)\b/,
+      /\bCONSTRUCT(?:ION)?\b/,
+      /\bDEFENCE\b/,
+      /\bAEROSPACE\b/,
+      /\bRAIL\b/,
+      /\bLOGISTICS\b/,
+      /\bSHIP(?:PING|BUILDING)?\b/,
+    ],
+  },
+  {
+    sector: 'Materials',
+    patterns: [
+      /\bSTEEL\b/,
+      /\bMETALS?\b/,
+      /\bMINING\b/,
+      /\bCOAL\b/,
+      /\bALUMIN(?:IUM|UM)\b/,
+      /\bCEMENT\b/,
+      /\bCHEM(?:ICALS?)?\b/,
+      /\bFERTILIZER\b/,
+    ],
+  },
+  {
+    sector: 'Consumer',
+    patterns: [
+      /\bCONSUMER\b/,
+      /\bFOODS?\b/,
+      /\bBEVERAGES?\b/,
+      /\bRETAIL\b/,
+      /\bPAINTS?\b/,
+      /\bTOBACCO\b/,
+      /\bTEXTILES?\b/,
+      /\bAPPAREL\b/,
+      /\bJEWELL(?:ERY|ERS)\b/,
+    ],
+  },
+  {
+    sector: 'Telecom',
+    patterns: [/\bTELECOM\b/, /\bCOMMUNICATIONS?\b/, /\bMOBILE\b/, /\bTOWER\b/, /\bBROADBAND\b/],
+  },
+  {
+    sector: 'Real Estate',
+    patterns: [/\bREALTY\b/, /\bREAL ESTATE\b/, /\bPROPERT(?:Y|IES)\b/, /\bDEVELOPERS?\b/],
+  },
+];
+
+const inferStockSector = (symbol: string, companyName: string) => {
+  const normalizedSymbol = normalizeStockSymbol(symbol);
+  const mappedSector = STOCK_SECTOR_BY_SYMBOL[normalizedSymbol];
+  if (mappedSector) return mappedSector;
+
+  const haystack = `${symbol} ${companyName}`.toUpperCase();
+  const matchedRule = STOCK_SECTOR_RULES.find(({ patterns }) =>
+    patterns.some((pattern) => pattern.test(haystack))
+  );
+
+  return matchedRule?.sector || 'Others';
+};
+
+const resolveStockSector = (symbol: string, companyName: string, explicitSector?: string) =>
+  explicitSector?.trim() ? explicitSector.trim() : inferStockSector(symbol, companyName);
 
 const getChargeModeLabel = (mode: StockChargeMode | 'mixed') => {
   if (mode === 'intraday') return 'Intraday';
@@ -317,6 +504,26 @@ export default function StocksClient() {
     );
   }, [aggregateStockCharges, viewingHolding]);
 
+  const viewingHoldingSector = useMemo(() => {
+    if (!viewingHolding) return 'Others';
+
+    return resolveStockSector(
+      viewingHolding.symbol,
+      viewingHolding.companyName,
+      viewingHolding.sector
+    );
+  }, [viewingHolding]);
+
+  const sortedStockTransactions = useMemo(
+    () =>
+      [...stockTransactions].sort((left, right) => {
+        const byDate = right.transactionDate.localeCompare(left.transactionDate);
+        if (byDate !== 0) return byDate;
+        return (right.createdAt || '').localeCompare(left.createdAt || '');
+      }),
+    [stockTransactions]
+  );
+
   const openHoldingFromTransaction = (transaction: StockTransaction) => {
     const linkedStock =
       stocks.find((stock) => stock.id === transaction.stockId) ||
@@ -372,6 +579,7 @@ export default function StocksClient() {
   const selectStock = async (item: { symbol: string; companyName: string }) => {
     setSymbol(item.symbol);
     setCompanyName(item.companyName);
+    setSector(resolveStockSector(item.symbol, item.companyName));
     setShowResults(false);
     setSearchQuery(item.symbol);
 
@@ -428,7 +636,7 @@ export default function StocksClient() {
       avgPrice: avg,
       currentPrice: current,
       previousPrice: previousPrice || current,
-      sector: sector || undefined,
+      sector: resolveStockSector(symbol.trim().toUpperCase(), companyName, sector),
       exchange,
       investmentAmount: investment,
       currentValue,
@@ -583,7 +791,7 @@ export default function StocksClient() {
     setAvgPrice(stock.avgPrice.toString());
     setCurrentPrice(stock.currentPrice.toString());
     setPreviousPrice(stock.previousPrice || stock.currentPrice);
-    setSector(stock.sector || '');
+    setSector(resolveStockSector(stock.symbol, stock.companyName, stock.sector));
     setExchange(stock.exchange);
     setIsModalOpen(true);
   };
@@ -623,8 +831,9 @@ export default function StocksClient() {
     const groups: Record<string, Stock> = {};
     stocks.forEach((stock) => {
       const key = `${stock.symbol.toUpperCase()}_${stock.exchange.toUpperCase()}`;
+      const resolvedSector = resolveStockSector(stock.symbol, stock.companyName, stock.sector);
       if (!groups[key]) {
-        groups[key] = { ...stock };
+        groups[key] = { ...stock, sector: resolvedSector };
       } else {
         const existing = groups[key];
         const totalQty = existing.quantity + stock.quantity;
@@ -637,6 +846,7 @@ export default function StocksClient() {
         const totalPrevValue =
           existingPrevPrice * existing.quantity + stockPrevPrice * stock.quantity;
 
+        existing.sector = existing.sector || resolvedSector;
         existing.quantity = totalQty;
         existing.investmentAmount = totalInvestment;
         existing.avgPrice = totalQty > 0 ? totalInvestment / totalQty : 0;
@@ -714,7 +924,7 @@ export default function StocksClient() {
   const sectorData = useMemo(() => {
     const data = groupedStocks.reduce(
       (acc, stock) => {
-        const sector = stock.sector || 'Others';
+        const sector = resolveStockSector(stock.symbol, stock.companyName, stock.sector);
         const existing = acc.find((item) => item.sector === sector);
         if (existing) {
           existing.value += stock.currentValue;
@@ -1196,16 +1406,6 @@ export default function StocksClient() {
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
-                        className="mobile-action-btn mobile-action-btn--view"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewingHolding(stock);
-                        }}
-                        aria-label="View charges"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
                         className="mobile-action-btn mobile-action-btn--sell"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1505,25 +1705,6 @@ export default function StocksClient() {
                       </td>
                       <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setViewingHolding(stock);
-                            }}
-                            title="Estimated Exit Charges"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#6366f1',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                          >
-                            <Eye size={16} />
-                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1872,166 +2053,115 @@ export default function StocksClient() {
 
       {activeTab === 'history' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>
-            Global Transaction History
-          </h3>
-          {stockTransactions.length > 0 ? (
-            stockTransactions.map((transaction) => {
-              const stock = stocks.find((s) => s.id === transaction.stockId);
-              return (
-                <div
-                  key={transaction.id}
-                  className="tx-history-card"
-                  style={{
-                    background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
-                    padding: '16px',
-                    borderRadius: '16px',
-                    border: '1px solid #111111',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div
-                    className="tx-history-card__left"
-                    style={{ display: 'flex', gap: '12px', alignItems: 'center' }}
-                  >
-                    <div
-                      style={{
-                        background:
-                          transaction.transactionType === 'BUY'
-                            ? 'rgba(248, 113, 113, 0.1)'
-                            : 'rgba(16, 185, 129, 0.1)',
-                        color: transaction.transactionType === 'BUY' ? '#f87171' : '#10b981',
-                        padding: '12px',
-                        borderRadius: '14px',
-                      }}
-                    >
-                      {transaction.transactionType === 'BUY' ? (
-                        <ArrowDownRight size={20} />
-                      ) : (
-                        <ArrowUpRight size={20} />
-                      )}
-                    </div>
-                    <div>
-                      <div
-                        style={{
-                          fontSize: '1rem',
-                          fontWeight: '800',
-                          color: '#fff',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        {stock?.symbol || 'Unknown'} • {transaction.transactionType}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>
-                        {transaction.quantity} shares @ ₹{transaction.price.toFixed(2)}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.7rem',
-                          color: '#475569',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        <Calendar size={12} />{' '}
-                        {new Date(transaction.transactionDate).toLocaleDateString(undefined, {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    className="tx-history-card__right"
-                    style={{
-                      textAlign: 'right',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          fontSize: '1.2rem',
-                          fontWeight: '900',
-                          color: transaction.transactionType === 'BUY' ? '#f87171' : '#34d399',
-                        }}
-                      >
-                        {transaction.transactionType === 'BUY' ? '-' : '+'}₹
-                        {transaction.totalAmount.toLocaleString()}
-                      </div>
-                      {(transaction.brokerage || transaction.taxes) && (
-                        <div
-                          style={{
-                            fontSize: '0.7rem',
-                            color: '#475569',
-                            marginTop: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: '4px',
-                          }}
-                        >
-                          Charges: ₹
-                          {((transaction.brokerage || 0) + (transaction.taxes || 0)).toFixed(2)}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openHoldingFromTransaction(transaction);
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#6366f1',
-                              padding: 0,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>
+              Global Transaction History
+            </h3>
+            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#64748b' }}>
+              {sortedStockTransactions.length} records
+            </div>
+          </div>
+          {sortedStockTransactions.length > 0 ? (
+            <div className="history-table-shell">
+              <div className="history-table-scroll">
+                <table className="history-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Stock</th>
+                      <th>Type</th>
+                      <th>Qty</th>
+                      <th>Price</th>
+                      <th>Total</th>
+                      <th>Charges</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedStockTransactions.map((transaction) => {
+                      const stock = stocks.find((s) => s.id === transaction.stockId);
+                      const totalCharges = (transaction.brokerage || 0) + (transaction.taxes || 0);
+
+                      return (
+                        <tr key={transaction.id}>
+                          <td>{dateFormatter.format(new Date(transaction.transactionDate))}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="history-table__symbol-btn"
+                              onClick={() => openHoldingFromTransaction(transaction)}
+                            >
+                              <span className="history-table__symbol">
+                                {stock?.symbol || 'Unknown'}
+                              </span>
+                              <span className="history-table__company">
+                                {stock?.companyName ||
+                                  transaction.notes ||
+                                  'Historical stock entry'}
+                              </span>
+                            </button>
+                          </td>
+                          <td>
+                            <span
+                              className={`history-table__type-badge ${
+                                transaction.transactionType === 'BUY'
+                                  ? 'history-table__type-badge--buy'
+                                  : 'history-table__type-badge--sell'
+                              }`}
+                            >
+                              {transaction.transactionType}
+                            </span>
+                          </td>
+                          <td>{transaction.quantity}</td>
+                          <td>{formatInr(transaction.price)}</td>
+                          <td
+                            className={`history-table__value ${
+                              transaction.transactionType === 'BUY'
+                                ? 'history-table__value--buy'
+                                : 'history-table__value--sell'
+                            }`}
                           >
-                            <Eye size={12} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        const isConfirmed = await customConfirm({
-                          title: 'Delete Transaction',
-                          message: 'Are you sure you want to delete this historical transaction?',
-                          type: 'warning',
-                          confirmLabel: 'Delete',
-                        });
-                        if (isConfirmed) {
-                          await deleteStockTransaction(transaction.id);
-                          showNotification('success', 'Transaction deleted');
-                        }
-                      }}
-                      style={{
-                        background: 'rgba(244, 63, 94, 0.1)',
-                        border: 'none',
-                        color: '#f43f5e',
-                        cursor: 'pointer',
-                        padding: '6px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      aria-label="Delete transaction"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
+                            {transaction.transactionType === 'BUY' ? '-' : '+'}
+                            {formatInr(transaction.totalAmount)}
+                          </td>
+                          <td>{totalCharges > 0 ? formatInr(totalCharges) : '--'}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="history-table__delete-btn"
+                              onClick={async () => {
+                                const isConfirmed = await customConfirm({
+                                  title: 'Delete Transaction',
+                                  message:
+                                    'Are you sure you want to delete this historical transaction?',
+                                  type: 'warning',
+                                  confirmLabel: 'Delete',
+                                });
+                                if (isConfirmed) {
+                                  await deleteStockTransaction(transaction.id);
+                                  showNotification('success', 'Transaction deleted');
+                                }
+                              }}
+                              aria-label="Delete transaction"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
             <div
               style={{
@@ -3059,19 +3189,19 @@ export default function StocksClient() {
       )}
       {viewingHolding && (
         <div
-          className="modal-overlay"
+          className="modal-overlay holding-detail-overlay"
           style={{ zIndex: 1100 }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setViewingHolding(null);
           }}
         >
           <div
-            className="modal-card entry-sheet"
+            className="modal-card entry-sheet entry-sheet--wide holding-detail-card"
             style={{
               background: '#050505',
               border: '1px solid #1a1a1a',
               width: '100%',
-              maxWidth: '560px',
+              maxWidth: '860px',
             }}
           >
             <div className="entry-sheet__handle" />
@@ -3121,132 +3251,187 @@ export default function StocksClient() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: '16px' }}>
+            <div style={{ display: 'grid', gap: '20px' }}>
               {(() => {
                 const deliveryMeta = getStockChargeMeta(viewingHolding.exchange, 'delivery');
                 return (
                   <>
                     <div
                       style={{
-                        padding: '16px',
-                        borderRadius: '20px',
-                        background: 'rgba(255,255,255,0.02)',
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        display: 'grid',
+                        gap: '16px',
+                        gridTemplateColumns: viewingHoldingChargePreview
+                          ? 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))'
+                          : '1fr',
+                        alignItems: 'start',
                       }}
                     >
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700' }}>
-                        {viewingHolding.exchange} holding
-                      </div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>
-                        {viewingHolding.symbol}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '4px' }}>
-                        {viewingHolding.companyName}
-                      </div>
-                    </div>
-
-                    <div className="detail-grid">
-                      <div className="detail-stat">
-                        <div className="detail-stat__label">Quantity</div>
-                        <div className="detail-stat__value">{viewingHolding.quantity}</div>
-                      </div>
-                      <div className="detail-stat">
-                        <div className="detail-stat__label">Average Cost</div>
-                        <div className="detail-stat__value">
-                          {formatInr(viewingHolding.avgPrice)}
-                        </div>
-                      </div>
-                      <div className="detail-stat">
-                        <div className="detail-stat__label">Current Value</div>
-                        <div className="detail-stat__value">
-                          {formatInr(viewingHolding.currentValue)}
-                        </div>
-                      </div>
-                      <div className="detail-stat">
-                        <div className="detail-stat__label">Live P&L</div>
-                        <div
-                          className={`detail-stat__value ${
-                            viewingHolding.pnl >= 0
-                              ? 'entry-summary__value--positive'
-                              : 'entry-summary__value--negative'
-                          }`}
-                        >
-                          {formatSignedInr(viewingHolding.pnl)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {viewingHoldingChargePreview && (
-                      <div
-                        className="entry-summary"
-                        style={{
-                          background: 'rgba(99, 102, 241, 0.08)',
-                          border: '1px solid rgba(99, 102, 241, 0.16)',
-                        }}
-                      >
+                      <div style={{ display: 'grid', gap: '16px' }}>
                         <div
                           style={{
-                            fontSize: '0.72rem',
-                            fontWeight: '900',
-                            color: '#818cf8',
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
+                            padding: '16px',
+                            borderRadius: '20px',
+                            background: 'rgba(255,255,255,0.02)',
+                            border: '1px solid rgba(255,255,255,0.05)',
                           }}
                         >
-                          Zerodha Exit Estimate
-                        </div>
-                        <div className="entry-summary__row">
-                          <span className="entry-summary__label">Mode</span>
-                          <span className="entry-summary__value">
-                            {getChargeModeLabel(viewingHoldingChargePreview.mode)}
-                          </span>
-                        </div>
-                        {viewingHoldingChargePreview.intradayQuantity > 0 && (
-                          <div className="entry-summary__row">
-                            <span className="entry-summary__label">Intraday quantity</span>
-                            <span className="entry-summary__value">
-                              {viewingHoldingChargePreview.intradayQuantity}
-                            </span>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              flexWrap: 'wrap',
+                              marginBottom: '12px',
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: '0.78rem',
+                                color: '#64748b',
+                                fontWeight: '700',
+                                padding: '6px 10px',
+                                borderRadius: '999px',
+                                background: 'rgba(255,255,255,0.04)',
+                              }}
+                            >
+                              {viewingHolding.exchange} holding
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '0.78rem',
+                                color: '#34d399',
+                                fontWeight: '700',
+                                padding: '6px 10px',
+                                borderRadius: '999px',
+                                background: 'rgba(16, 185, 129, 0.12)',
+                              }}
+                            >
+                              {viewingHoldingSector}
+                            </div>
                           </div>
-                        )}
-                        {viewingHoldingChargePreview.deliveryQuantity > 0 && (
-                          <div className="entry-summary__row">
-                            <span className="entry-summary__label">Delivery quantity</span>
-                            <span className="entry-summary__value">
-                              {viewingHoldingChargePreview.deliveryQuantity}
-                            </span>
+                          <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>
+                            {viewingHolding.symbol}
                           </div>
-                        )}
-                        <div className="entry-summary__row">
-                          <span className="entry-summary__label">Brokerage</span>
-                          <span className="entry-summary__value">
-                            {formatInr(viewingHoldingChargePreview.total.brokerage)}
-                          </span>
+                          <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '4px' }}>
+                            {viewingHolding.companyName}
+                          </div>
                         </div>
-                        <div className="entry-summary__row">
-                          <span className="entry-summary__label">Taxes and charges</span>
-                          <span className="entry-summary__value">
-                            {formatInr(viewingHoldingChargePreview.total.taxes)}
-                          </span>
-                        </div>
-                        <div className="entry-summary__row">
-                          <span className="entry-summary__label">DP charges</span>
-                          <span className="entry-summary__value">
-                            {formatInr(viewingHoldingChargePreview.total.dpCharges)}
-                          </span>
-                        </div>
-                        <div className="entry-summary__row">
-                          <span className="entry-summary__label">Expected credit after sell</span>
-                          <span className="entry-summary__value entry-summary__value--positive">
-                            {formatInr(viewingHoldingChargePreview.total.settlementAmount)}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                          Brokerage follows {deliveryMeta.exchange} market rules, with same-day sell
-                          quantity treated as intraday and DP shown only for demat-delivery debit.
+
+                        <div className="detail-grid">
+                          <div className="detail-stat">
+                            <div className="detail-stat__label">Quantity</div>
+                            <div className="detail-stat__value">{viewingHolding.quantity}</div>
+                          </div>
+                          <div className="detail-stat">
+                            <div className="detail-stat__label">Average Cost</div>
+                            <div className="detail-stat__value">
+                              {formatInr(viewingHolding.avgPrice)}
+                            </div>
+                          </div>
+                          <div className="detail-stat">
+                            <div className="detail-stat__label">Current Value</div>
+                            <div className="detail-stat__value">
+                              {formatInr(viewingHolding.currentValue)}
+                            </div>
+                          </div>
+                          <div className="detail-stat">
+                            <div className="detail-stat__label">Current Price</div>
+                            <div className="detail-stat__value">
+                              {formatInr(viewingHolding.currentPrice)}
+                            </div>
+                          </div>
+                          <div className="detail-stat">
+                            <div className="detail-stat__label">Live P&L</div>
+                            <div
+                              className={`detail-stat__value ${
+                                viewingHolding.pnl >= 0
+                                  ? 'entry-summary__value--positive'
+                                  : 'entry-summary__value--negative'
+                              }`}
+                            >
+                              {formatSignedInr(viewingHolding.pnl)}
+                            </div>
+                          </div>
+                          <div className="detail-stat">
+                            <div className="detail-stat__label">Sector</div>
+                            <div className="detail-stat__value">{viewingHoldingSector}</div>
+                          </div>
                         </div>
                       </div>
-                    )}
+
+                      {viewingHoldingChargePreview && (
+                        <div
+                          className="entry-summary"
+                          style={{
+                            background: 'rgba(99, 102, 241, 0.08)',
+                            border: '1px solid rgba(99, 102, 241, 0.16)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: '900',
+                              color: '#818cf8',
+                              textTransform: 'uppercase',
+                              letterSpacing: '1px',
+                            }}
+                          >
+                            Zerodha Exit Estimate
+                          </div>
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">Mode</span>
+                            <span className="entry-summary__value">
+                              {getChargeModeLabel(viewingHoldingChargePreview.mode)}
+                            </span>
+                          </div>
+                          {viewingHoldingChargePreview.intradayQuantity > 0 && (
+                            <div className="entry-summary__row">
+                              <span className="entry-summary__label">Intraday quantity</span>
+                              <span className="entry-summary__value">
+                                {viewingHoldingChargePreview.intradayQuantity}
+                              </span>
+                            </div>
+                          )}
+                          {viewingHoldingChargePreview.deliveryQuantity > 0 && (
+                            <div className="entry-summary__row">
+                              <span className="entry-summary__label">Delivery quantity</span>
+                              <span className="entry-summary__value">
+                                {viewingHoldingChargePreview.deliveryQuantity}
+                              </span>
+                            </div>
+                          )}
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">Brokerage</span>
+                            <span className="entry-summary__value">
+                              {formatInr(viewingHoldingChargePreview.total.brokerage)}
+                            </span>
+                          </div>
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">Taxes and charges</span>
+                            <span className="entry-summary__value">
+                              {formatInr(viewingHoldingChargePreview.total.taxes)}
+                            </span>
+                          </div>
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">DP charges</span>
+                            <span className="entry-summary__value">
+                              {formatInr(viewingHoldingChargePreview.total.dpCharges)}
+                            </span>
+                          </div>
+                          <div className="entry-summary__row">
+                            <span className="entry-summary__label">Expected credit after sell</span>
+                            <span className="entry-summary__value entry-summary__value--positive">
+                              {formatInr(viewingHoldingChargePreview.total.settlementAmount)}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                            Brokerage follows {deliveryMeta.exchange} market rules, with same-day
+                            sell quantity treated as intraday and DP shown only for demat-delivery
+                            debit.
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     <div>
                       <div
@@ -3303,23 +3488,6 @@ export default function StocksClient() {
                 );
               })()}
             </div>
-
-            <button
-              onClick={() => setViewingHolding(null)}
-              style={{
-                width: '100%',
-                background: '#111111',
-                color: '#fff',
-                padding: '14px',
-                borderRadius: '16px',
-                border: 'none',
-                fontWeight: '800',
-                cursor: 'pointer',
-                marginTop: '24px',
-              }}
-            >
-              Got it
-            </button>
           </div>
         </div>
       )}

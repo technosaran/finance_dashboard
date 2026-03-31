@@ -912,26 +912,6 @@ export default function MutualFundsClient() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setViewingHolding(mf);
-                        }}
-                        style={{
-                          color: '#6366f1',
-                          background: 'none',
-                          border: 'none',
-                          padding: '12px',
-                          minWidth: '44px',
-                          minHeight: '44px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Eye size={18} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
                           handleExitFund(mf);
                         }}
                         style={{
@@ -1227,30 +1207,6 @@ export default function MutualFundsClient() {
                       </td>
                       <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setViewingHolding(mf);
-                            }}
-                            title="Estimated Sell Charges"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#6366f1',
-                              cursor: 'pointer',
-                              padding: '12px',
-                              minWidth: '44px',
-                              minHeight: '44px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                          >
-                            <Eye size={16} />
-                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
