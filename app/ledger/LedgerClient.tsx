@@ -5,6 +5,8 @@ import { Transaction } from '@/lib/types';
 import {
   ArrowDownRight,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Edit3,
   Plus,
@@ -27,6 +29,11 @@ const tableHeaders: Array<{ label: string; align?: CSSProperties['textAlign'] }>
   { label: 'Amount', align: 'right' },
   { label: 'Actions', align: 'right' },
 ];
+
+const CALENDAR_DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const toCalendarDateStr = (year: number, month: number, day: number): string =>
+  `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
 const getHeaderCellStyle = (align: CSSProperties['textAlign'] = 'left'): CSSProperties => ({
   padding: '16px 18px',
@@ -77,6 +84,11 @@ export default function LedgerClient() {
   const [type, setType] = useState<'Income' | 'Expense'>('Expense');
   const [accountId, setAccountId] = useState<string>('');
 
+  const today = new Date();
+  const [calendarDate, setCalendarDate] = useState(
+    new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+
   const accountNameById = useMemo(
     () => new Map(accounts.map((account) => [account.id, account.name])),
     [accounts]
@@ -87,6 +99,12 @@ export default function LedgerClient() {
       const dateCompare = right.date.localeCompare(left.date);
       return dateCompare !== 0 ? dateCompare : right.id - left.id;
     });
+  }, [transactions]);
+
+  const transactionDates = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach((t) => set.add(t.date));
+    return set;
   }, [transactions]);
 
   const formatCurrency = (value: number) => `${currencySymbol}${value.toLocaleString()}`;
@@ -250,210 +268,397 @@ export default function LedgerClient() {
             backdropFilter: 'blur(32px)',
           }}
         >
-          <div
-            style={{
-              background: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '20px',
-              border: '1px solid rgba(255, 255, 255, 0.03)',
-              overflow: 'hidden',
-            }}
-          >
-            {sortedTransactions.length > 0 ? (
-              <div style={{ maxHeight: '780px', overflow: 'auto' }}>
-                <table
-                  className="table-stack"
-                  style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}
-                >
-                  <thead>
-                    <tr
-                      style={{ background: 'rgba(6, 12, 16, 0.96)', backdropFilter: 'blur(14px)' }}
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+            {/* Transactions table */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.03)',
+                  overflow: 'hidden',
+                }}
+              >
+                {sortedTransactions.length > 0 ? (
+                  <div style={{ maxHeight: '780px', overflow: 'auto' }}>
+                    <table
+                      className="table-stack"
+                      style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}
                     >
-                      {tableHeaders.map((header) => (
-                        <th key={header.label} style={getHeaderCellStyle(header.align)}>
-                          {header.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedTransactions.map((transaction, index) => {
-                      const accountName = transaction.accountId
-                        ? (accountNameById.get(transaction.accountId) ?? 'Unassigned')
-                        : 'Unassigned';
-                      const isIncome = transaction.type === 'Income';
-
-                      return (
+                      <thead>
                         <tr
-                          key={transaction.id}
-                          onClick={() => handleEdit(transaction)}
                           style={{
-                            cursor: 'pointer',
-                            background:
-                              index % 2 === 0
-                                ? 'rgba(255, 255, 255, 0.018)'
-                                : 'rgba(255, 255, 255, 0.032)',
+                            background: 'rgba(6, 12, 16, 0.96)',
+                            backdropFilter: 'blur(14px)',
                           }}
                         >
-                          <td data-label="Entry" style={getBodyCellStyle()}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                              <div
-                                style={{
-                                  width: '42px',
-                                  height: '42px',
-                                  borderRadius: '12px',
-                                  background: isIncome
-                                    ? 'rgba(16, 185, 129, 0.1)'
-                                    : 'rgba(244, 63, 94, 0.1)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: isIncome ? '#10b981' : '#f43f5e',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {isIncome ? (
-                                  <ArrowUpRight size={18} strokeWidth={2.5} />
-                                ) : (
-                                  <ArrowDownRight size={18} strokeWidth={2.5} />
-                                )}
-                              </div>
-                              <div style={{ minWidth: 0 }}>
-                                <div
-                                  style={{
-                                    fontWeight: 800,
-                                    fontSize: '0.95rem',
-                                    color: '#fff',
-                                    marginBottom: '4px',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {transaction.description}
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: '0.74rem',
-                                    color: '#64748b',
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  Opens the entry editor
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td data-label="Category" style={getBodyCellStyle()}>
-                            <span style={getPillStyle('rgba(99, 102, 241, 0.1)', '#a5b4fc')}>
-                              {transaction.category}
-                            </span>
-                          </td>
-                          <td data-label="Type" style={getBodyCellStyle()}>
-                            <span
-                              style={getPillStyle(
-                                isIncome ? 'rgba(16, 185, 129, 0.12)' : 'rgba(244, 63, 94, 0.12)',
-                                isIncome ? '#34d399' : '#fb7185'
-                              )}
-                            >
-                              {transaction.type}
-                            </span>
-                          </td>
-                          <td
-                            data-label="Account"
-                            style={{ ...getBodyCellStyle(), color: '#d5dfdc', fontWeight: 700 }}
-                          >
-                            <span
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                            >
-                              <Wallet size={14} color="#6b827d" />
-                              {accountName}
-                            </span>
-                          </td>
-                          <td
-                            data-label="Date"
-                            style={{
-                              ...getBodyCellStyle(),
-                              color: '#9fb0ac',
-                              fontWeight: 700,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {formatDate(transaction.date)}
-                          </td>
-                          <td
-                            data-label="Amount"
-                            style={{
-                              ...getBodyCellStyle('right'),
-                              color: isIncome ? '#10b981' : '#f43f5e',
-                              fontWeight: 950,
-                              fontSize: '1rem',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {isIncome ? '+' : '-'}
-                            {formatCurrency(transaction.amount)}
-                          </td>
-                          <td data-label="Actions" style={getBodyCellStyle('right')}>
-                            <div
-                              style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}
-                            >
-                              <button
-                                className="action-btn action-btn--edit"
-                                type="button"
-                                style={{ padding: '6px', borderRadius: '8px' }}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleEdit(transaction);
-                                }}
-                              >
-                                <Edit3 size={14} />
-                              </button>
-                              <button
-                                className="action-btn action-btn--delete"
-                                type="button"
-                                style={{ padding: '6px', borderRadius: '8px' }}
-                                onClick={async (event) => {
-                                  event.stopPropagation();
-                                  const isConfirmed = await customConfirm({
-                                    title: 'Delete entry?',
-                                    message: 'This ledger entry will be permanently deleted.',
-                                    type: 'error',
-                                    confirmLabel: 'Delete',
-                                  });
-                                  if (isConfirmed) {
-                                    await deleteTransaction(transaction.id);
-                                    showNotification('success', 'Entry deleted');
-                                  }
-                                }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
+                          {tableHeaders.map((header) => (
+                            <th key={header.label} style={getHeaderCellStyle(header.align)}>
+                              {header.label}
+                            </th>
+                          ))}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {sortedTransactions.map((transaction, index) => {
+                          const accountName = transaction.accountId
+                            ? (accountNameById.get(transaction.accountId) ?? 'Unassigned')
+                            : 'Unassigned';
+                          const isIncome = transaction.type === 'Income';
+
+                          return (
+                            <tr
+                              key={transaction.id}
+                              onClick={() => handleEdit(transaction)}
+                              style={{
+                                cursor: 'pointer',
+                                background:
+                                  index % 2 === 0
+                                    ? 'rgba(255, 255, 255, 0.018)'
+                                    : 'rgba(255, 255, 255, 0.032)',
+                              }}
+                            >
+                              <td data-label="Entry" style={getBodyCellStyle()}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                  <div
+                                    style={{
+                                      width: '42px',
+                                      height: '42px',
+                                      borderRadius: '12px',
+                                      background: isIncome
+                                        ? 'rgba(16, 185, 129, 0.1)'
+                                        : 'rgba(244, 63, 94, 0.1)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: isIncome ? '#10b981' : '#f43f5e',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {isIncome ? (
+                                      <ArrowUpRight size={18} strokeWidth={2.5} />
+                                    ) : (
+                                      <ArrowDownRight size={18} strokeWidth={2.5} />
+                                    )}
+                                  </div>
+                                  <div style={{ minWidth: 0 }}>
+                                    <div
+                                      style={{
+                                        fontWeight: 800,
+                                        fontSize: '0.95rem',
+                                        color: '#fff',
+                                        marginBottom: '4px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {transaction.description}
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: '0.74rem',
+                                        color: '#64748b',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      Opens the entry editor
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td data-label="Category" style={getBodyCellStyle()}>
+                                <span style={getPillStyle('rgba(99, 102, 241, 0.1)', '#a5b4fc')}>
+                                  {transaction.category}
+                                </span>
+                              </td>
+                              <td data-label="Type" style={getBodyCellStyle()}>
+                                <span
+                                  style={getPillStyle(
+                                    isIncome
+                                      ? 'rgba(16, 185, 129, 0.12)'
+                                      : 'rgba(244, 63, 94, 0.12)',
+                                    isIncome ? '#34d399' : '#fb7185'
+                                  )}
+                                >
+                                  {transaction.type}
+                                </span>
+                              </td>
+                              <td
+                                data-label="Account"
+                                style={{ ...getBodyCellStyle(), color: '#d5dfdc', fontWeight: 700 }}
+                              >
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                  }}
+                                >
+                                  <Wallet size={14} color="#6b827d" />
+                                  {accountName}
+                                </span>
+                              </td>
+                              <td
+                                data-label="Date"
+                                style={{
+                                  ...getBodyCellStyle(),
+                                  color: '#9fb0ac',
+                                  fontWeight: 700,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {formatDate(transaction.date)}
+                              </td>
+                              <td
+                                data-label="Amount"
+                                style={{
+                                  ...getBodyCellStyle('right'),
+                                  color: isIncome ? '#10b981' : '#f43f5e',
+                                  fontWeight: 950,
+                                  fontSize: '1rem',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {isIncome ? '+' : '-'}
+                                {formatCurrency(transaction.amount)}
+                              </td>
+                              <td data-label="Actions" style={getBodyCellStyle('right')}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    gap: '6px',
+                                  }}
+                                >
+                                  <button
+                                    className="action-btn action-btn--edit"
+                                    type="button"
+                                    style={{ padding: '6px', borderRadius: '8px' }}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleEdit(transaction);
+                                    }}
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                  <button
+                                    className="action-btn action-btn--delete"
+                                    type="button"
+                                    style={{ padding: '6px', borderRadius: '8px' }}
+                                    onClick={async (event) => {
+                                      event.stopPropagation();
+                                      const isConfirmed = await customConfirm({
+                                        title: 'Delete entry?',
+                                        message: 'This ledger entry will be permanently deleted.',
+                                        type: 'error',
+                                        confirmLabel: 'Delete',
+                                      });
+                                      if (isConfirmed) {
+                                        await deleteTransaction(transaction.id);
+                                        showNotification('success', 'Entry deleted');
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ padding: '80px 40px', textAlign: 'center' }}>
+                    <EmptyTransactionsVisual />
+                    <h3 style={{ color: '#fff', margin: '0 0 12px 0', fontSize: '1.1rem' }}>
+                      No ledger entries yet
+                    </h3>
+                    <p
+                      style={{
+                        color: '#64748b',
+                        maxWidth: '300px',
+                        margin: '0 auto',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      Add your first entry to start building the ledger.
+                    </p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div style={{ padding: '80px 40px', textAlign: 'center' }}>
-                <EmptyTransactionsVisual />
-                <h3 style={{ color: '#fff', margin: '0 0 12px 0', fontSize: '1.1rem' }}>
-                  No ledger entries yet
-                </h3>
-                <p
+            </div>
+
+            {/* Mini Calendar */}
+            {(() => {
+              const calYear = calendarDate.getFullYear();
+              const calMonth = calendarDate.getMonth();
+              const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+              const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
+              const todayStr = toCalendarDateStr(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate()
+              );
+              const monthName = calendarDate.toLocaleDateString(undefined, {
+                month: 'long',
+                year: 'numeric',
+              });
+              const cells: Array<number | null> = [
+                ...Array(firstDayOfWeek).fill(null),
+                ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+              ];
+              return (
+                <div
                   style={{
-                    color: '#64748b',
-                    maxWidth: '300px',
-                    margin: '0 auto',
-                    fontSize: '0.85rem',
+                    width: '220px',
+                    flexShrink: 0,
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    borderRadius: '18px',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    padding: '16px',
                   }}
                 >
-                  Add your first entry to start building the ledger.
-                </p>
-              </div>
-            )}
+                  {/* Calendar header */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setCalendarDate(new Date(calYear, calMonth - 1, 1))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#7e928e',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      aria-label="Previous month"
+                    >
+                      <ChevronLeft size={14} />
+                    </button>
+                    <span
+                      style={{
+                        color: '#d5dfdc',
+                        fontSize: '0.72rem',
+                        fontWeight: 900,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {monthName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCalendarDate(new Date(calYear, calMonth + 1, 1))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#7e928e',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      aria-label="Next month"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+
+                  {/* Day labels */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, 1fr)',
+                      gap: '2px',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    {CALENDAR_DAY_LABELS.map((d, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          textAlign: 'center',
+                          fontSize: '0.6rem',
+                          fontWeight: 900,
+                          color: '#4a6560',
+                          letterSpacing: '0.04em',
+                          padding: '2px 0',
+                        }}
+                      >
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Date grid */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(7, 1fr)',
+                      gap: '2px',
+                    }}
+                  >
+                    {cells.map((day, idx) => {
+                      if (day === null) {
+                        return <div key={`empty-${idx}`} />;
+                      }
+                      const dateStr = toCalendarDateStr(calYear, calMonth, day);
+                      const isToday = dateStr === todayStr;
+                      const hasTx = transactionDates.has(dateStr);
+                      return (
+                        <div
+                          key={dateStr}
+                          style={{
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '7px',
+                            fontSize: '0.65rem',
+                            fontWeight: isToday ? 900 : 600,
+                            background: isToday
+                              ? 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)'
+                              : 'transparent',
+                            color: isToday ? '#fff' : hasTx ? '#43c08a' : '#7e928e',
+                            boxShadow: isToday ? '0 2px 8px rgba(30, 166, 114, 0.45)' : 'none',
+                            cursor: 'default',
+                          }}
+                        >
+                          {day}
+                          {hasTx && !isToday && (
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: '3px',
+                                width: '4px',
+                                height: '4px',
+                                borderRadius: '50%',
+                                background: '#43c08a',
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
