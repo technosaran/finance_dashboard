@@ -10,6 +10,7 @@ import {
   calculateStockCharges,
 } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
+import { validateStockTrade } from '@/lib/utils/stock-transactions';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -91,14 +92,50 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
   const [exitPrice, setExitPrice] = useState('');
   const [exitDate, setExitDate] = useState('');
 
+  const numericQuantity = Number.parseFloat(quantity);
+  const numericPrice = Number.parseFloat(price);
+  const numericExitPrice = Number.parseFloat(exitPrice);
+
+  const stockFundingAccounts = useMemo(
+    () => accounts.filter((account) => account.currency === 'INR'),
+    [accounts]
+  );
+
+  const selectedStockFundingAccount = useMemo(
+    () => stockFundingAccounts.find((account) => account.id === Number(accountId)) || null,
+    [accountId, stockFundingAccounts]
+  );
+
+  const selectedStockExchange =
+    selectedItem && 'exchange' in selectedItem && selectedItem.exchange.includes('BSE')
+      ? 'BSE'
+      : 'NSE';
+
+  const selectedStockAvailableQuantity = useMemo(() => {
+    if (type !== 'STOCK' || !selectedItem || !('symbol' in selectedItem)) {
+      return 0;
+    }
+
+    return stocks
+      .filter(
+        (stock) =>
+          stock.symbol.toUpperCase() === selectedItem.symbol.toUpperCase() &&
+          stock.exchange.toUpperCase() === selectedStockExchange
+      )
+      .reduce((sum, stock) => sum + stock.quantity, 0);
+  }, [selectedItem, selectedStockExchange, stocks, type]);
+
   const getDefaultAccountId = useCallback(
     (nextType: TransactionType) => {
       if (nextType === 'STOCK' || nextType === 'FNO') {
-        return settings.defaultStockAccountId || '';
+        return settings.defaultStockAccountId &&
+          stockFundingAccounts.some((account) => account.id === settings.defaultStockAccountId)
+          ? settings.defaultStockAccountId
+          : '';
       }
       return settings.defaultMfAccountId || '';
     },
-    [settings.defaultMfAccountId, settings.defaultStockAccountId]
+    [settings.defaultMfAccountId, settings.defaultStockAccountId, stockFundingAccounts]
   );
 
   const resetForm = useCallback(
@@ -130,10 +167,6 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     }
   }, [isOpen, resetForm]);
 
-  const numericQuantity = Number.parseFloat(quantity);
-  const numericPrice = Number.parseFloat(price);
-  const numericExitPrice = Number.parseFloat(exitPrice);
-
   const stockChargePreview = useMemo(() => {
     if (
       type !== 'STOCK' ||
@@ -157,6 +190,27 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       exchange
     );
   }, [type, quantity, price, numericQuantity, numericPrice, selectedItem, subType]);
+
+  const stockTradeValidation = useMemo(() => {
+    if (type !== 'STOCK' || !stockChargePreview) {
+      return null;
+    }
+
+    return validateStockTrade({
+      transactionType: subType as 'BUY' | 'SELL',
+      quantity: numericQuantity,
+      availableQuantity: subType === 'SELL' ? selectedStockAvailableQuantity : null,
+      settlementAmount: subType === 'BUY' ? stockChargePreview.settlementAmount : null,
+      accountBalance: selectedStockFundingAccount?.balance,
+    });
+  }, [
+    type,
+    stockChargePreview,
+    subType,
+    numericQuantity,
+    selectedStockAvailableQuantity,
+    selectedStockFundingAccount,
+  ]);
 
   const mutualFundChargePreview = useMemo(() => {
     if (
@@ -289,8 +343,17 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     const p = parseFloat(price);
     const total = qty * p;
 
+    if (!selectedStockFundingAccount) {
+      showNotification('error', 'Select the INR account that should settle this stock order.');
+      return;
+    }
+
     // Check if stock already exists in portfolio
-    const existingStock = stocks.find((s) => s.symbol === selectedItem.symbol);
+    const existingStock = stocks.find(
+      (s) =>
+        s.symbol.toUpperCase() === selectedItem.symbol.toUpperCase() &&
+        s.exchange.toUpperCase() === selectedStockExchange
+    );
     if (!existingStock && subType === 'SELL') {
       showNotification('error', `Add a BUY transaction for ${selectedItem.symbol} before selling.`);
       return;
@@ -305,7 +368,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         avgPrice: p,
         currentPrice: p,
         previousPrice: previousPrice ?? p,
-        exchange: selectedItem.exchange?.includes('BSE') ? 'BSE' : 'NSE',
+        exchange: selectedStockExchange,
         investmentAmount: 0,
         currentValue: 0,
         pnl: 0,
@@ -314,12 +377,25 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       targetStockId = newStock.id;
     }
 
-    const charges = calculateStockCharges(
-      subType as 'BUY' | 'SELL',
-      qty,
-      p,
-      selectedItem.exchange?.includes('BSE') ? 'BSE' : 'NSE'
-    );
+    const charges = calculateStockCharges(subType as 'BUY' | 'SELL', qty, p, selectedStockExchange);
+
+    const stockTradeValidation = validateStockTrade({
+      transactionType: subType as 'BUY' | 'SELL',
+      quantity: qty,
+      availableQuantity: subType === 'SELL' ? selectedStockAvailableQuantity : null,
+      settlementAmount: subType === 'BUY' ? charges.settlementAmount : null,
+      accountBalance: selectedStockFundingAccount.balance,
+    });
+
+    if (!stockTradeValidation.isValid) {
+      showNotification(
+        'error',
+        stockTradeValidation.shortfall
+          ? `${stockTradeValidation.message} Shortfall: ${stockTradeValidation.shortfall.toFixed(2)}.`
+          : stockTradeValidation.message || 'Unable to place this stock order.'
+      );
+      return;
+    }
 
     await addStockTransaction({
       stockId: targetStockId,
@@ -331,7 +407,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
       taxes: charges.taxes,
       transactionDate: date,
       notes: notes || undefined,
-      accountId: accountId ? Number(accountId) : undefined,
+      accountId: Number(accountId),
     });
 
     showNotification('success', `${selectedItem.symbol} transaction recorded successfully`);
@@ -1153,11 +1229,12 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 marginBottom: '6px',
               }}
             >
-              Operating Bank Account
+              {type === 'STOCK' ? 'Funding Account (INR)' : 'Operating Bank Account'}
             </label>
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : '')}
+              required={type === 'STOCK'}
               style={{
                 width: '100%',
                 background: '#000000',
@@ -1167,13 +1244,105 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 color: '#fff',
               }}
             >
-              <option value="">No Account (Ledger Only)</option>
-              {accounts.map((acc) => (
+              <option value="">
+                {type === 'STOCK'
+                  ? stockFundingAccounts.length > 0
+                    ? 'Select INR Account'
+                    : 'Add an INR account first'
+                  : 'No Account (Ledger Only)'}
+              </option>
+              {(type === 'STOCK' ? stockFundingAccounts : accounts).map((acc) => (
                 <option key={acc.id} value={acc.id}>
                   {acc.name} - ₹{acc.balance.toLocaleString()}
                 </option>
               ))}
             </select>
+            {type === 'STOCK' && stockChargePreview && (
+              <div
+                style={{
+                  marginTop: '12px',
+                  padding: '14px 16px',
+                  borderRadius: '16px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  display: 'grid',
+                  gap: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    fontSize: '0.84rem',
+                  }}
+                >
+                  <span style={{ color: '#94a3b8' }}>Available balance</span>
+                  <span style={{ color: '#f4f8f7', fontWeight: '800' }}>
+                    {selectedStockFundingAccount
+                      ? `₹${selectedStockFundingAccount.balance.toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : 'Select account'}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    fontSize: '0.84rem',
+                  }}
+                >
+                  <span style={{ color: '#94a3b8' }}>
+                    {subType === 'BUY' ? 'Projected balance' : 'Projected credit'}
+                  </span>
+                  <span
+                    style={{
+                      color:
+                        selectedStockFundingAccount && stockTradeValidation?.isValid !== false
+                          ? subType === 'BUY'
+                            ? '#d9f3e9'
+                            : '#34d399'
+                          : '#f59e0b',
+                      fontWeight: '800',
+                    }}
+                  >
+                    {selectedStockFundingAccount
+                      ? `₹${(subType === 'BUY'
+                          ? selectedStockFundingAccount.balance -
+                            stockChargePreview.settlementAmount
+                          : selectedStockFundingAccount.balance +
+                            stockChargePreview.settlementAmount
+                        ).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : '--'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#9aaea9', lineHeight: 1.5 }}>
+                  {!selectedStockFundingAccount
+                    ? 'Choose the INR account that should handle this stock settlement.'
+                    : stockTradeValidation?.isValid === false
+                      ? `${stockTradeValidation.message}${
+                          stockTradeValidation.shortfall
+                            ? ` Shortfall: ₹${stockTradeValidation.shortfall.toLocaleString(
+                                'en-IN',
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}.`
+                            : ''
+                        }`
+                      : subType === 'BUY'
+                        ? 'This account will be debited after brokerage, statutory taxes, exchange fees, and stamp duty.'
+                        : `This account will be credited after charges. Available to sell: ${selectedStockAvailableQuantity} shares.`}
+                </div>
+              </div>
+            )}
           </div>
 
           <button

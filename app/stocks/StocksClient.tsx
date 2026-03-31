@@ -8,6 +8,11 @@ import { Stock, StockTransaction } from '@/lib/types';
 import { calculateStockCharges, getStockChargeMeta, StockChargeMode } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
 import {
+  calculateStockTradeChargesTotal,
+  calculateStockTradeSettlement,
+  validateStockTrade,
+} from '@/lib/utils/stock-transactions';
+import {
   calculateLifetimePerformance,
   calculatePositionMetrics,
   calculatePositionMetricsFromInvestment,
@@ -36,14 +41,14 @@ import {
 import { EmptyPortfolioVisual } from '../components/Visuals';
 
 const COLORS = [
-  '#6366f1',
-  '#10b981',
-  '#f59e0b',
-  '#ec4899',
-  '#3b82f6',
-  '#8b5cf6',
-  '#ef4444',
-  '#06b6d4',
+  '#1ea672',
+  '#43c08a',
+  '#f2a93b',
+  '#3ea8a1',
+  '#146d63',
+  '#8fd5b6',
+  '#ef5d5d',
+  '#6cb6ff',
 ];
 
 const inrFormatter = new Intl.NumberFormat('en-IN', {
@@ -256,6 +261,121 @@ const getChargeModeLabel = (mode: StockChargeMode | 'mixed') => {
   return 'Delivery';
 };
 
+type ChargeBreakdownSnapshot = Pick<
+  ReturnType<typeof calculateStockCharges>,
+  | 'turnover'
+  | 'brokerage'
+  | 'stt'
+  | 'transactionCharges'
+  | 'sebiCharges'
+  | 'stampDuty'
+  | 'gst'
+  | 'dpCharges'
+  | 'total'
+  | 'settlementAmount'
+>;
+
+interface ChargeBreakdownCardProps {
+  title: string;
+  charges: ChargeBreakdownSnapshot;
+  settlementLabel: string;
+  accentColor: string;
+  background: string;
+  borderColor: string;
+  settlementColor: string;
+  prefixRows?: Array<{ label: string; value: string | number }>;
+  note?: string;
+}
+
+const ChargeBreakdownCard = ({
+  title,
+  charges,
+  settlementLabel,
+  accentColor,
+  background,
+  borderColor,
+  settlementColor,
+  prefixRows = [],
+  note,
+}: ChargeBreakdownCardProps) => (
+  <div
+    style={{
+      background,
+      border: `1px solid ${borderColor}`,
+      borderRadius: '18px',
+      padding: '18px',
+      display: 'grid',
+      gap: '10px',
+    }}
+  >
+    <div
+      style={{
+        fontSize: '0.72rem',
+        fontWeight: '900',
+        color: accentColor,
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+      }}
+    >
+      {title}
+    </div>
+    {prefixRows.map((row) => (
+      <div
+        key={`${row.label}-${row.value}`}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '16px',
+          fontSize: '0.85rem',
+        }}
+      >
+        <span style={{ color: '#94a3b8' }}>{row.label}</span>
+        <span style={{ color: '#f4f8f7', fontWeight: '800', textAlign: 'right' }}>{row.value}</span>
+      </div>
+    ))}
+    {[
+      ['Trade value', formatInr(charges.turnover)],
+      ['Brokerage', formatInr(charges.brokerage)],
+      ['STT', formatInr(charges.stt)],
+      ['Exchange txn charges', formatInr(charges.transactionCharges)],
+      ['SEBI charges', formatInr(charges.sebiCharges)],
+      ['GST', formatInr(charges.gst)],
+      ['Stamp duty', formatInr(charges.stampDuty)],
+      ['DP charges', formatInr(charges.dpCharges)],
+      ['Total charges', formatInr(charges.total)],
+    ].map(([label, value]) => (
+      <div
+        key={label}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '16px',
+          fontSize: '0.85rem',
+        }}
+      >
+        <span style={{ color: '#94a3b8' }}>{label}</span>
+        <span style={{ color: '#f4f8f7', fontWeight: '800', textAlign: 'right' }}>{value}</span>
+      </div>
+    ))}
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: '16px',
+        paddingTop: '10px',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        fontSize: '0.88rem',
+      }}
+    >
+      <span style={{ color: '#c0d2cb', fontWeight: '700' }}>{settlementLabel}</span>
+      <span style={{ color: settlementColor, fontWeight: '900', textAlign: 'right' }}>
+        {formatInr(charges.settlementAmount)}
+      </span>
+    </div>
+    {note && <div style={{ fontSize: '0.74rem', color: '#9aaea9', lineHeight: 1.5 }}>{note}</div>}
+  </div>
+);
+
 export default function StocksClient() {
   const { accounts, loading } = useLedger();
   const {
@@ -315,6 +435,25 @@ export default function StocksClient() {
   const selectedTransactionExchange =
     selectedTransactionStock?.exchange === 'BSE' ? 'BSE' : ('NSE' as const);
 
+  const stockFundingAccounts = useMemo(
+    () => accounts.filter((account) => account.currency === 'INR'),
+    [accounts]
+  );
+
+  const selectedFundingAccount = useMemo(
+    () => stockFundingAccounts.find((account) => account.id === Number(selectedAccountId)) || null,
+    [selectedAccountId, stockFundingAccounts]
+  );
+
+  const getDefaultStockFundingAccountId = useCallback(() => {
+    const defaultAccountId = settings.defaultStockAccountId;
+
+    return defaultAccountId &&
+      stockFundingAccounts.some((account) => account.id === defaultAccountId)
+      ? defaultAccountId
+      : '';
+  }, [settings.defaultStockAccountId, stockFundingAccounts]);
+
   const getHoldingIds = useCallback(
     (stockId: number) => {
       const currentStock = stocks.find((stock) => stock.id === stockId);
@@ -330,6 +469,15 @@ export default function StocksClient() {
     },
     [stocks]
   );
+
+  const selectedTransactionAvailableQuantity = useMemo(() => {
+    if (!selectedTransactionStock) return 0;
+
+    const holdingIds = getHoldingIds(selectedTransactionStock.id);
+    return stocks
+      .filter((stock) => holdingIds.includes(stock.id))
+      .reduce((sum, stock) => sum + stock.quantity, 0);
+  }, [getHoldingIds, selectedTransactionStock, stocks]);
 
   const getIntradaySellQuantity = useCallback(
     (
@@ -479,6 +627,40 @@ export default function StocksClient() {
     transactionDate,
   ]);
 
+  const initialBuyTradeValidation = useMemo(() => {
+    if (editId !== null || !initialBuyChargePreview) {
+      return null;
+    }
+
+    return validateStockTrade({
+      transactionType: 'BUY',
+      quantity: Number(quantity),
+      settlementAmount: initialBuyChargePreview.settlementAmount,
+      accountBalance: selectedFundingAccount?.balance,
+    });
+  }, [editId, initialBuyChargePreview, quantity, selectedFundingAccount]);
+
+  const transactionTradeValidation = useMemo(() => {
+    if (!transactionChargePreview) {
+      return null;
+    }
+
+    return validateStockTrade({
+      transactionType,
+      quantity: Number(transactionQuantity),
+      availableQuantity: transactionType === 'SELL' ? selectedTransactionAvailableQuantity : null,
+      settlementAmount:
+        transactionType === 'BUY' ? transactionChargePreview.total.settlementAmount : null,
+      accountBalance: selectedFundingAccount?.balance,
+    });
+  }, [
+    transactionChargePreview,
+    transactionType,
+    transactionQuantity,
+    selectedTransactionAvailableQuantity,
+    selectedFundingAccount,
+  ]);
+
   const viewingHoldingTransactions = useMemo(() => {
     if (!viewingHolding) return [];
 
@@ -527,6 +709,58 @@ export default function StocksClient() {
         return (right.createdAt || '').localeCompare(left.createdAt || '');
       }),
     [stockTransactions]
+  );
+
+  const stockHistoryCards = useMemo(
+    () =>
+      sortedStockTransactions.map((transaction) => {
+        const stock = stocks.find((entry) => entry.id === transaction.stockId) || null;
+        const totalCharges = calculateStockTradeChargesTotal(
+          transaction.brokerage || 0,
+          transaction.taxes || 0
+        );
+        const settlementAmount = calculateStockTradeSettlement(
+          transaction.transactionType,
+          transaction.totalAmount,
+          transaction.brokerage || 0,
+          transaction.taxes || 0
+        );
+        const account =
+          accounts.find((entry) => entry.id === Number(transaction.accountId)) || null;
+
+        return {
+          transaction,
+          stock,
+          account,
+          totalCharges,
+          settlementAmount,
+        };
+      }),
+    [accounts, sortedStockTransactions, stocks]
+  );
+
+  const stockHistorySummary = useMemo(
+    () => ({
+      totalCharges: stockHistoryCards.reduce((sum, entry) => sum + entry.totalCharges, 0),
+      totalBuys: stockHistoryCards
+        .filter((entry) => entry.transaction.transactionType === 'BUY')
+        .reduce((sum, entry) => sum + entry.transaction.totalAmount, 0),
+      totalSells: stockHistoryCards
+        .filter((entry) => entry.transaction.transactionType === 'SELL')
+        .reduce((sum, entry) => sum + entry.transaction.totalAmount, 0),
+      totalDebits: stockHistoryCards
+        .filter((entry) => entry.transaction.transactionType === 'BUY')
+        .reduce((sum, entry) => sum + entry.settlementAmount, 0),
+      totalCredits: stockHistoryCards
+        .filter((entry) => entry.transaction.transactionType === 'SELL')
+        .reduce((sum, entry) => sum + entry.settlementAmount, 0),
+      distinctAccounts: new Set(
+        stockHistoryCards
+          .map((entry) => entry.account?.id)
+          .filter((accountId): accountId is number => typeof accountId === 'number')
+      ).size,
+    }),
+    [stockHistoryCards]
   );
 
   const openHoldingFromTransaction = (transaction: StockTransaction) => {
@@ -655,6 +889,29 @@ export default function StocksClient() {
         await updateStock(editId, stockData);
         showNotification('success', `${symbol} updated successfully`);
       } else {
+        if (!selectedAccountId || !selectedFundingAccount) {
+          showNotification('error', 'Select the bank account that should fund this buy order.');
+          return;
+        }
+
+        const calculatedCharges = calculateStockCharges('BUY', qty, avg, exchange);
+        const buyValidation = validateStockTrade({
+          transactionType: 'BUY',
+          quantity: qty,
+          settlementAmount: calculatedCharges.settlementAmount,
+          accountBalance: selectedFundingAccount.balance,
+        });
+
+        if (!buyValidation.isValid) {
+          showNotification(
+            'error',
+            buyValidation.shortfall
+              ? `${buyValidation.message} Shortfall: ${formatInr(buyValidation.shortfall)}.`
+              : buyValidation.message || 'Unable to place this buy order.'
+          );
+          return;
+        }
+
         // Log to ledger by default (per user request)
         // 1. Create stock with 0 quantity first (or get existing)
         let targetStockId: number;
@@ -681,7 +938,6 @@ export default function StocksClient() {
 
         // 2. Add transaction which will update holdings AND log to ledger
         const investment = qty * avg;
-        const calculatedCharges = calculateStockCharges('BUY', qty, avg, exchange);
 
         await addStockTransaction({
           stockId: targetStockId,
@@ -692,7 +948,7 @@ export default function StocksClient() {
           brokerage: calculatedCharges.brokerage,
           taxes: calculatedCharges.taxes,
           transactionDate: new Date().toISOString().split('T')[0],
-          accountId: selectedAccountId !== '' ? Number(selectedAccountId) : undefined,
+          accountId: Number(selectedAccountId),
           notes: 'Initial portfolio entry',
         });
 
@@ -742,6 +998,30 @@ export default function StocksClient() {
       selectedTransactionStock?.id,
       transactionDate
     );
+    const fundingAccount = selectedFundingAccount;
+
+    if (!fundingAccount) {
+      showNotification('error', 'We could not find the selected operating account.');
+      return;
+    }
+
+    const tradeValidation = validateStockTrade({
+      transactionType,
+      quantity: qty,
+      availableQuantity: transactionType === 'SELL' ? selectedTransactionAvailableQuantity : null,
+      settlementAmount: transactionType === 'BUY' ? calculatedCharges.total.settlementAmount : null,
+      accountBalance: fundingAccount.balance,
+    });
+
+    if (!tradeValidation.isValid) {
+      showNotification(
+        'error',
+        tradeValidation.shortfall
+          ? `${tradeValidation.message} Shortfall: ${formatInr(tradeValidation.shortfall)}.`
+          : tradeValidation.message || 'Unable to place this stock order.'
+      );
+      return;
+    }
 
     try {
       await addStockTransaction({
@@ -785,7 +1065,7 @@ export default function StocksClient() {
     setSector('');
     setExchange('NSE');
     setSearchQuery('');
-    setSelectedAccountId(settings.defaultStockAccountId || '');
+    setSelectedAccountId(getDefaultStockFundingAccountId());
   };
 
   const handleEditStock = (stock: Stock) => {
@@ -808,8 +1088,8 @@ export default function StocksClient() {
     setTransactionType('SELL');
     setTransactionQuantity(stock.quantity.toString());
     setTransactionPrice(stock.currentPrice.toString());
-    if (!selectedAccountId && settings.defaultStockAccountId) {
-      setSelectedAccountId(settings.defaultStockAccountId);
+    if (!selectedAccountId) {
+      setSelectedAccountId(getDefaultStockFundingAccountId());
     }
     setIsTypeLocked(true);
     setIsModalOpen(true);
@@ -821,7 +1101,7 @@ export default function StocksClient() {
     setTransactionQuantity('');
     setTransactionPrice('');
     setTransactionDate(new Date().toISOString().split('T')[0]);
-    setSelectedAccountId(settings.defaultStockAccountId || '');
+    setSelectedAccountId(getDefaultStockFundingAccountId());
     setNotes('');
     setIsTypeLocked(false);
   };
@@ -2064,116 +2344,348 @@ export default function StocksClient() {
       )}
 
       {activeTab === 'history' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'grid', gap: '20px' }}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '12px',
+              alignItems: 'flex-start',
+              gap: '16px',
               flexWrap: 'wrap',
             }}
           >
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>
-              Global Transaction History
-            </h3>
-            <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#64748b' }}>
-              {sortedStockTransactions.length} records
-            </div>
-          </div>
-          {sortedStockTransactions.length > 0 ? (
-            <div className="history-table-shell">
-              <div className="history-table-scroll">
-                <table className="history-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Stock</th>
-                      <th>Type</th>
-                      <th>Qty</th>
-                      <th>Price</th>
-                      <th>Total</th>
-                      <th>Charges</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedStockTransactions.map((transaction) => {
-                      const stock = stocks.find((s) => s.id === transaction.stockId);
-                      const totalCharges = (transaction.brokerage || 0) + (transaction.taxes || 0);
-
-                      return (
-                        <tr key={transaction.id}>
-                          <td>{dateFormatter.format(new Date(transaction.transactionDate))}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="history-table__symbol-btn"
-                              onClick={() => openHoldingFromTransaction(transaction)}
-                            >
-                              <span className="history-table__symbol">
-                                {stock?.symbol || 'Unknown'}
-                              </span>
-                              <span className="history-table__company">
-                                {stock?.companyName ||
-                                  transaction.notes ||
-                                  'Historical stock entry'}
-                              </span>
-                            </button>
-                          </td>
-                          <td>
-                            <span
-                              className={`history-table__type-badge ${
-                                transaction.transactionType === 'BUY'
-                                  ? 'history-table__type-badge--buy'
-                                  : 'history-table__type-badge--sell'
-                              }`}
-                            >
-                              {transaction.transactionType}
-                            </span>
-                          </td>
-                          <td>{transaction.quantity}</td>
-                          <td>{formatInr(transaction.price)}</td>
-                          <td
-                            className={`history-table__value ${
-                              transaction.transactionType === 'BUY'
-                                ? 'history-table__value--buy'
-                                : 'history-table__value--sell'
-                            }`}
-                          >
-                            {transaction.transactionType === 'BUY' ? '-' : '+'}
-                            {formatInr(transaction.totalAmount)}
-                          </td>
-                          <td>{totalCharges > 0 ? formatInr(totalCharges) : '--'}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="history-table__delete-btn"
-                              onClick={async () => {
-                                const isConfirmed = await customConfirm({
-                                  title: 'Delete Transaction',
-                                  message:
-                                    'Are you sure you want to delete this historical transaction?',
-                                  type: 'warning',
-                                  confirmLabel: 'Delete',
-                                });
-                                if (isConfirmed) {
-                                  await deleteStockTransaction(transaction.id);
-                                  showNotification('success', 'Transaction deleted');
-                                }
-                              }}
-                              aria-label="Delete transaction"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0, color: '#f4f8f7' }}>
+                Trade book
+              </h3>
+              <div style={{ fontSize: '0.82rem', color: '#9aaea9', marginTop: '6px' }}>
+                Every debit and credit here already includes brokerage, taxes, exchange fees, and
+                statutory charges.
               </div>
             </div>
+            <div
+              style={{
+                padding: '8px 12px',
+                borderRadius: '999px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(160, 188, 180, 0.12)',
+                color: '#d9f3e9',
+                fontSize: '0.78rem',
+                fontWeight: '800',
+              }}
+            >
+              {stockHistoryCards.length} entries
+            </div>
+          </div>
+
+          {stockHistoryCards.length > 0 ? (
+            <>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: '14px',
+                }}
+              >
+                {[
+                  {
+                    label: 'Gross buys',
+                    value: formatInr(stockHistorySummary.totalBuys),
+                    tone: '#f2a93b',
+                    detail: `${formatInr(stockHistorySummary.totalDebits)} debited after charges`,
+                  },
+                  {
+                    label: 'Gross sells',
+                    value: formatInr(stockHistorySummary.totalSells),
+                    tone: '#43c08a',
+                    detail: `${formatInr(stockHistorySummary.totalCredits)} credited after charges`,
+                  },
+                  {
+                    label: 'Charges paid',
+                    value: formatInr(stockHistorySummary.totalCharges),
+                    tone: '#ef5d5d',
+                    detail: 'Brokerage, taxes, DP and exchange fees combined',
+                  },
+                  {
+                    label: 'Net cash flow',
+                    value: formatSignedInr(
+                      stockHistorySummary.totalCredits - stockHistorySummary.totalDebits
+                    ),
+                    tone:
+                      stockHistorySummary.totalCredits >= stockHistorySummary.totalDebits
+                        ? '#43c08a'
+                        : '#f2a93b',
+                    detail: `${stockHistorySummary.distinctAccounts} funding account${
+                      stockHistorySummary.distinctAccounts === 1 ? '' : 's'
+                    } used`,
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.label}
+                    style={{
+                      padding: '16px 18px',
+                      borderRadius: '18px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(160, 188, 180, 0.12)',
+                      display: 'grid',
+                      gap: '8px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '900',
+                        color: '#9aaea9',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                      }}
+                    >
+                      {card.label}
+                    </div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: '900', color: card.tone }}>
+                      {card.value}
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: '#7f928d', lineHeight: 1.5 }}>
+                      {card.detail}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gap: '14px' }}>
+                {stockHistoryCards.map((entry) => {
+                  const isBuy = entry.transaction.transactionType === 'BUY';
+                  const accentColor = isBuy ? '#f2a93b' : '#43c08a';
+                  const balanceCopy = isBuy ? 'Net debit' : 'Net credit';
+
+                  return (
+                    <article
+                      key={entry.transaction.id}
+                      style={{
+                        padding: '18px',
+                        borderRadius: '22px',
+                        background: isBuy
+                          ? 'linear-gradient(135deg, rgba(242, 169, 59, 0.08) 0%, rgba(255,255,255,0.03) 100%)'
+                          : 'linear-gradient(135deg, rgba(67, 192, 138, 0.08) 0%, rgba(255,255,255,0.03) 100%)',
+                        border: `1px solid ${isBuy ? 'rgba(242, 169, 59, 0.18)' : 'rgba(67, 192, 138, 0.18)'}`,
+                        display: 'grid',
+                        gap: '16px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '16px',
+                          flexWrap: 'wrap',
+                          alignItems: 'flex-start',
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                          <div
+                            style={{
+                              width: '44px',
+                              height: '44px',
+                              borderRadius: '14px',
+                              background: isBuy
+                                ? 'rgba(242, 169, 59, 0.14)'
+                                : 'rgba(67, 192, 138, 0.14)',
+                              color: accentColor,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {isBuy ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
+                          </div>
+                          <div style={{ display: 'grid', gap: '6px' }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: '1rem',
+                                  fontWeight: '900',
+                                  color: '#f4f8f7',
+                                }}
+                              >
+                                {entry.stock?.symbol || 'Unknown'}
+                              </span>
+                              <span
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  background: isBuy
+                                    ? 'rgba(242, 169, 59, 0.12)'
+                                    : 'rgba(67, 192, 138, 0.12)',
+                                  color: accentColor,
+                                  fontSize: '0.7rem',
+                                  fontWeight: '900',
+                                  letterSpacing: '0.08em',
+                                }}
+                              >
+                                {entry.transaction.transactionType}
+                              </span>
+                              <span
+                                style={{ fontSize: '0.74rem', color: '#9aaea9', fontWeight: '700' }}
+                              >
+                                {entry.stock?.exchange || 'NSE'}
+                              </span>
+                            </div>
+                            <div style={{ color: '#9aaea9', fontSize: '0.82rem' }}>
+                              {entry.stock?.companyName ||
+                                entry.transaction.notes ||
+                                'Historical stock entry'}
+                            </div>
+                            <div style={{ color: '#7f928d', fontSize: '0.76rem' }}>
+                              {dateFormatter.format(new Date(entry.transaction.transactionDate))}
+                              {' · '}
+                              {entry.account?.name || 'Ledger-only entry'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => openHoldingFromTransaction(entry.transaction)}
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              color: '#d9f3e9',
+                              borderRadius: '12px',
+                              width: '40px',
+                              height: '40px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            aria-label="Open holding"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isConfirmed = await customConfirm({
+                                title: 'Delete Transaction',
+                                message:
+                                  'Are you sure you want to delete this historical transaction?',
+                                type: 'warning',
+                                confirmLabel: 'Delete',
+                              });
+                              if (isConfirmed) {
+                                await deleteStockTransaction(entry.transaction.id);
+                                showNotification('success', 'Transaction deleted');
+                              }
+                            }}
+                            style={{
+                              background: 'rgba(239, 93, 93, 0.08)',
+                              border: '1px solid rgba(239, 93, 93, 0.18)',
+                              color: '#ef5d5d',
+                              borderRadius: '12px',
+                              width: '40px',
+                              height: '40px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            aria-label="Delete transaction"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                          gap: '12px',
+                        }}
+                      >
+                        {[
+                          {
+                            label: 'Quantity x price',
+                            value: `${entry.transaction.quantity} x ${formatInr(entry.transaction.price)}`,
+                          },
+                          {
+                            label: 'Gross trade value',
+                            value: formatInr(entry.transaction.totalAmount),
+                          },
+                          {
+                            label: 'Charges',
+                            value: formatInr(entry.totalCharges),
+                          },
+                          {
+                            label: balanceCopy,
+                            value: formatInr(entry.settlementAmount),
+                            tone: accentColor,
+                          },
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: '16px',
+                              background: 'rgba(7, 16, 24, 0.38)',
+                              border: '1px solid rgba(160, 188, 180, 0.1)',
+                              display: 'grid',
+                              gap: '6px',
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: '800',
+                                color: '#7f928d',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                              }}
+                            >
+                              {item.label}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '0.9rem',
+                                fontWeight: '900',
+                                color: item.tone || '#f4f8f7',
+                              }}
+                            >
+                              {item.value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {entry.transaction.notes && (
+                        <div
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '16px',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(160, 188, 180, 0.08)',
+                            color: '#9aaea9',
+                            fontSize: '0.78rem',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {entry.transaction.notes}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <div
               style={{
@@ -2186,10 +2698,10 @@ export default function StocksClient() {
             >
               <History size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
               <div style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '8px' }}>
-                No transactions recorded
+                No stock trades recorded
               </div>
               <div style={{ fontSize: '0.9rem' }}>
-                Your trading activities will appear here chronologically
+                Your buy and sell activity will appear here as a clean trade book.
               </div>
             </div>
           )}
@@ -2197,133 +2709,215 @@ export default function StocksClient() {
       )}
 
       {activeTab === 'lifetime' && (
-        <div className="grid-responsive-3" style={{ gap: '32px' }}>
+        <div style={{ display: 'grid', gap: '20px' }}>
           <div
-            className="lifetime-report-card"
             style={{
-              background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
-              borderRadius: 'clamp(20px, 3vw, 32px)',
-              border: '1px solid #111111',
-              padding: 'clamp(20px, 4vw, 40px)',
+              background:
+                'linear-gradient(135deg, rgba(20, 109, 99, 0.22) 0%, rgba(10, 18, 24, 0.96) 55%, rgba(242, 169, 59, 0.14) 100%)',
+              borderRadius: '28px',
+              border: '1px solid rgba(160, 188, 180, 0.14)',
+              padding: 'clamp(22px, 4vw, 36px)',
+              display: 'grid',
+              gap: '24px',
             }}
           >
-            <h3
+            <div
               style={{
-                fontSize: '1.5rem',
-                fontWeight: '900',
-                marginBottom: '32px',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
+                justifyContent: 'space-between',
+                gap: '20px',
+                flexWrap: 'wrap',
+                alignItems: 'flex-start',
               }}
             >
-              <Star color="#f59e0b" fill="#f59e0b" size={24} /> Lifetime performance
-            </h3>
-
-            <div className="grid-responsive-2" style={{ gap: '48px', marginBottom: '48px' }}>
-              <div>
+              <div style={{ display: 'grid', gap: '10px' }}>
                 <div
                   style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '800',
-                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontSize: '0.82rem',
+                    fontWeight: '900',
+                    color: '#f2a93b',
                     textTransform: 'uppercase',
-                    marginBottom: '12px',
+                    letterSpacing: '0.08em',
                   }}
                 >
-                  Total Money Inflow
+                  <Star color="#f2a93b" fill="#f2a93b" size={18} /> Lifetime performance
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: '950', color: '#fff' }}>
-                  ₹{totalBuys.toLocaleString()}
+                <div
+                  style={{
+                    fontSize: 'clamp(2rem, 5vw, 3.1rem)',
+                    fontWeight: '950',
+                    color: lifetimeEarned >= 0 ? '#d9f3e9' : '#ffd8d8',
+                    lineHeight: 1.05,
+                  }}
+                >
+                  {formatSignedInr(lifetimeEarned)}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '8px' }}>
-                  Combined value of all BUY orders
+                <div style={{ fontSize: '0.88rem', color: '#b6c6c1', maxWidth: '620px' }}>
+                  Combined lifetime P&amp;L after charges. This includes realized sell value,
+                  today&apos;s market value of open holdings, and every verified charge already
+                  applied.
                 </div>
               </div>
-              <div>
+
+              <div
+                style={{
+                  minWidth: '220px',
+                  padding: '16px 18px',
+                  borderRadius: '20px',
+                  background: 'rgba(7, 16, 24, 0.42)',
+                  border: '1px solid rgba(160, 188, 180, 0.12)',
+                  display: 'grid',
+                  gap: '8px',
+                }}
+              >
                 <div
                   style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '800',
-                    color: '#64748b',
+                    fontSize: '0.72rem',
+                    fontWeight: '900',
+                    color: '#9aaea9',
                     textTransform: 'uppercase',
-                    marginBottom: '12px',
+                    letterSpacing: '0.08em',
                   }}
                 >
-                  Total Lifetime Gains
+                  Current market value
                 </div>
-                <div
-                  style={{
-                    fontSize: '2.5rem',
-                    fontWeight: '950',
-                    color: lifetimeEarned >= 0 ? '#10b981' : '#ef4444',
-                  }}
-                >
-                  {lifetimeEarned >= 0 ? '+' : ''}₹{lifetimeEarned.toLocaleString()}
+                <div style={{ fontSize: '1.35rem', fontWeight: '900', color: '#f4f8f7' }}>
+                  {formatInr(totalCurrentValue)}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '8px' }}>
-                  Absolute profit after all charges
+                <div style={{ fontSize: '0.78rem', color: '#7f928d' }}>
+                  {groupedStocks.length} live holding{groupedStocks.length === 1 ? '' : 's'} in the
+                  portfolio
                 </div>
               </div>
             </div>
 
             <div
-              className="grid-responsive-3"
               style={{
-                gap: '24px',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
-                paddingTop: '32px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '14px',
               }}
             >
-              <div>
+              {[
+                {
+                  label: 'Gross buy turnover',
+                  value: formatInr(totalBuys),
+                  tone: '#f2a93b',
+                  detail: `${formatInr(stockHistorySummary.totalDebits)} cash debited after charges`,
+                },
+                {
+                  label: 'Gross sell turnover',
+                  value: formatInr(totalSells),
+                  tone: '#43c08a',
+                  detail: `${formatInr(stockHistorySummary.totalCredits)} cash credited after charges`,
+                },
+                {
+                  label: 'Net deployed cash',
+                  value: formatInr(
+                    Math.max(stockHistorySummary.totalDebits - stockHistorySummary.totalCredits, 0)
+                  ),
+                  tone: '#d9f3e9',
+                  detail: 'Real cash still deployed into the stock book',
+                },
+                {
+                  label: 'Return on capital',
+                  value: `${lifetimeReturnPercentage.toFixed(2)}%`,
+                  tone: lifetimeReturnPercentage >= 0 ? '#43c08a' : '#ef5d5d',
+                  detail: 'Based on lifetime P&L after charges',
+                },
+              ].map((card) => (
                 <div
+                  key={card.label}
                   style={{
-                    fontSize: '0.7rem',
-                    fontWeight: '800',
-                    color: '#475569',
-                    textTransform: 'uppercase',
-                    marginBottom: '8px',
+                    padding: '16px 18px',
+                    borderRadius: '18px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(160, 188, 180, 0.12)',
+                    display: 'grid',
+                    gap: '8px',
                   }}
                 >
-                  Total Withdrawals
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: '900',
+                      color: '#9aaea9',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {card.label}
+                  </div>
+                  <div style={{ fontSize: '1.12rem', fontWeight: '900', color: card.tone }}>
+                    {card.value}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: '#7f928d', lineHeight: 1.5 }}>
+                    {card.detail}
+                  </div>
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>
-                  ₹{totalSells.toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: '800',
-                    color: '#475569',
-                    textTransform: 'uppercase',
-                    marginBottom: '8px',
-                  }}
-                >
-                  Regulatory Charges
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ef4444' }}>
-                  ₹{totalCharges.toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: '800',
-                    color: '#475569',
-                    textTransform: 'uppercase',
-                    marginBottom: '8px',
-                  }}
-                >
-                  XIRR Equivalent
-                </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#10b981' }}>
-                  {lifetimeReturnPercentage.toFixed(2)}%
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '14px',
+            }}
+          >
+            {[
+              {
+                label: 'Current holdings value',
+                value: formatInr(totalCurrentValue),
+                tone: '#f4f8f7',
+              },
+              {
+                label: 'Total charges paid',
+                value: formatInr(totalCharges),
+                tone: '#ef5d5d',
+              },
+              {
+                label: 'Trade count',
+                value: stockHistoryCards.length.toString(),
+                tone: '#6cb6ff',
+              },
+              {
+                label: 'Funding accounts used',
+                value: stockHistorySummary.distinctAccounts.toString(),
+                tone: '#8fd5b6',
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                style={{
+                  padding: '16px 18px',
+                  borderRadius: '18px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(160, 188, 180, 0.12)',
+                  display: 'grid',
+                  gap: '6px',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '0.7rem',
+                    fontWeight: '900',
+                    color: '#9aaea9',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  {item.label}
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: '900', color: item.tone }}>
+                  {item.value}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -2647,68 +3241,20 @@ export default function StocksClient() {
                 </div>
 
                 {initialBuyChargePreview && !editId && (
-                  <div
-                    style={{
-                      background: 'rgba(16, 185, 129, 0.06)',
-                      border: '1px solid rgba(16, 185, 129, 0.14)',
-                      borderRadius: '16px',
-                      padding: '16px',
-                      display: 'grid',
-                      gap: '8px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: '900',
-                        color: '#34d399',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                      }}
-                    >
-                      Zerodha Delivery Estimate
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>Trade value</span>
-                      <span style={{ color: '#fff', fontWeight: '800' }}>
-                        {formatInr(initialBuyChargePreview.turnover)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
-                      <span style={{ color: '#fff', fontWeight: '800' }}>
-                        {formatInr(initialBuyChargePreview.taxes)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>Estimated bank debit</span>
-                      <span style={{ color: '#34d399', fontWeight: '900' }}>
-                        {formatInr(initialBuyChargePreview.settlementAmount)}
-                      </span>
-                    </div>
-                  </div>
+                  <ChargeBreakdownCard
+                    title={`Official Zerodha Buy Estimate (${exchange})`}
+                    charges={initialBuyChargePreview}
+                    settlementLabel="Estimated bank debit"
+                    accentColor="#43c08a"
+                    background="rgba(30, 166, 114, 0.08)"
+                    borderColor="rgba(67, 192, 138, 0.22)"
+                    settlementColor="#f2a93b"
+                    note="Verified against Zerodha's current equity charge schedule. Delivery brokerage is zero, and the final debit includes all taxes and fees."
+                  />
                 )}
 
                 {!editId && (
-                  <div>
+                  <div style={{ display: 'grid', gap: '12px' }}>
                     <label
                       style={{
                         fontSize: '0.75rem',
@@ -2719,13 +3265,14 @@ export default function StocksClient() {
                         marginBottom: '8px',
                       }}
                     >
-                      Operating Bank Account (For Ledger)
+                      Funding Account (INR)
                     </label>
                     <select
                       value={selectedAccountId}
                       onChange={(e) =>
                         setSelectedAccountId(e.target.value === '' ? '' : Number(e.target.value))
                       }
+                      required
                       style={{
                         width: '100%',
                         background: '#000000',
@@ -2735,13 +3282,81 @@ export default function StocksClient() {
                         color: '#fff',
                       }}
                     >
-                      <option value="">Select Account</option>
-                      {accounts.map((acc) => (
+                      <option value="">
+                        {stockFundingAccounts.length > 0
+                          ? 'Select INR Account'
+                          : 'Add an INR account first'}
+                      </option>
+                      {stockFundingAccounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
                           {acc.name} - ₹{acc.balance.toLocaleString()}
                         </option>
                       ))}
                     </select>
+                    {initialBuyChargePreview && (
+                      <div
+                        style={{
+                          padding: '14px 16px',
+                          borderRadius: '16px',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          display: 'grid',
+                          gap: '8px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            fontSize: '0.84rem',
+                          }}
+                        >
+                          <span style={{ color: '#94a3b8' }}>Available balance</span>
+                          <span style={{ color: '#f4f8f7', fontWeight: '800' }}>
+                            {selectedFundingAccount
+                              ? formatInr(selectedFundingAccount.balance)
+                              : 'Select account'}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            fontSize: '0.84rem',
+                          }}
+                        >
+                          <span style={{ color: '#94a3b8' }}>Projected balance</span>
+                          <span
+                            style={{
+                              color:
+                                selectedFundingAccount &&
+                                initialBuyTradeValidation?.isValid !== false
+                                  ? '#d9f3e9'
+                                  : '#f2a93b',
+                              fontWeight: '800',
+                            }}
+                          >
+                            {selectedFundingAccount
+                              ? formatInr(
+                                  selectedFundingAccount.balance -
+                                    initialBuyChargePreview.settlementAmount
+                                )
+                              : '--'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#9aaea9', lineHeight: 1.5 }}>
+                          {!selectedFundingAccount
+                            ? 'Choose the bank account to debit this buy order from.'
+                            : initialBuyTradeValidation?.isValid === false
+                              ? `${
+                                  initialBuyTradeValidation.message
+                                } Shortfall: ${formatInr(initialBuyTradeValidation.shortfall || 0)}.`
+                              : 'The final debit will happen after adding brokerage, taxes, exchange fees, and stamp duty.'}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -3004,140 +3619,67 @@ export default function StocksClient() {
                 </div>
 
                 {transactionChargePreview && (
-                  <div
-                    style={{
-                      background: 'rgba(16, 185, 129, 0.06)',
-                      padding: '16px',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(16, 185, 129, 0.14)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: '900',
-                        color: '#34d399',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                        marginBottom: '12px',
-                      }}
-                    >
-                      Zerodha {getChargeModeLabel(transactionChargePreview.mode)} Estimate
-                    </div>
-                    {transactionType === 'SELL' && (
-                      <>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '8px',
-                            fontSize: '0.85rem',
-                          }}
-                        >
-                          <span style={{ color: '#94a3b8' }}>Charge mode</span>
-                          <span style={{ fontWeight: '800', color: '#fff' }}>
-                            {getChargeModeLabel(transactionChargePreview.mode)}
-                          </span>
-                        </div>
-                        {transactionChargePreview.intradayQuantity > 0 && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              marginBottom: '8px',
-                              fontSize: '0.85rem',
-                            }}
-                          >
-                            <span style={{ color: '#94a3b8' }}>Same-day sell qty</span>
-                            <span style={{ fontWeight: '800', color: '#fff' }}>
-                              {transactionChargePreview.intradayQuantity}
-                            </span>
-                          </div>
-                        )}
-                        {transactionChargePreview.deliveryQuantity > 0 && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              marginBottom: '8px',
-                              fontSize: '0.85rem',
-                            }}
-                          >
-                            <span style={{ color: '#94a3b8' }}>Delivery sell qty</span>
-                            <span style={{ fontWeight: '800', color: '#fff' }}>
-                              {transactionChargePreview.deliveryQuantity}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>Trade value</span>
-                      <span style={{ fontWeight: '800', color: '#fff' }}>
-                        {formatInr(transactionChargePreview.total.turnover)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>Brokerage</span>
-                      <span style={{ fontWeight: '800', color: '#fff' }}>
-                        {formatInr(transactionChargePreview.total.brokerage)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>Taxes and charges</span>
-                      <span style={{ fontWeight: '800', color: '#fff' }}>
-                        {formatInr(transactionChargePreview.total.taxes)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>DP charges</span>
-                      <span style={{ fontWeight: '800', color: '#fff' }}>
-                        {formatInr(transactionChargePreview.total.dpCharges)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span style={{ color: '#94a3b8' }}>
-                        {transactionType === 'BUY' ? 'Estimated debit' : 'Estimated credit'}
-                      </span>
-                      <span style={{ fontWeight: '900', color: '#34d399' }}>
-                        {formatInr(transactionChargePreview.total.settlementAmount)}
-                      </span>
-                    </div>
-                  </div>
+                  <ChargeBreakdownCard
+                    title={`Official Zerodha ${
+                      transactionType === 'BUY' ? 'Buy' : 'Sell'
+                    } Estimate (${selectedTransactionExchange})`}
+                    charges={transactionChargePreview.total}
+                    settlementLabel={
+                      transactionType === 'BUY' ? 'Estimated debit' : 'Estimated credit'
+                    }
+                    accentColor={transactionType === 'BUY' ? '#43c08a' : '#f2a93b'}
+                    background={
+                      transactionType === 'BUY'
+                        ? 'rgba(30, 166, 114, 0.08)'
+                        : 'rgba(242, 169, 59, 0.08)'
+                    }
+                    borderColor={
+                      transactionType === 'BUY'
+                        ? 'rgba(67, 192, 138, 0.22)'
+                        : 'rgba(242, 169, 59, 0.22)'
+                    }
+                    settlementColor={transactionType === 'BUY' ? '#f2a93b' : '#43c08a'}
+                    prefixRows={
+                      transactionType === 'SELL'
+                        ? [
+                            {
+                              label: 'Charge mode',
+                              value: getChargeModeLabel(transactionChargePreview.mode),
+                            },
+                            {
+                              label: 'Available quantity',
+                              value: selectedTransactionAvailableQuantity,
+                            },
+                            ...(transactionChargePreview.intradayQuantity > 0
+                              ? [
+                                  {
+                                    label: 'Same-day sell qty',
+                                    value: transactionChargePreview.intradayQuantity,
+                                  },
+                                ]
+                              : []),
+                            ...(transactionChargePreview.deliveryQuantity > 0
+                              ? [
+                                  {
+                                    label: 'Delivery sell qty',
+                                    value: transactionChargePreview.deliveryQuantity,
+                                  },
+                                ]
+                              : []),
+                          ]
+                        : [
+                            {
+                              label: 'Order type',
+                              value: 'Delivery buy',
+                            },
+                          ]
+                    }
+                    note={
+                      transactionType === 'BUY'
+                        ? 'The final debit will be trade value plus all charges. If the selected account balance is short, the order will be blocked.'
+                        : 'Sell credit is net of charges. Same-day matched quantity is treated as intraday and delivery quantity keeps DP charges.'
+                    }
+                  />
                 )}
 
                 <div>
@@ -3151,7 +3693,7 @@ export default function StocksClient() {
                       marginBottom: '8px',
                     }}
                   >
-                    Operating Bank Account
+                    Funding Account (INR)
                   </label>
                   <select
                     value={selectedAccountId}
@@ -3168,13 +3710,95 @@ export default function StocksClient() {
                       color: '#fff',
                     }}
                   >
-                    <option value="">Select Account</option>
-                    {accounts.map((acc) => (
+                    <option value="">
+                      {stockFundingAccounts.length > 0
+                        ? 'Select INR Account'
+                        : 'Add an INR account first'}
+                    </option>
+                    {stockFundingAccounts.map((acc) => (
                       <option key={acc.id} value={acc.id}>
                         {acc.name} - ₹{acc.balance.toLocaleString()}
                       </option>
                     ))}
                   </select>
+                  {transactionChargePreview && (
+                    <div
+                      style={{
+                        marginTop: '12px',
+                        padding: '14px 16px',
+                        borderRadius: '16px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        display: 'grid',
+                        gap: '8px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          fontSize: '0.84rem',
+                        }}
+                      >
+                        <span style={{ color: '#94a3b8' }}>Available balance</span>
+                        <span style={{ color: '#f4f8f7', fontWeight: '800' }}>
+                          {selectedFundingAccount
+                            ? formatInr(selectedFundingAccount.balance)
+                            : 'Select account'}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          fontSize: '0.84rem',
+                        }}
+                      >
+                        <span style={{ color: '#94a3b8' }}>
+                          {transactionType === 'BUY' ? 'Projected balance' : 'Projected credit'}
+                        </span>
+                        <span
+                          style={{
+                            color:
+                              selectedFundingAccount &&
+                              transactionTradeValidation?.isValid !== false
+                                ? transactionType === 'BUY'
+                                  ? '#d9f3e9'
+                                  : '#43c08a'
+                                : '#f2a93b',
+                            fontWeight: '800',
+                          }}
+                        >
+                          {selectedFundingAccount
+                            ? formatInr(
+                                transactionType === 'BUY'
+                                  ? selectedFundingAccount.balance -
+                                      transactionChargePreview.total.settlementAmount
+                                  : selectedFundingAccount.balance +
+                                      transactionChargePreview.total.settlementAmount
+                              )
+                            : '--'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#9aaea9', lineHeight: 1.5 }}>
+                        {!selectedFundingAccount
+                          ? 'Choose the bank account that should handle this trade settlement.'
+                          : transactionTradeValidation?.isValid === false
+                            ? `${transactionTradeValidation.message}${
+                                transactionTradeValidation.shortfall
+                                  ? ` Shortfall: ${formatInr(transactionTradeValidation.shortfall)}.`
+                                  : ''
+                              }`
+                            : transactionType === 'BUY'
+                              ? 'This account will be debited after adding all verified brokerage and statutory charges.'
+                              : `This account will be credited ${formatInr(
+                                  transactionChargePreview.total.settlementAmount
+                                )} after charges.`}
+                      </div>
+                    </div>
+                  )}
                   <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '6px' }}>
                     Money will be {transactionType === 'BUY' ? 'deducted from' : 'added to'} this
                     account.

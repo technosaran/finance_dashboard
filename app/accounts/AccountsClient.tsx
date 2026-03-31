@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLedger } from '../components/FinanceContext';
@@ -20,7 +20,7 @@ import {
   Download,
 } from 'lucide-react';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
+const ACCOUNT_ACCENT_COLORS = ['#1ea672', '#43c08a', '#f2a93b', '#3ea8a1', '#2f7f78', '#8fd5b6'];
 
 export default function AccountsClient() {
   const { accounts, addAccount, updateAccount, deleteAccount, addFunds, loading } = useLedger();
@@ -46,6 +46,12 @@ export default function AccountsClient() {
   const [sourceAccountId, setSourceAccountId] = useState<number | ''>('');
   const [targetAccountId, setTargetAccountId] = useState<number | ''>('');
   const [transferAmount, setTransferAmount] = useState('');
+
+  const resetTransferForm = () => {
+    setSourceAccountId('');
+    setTargetAccountId('');
+    setTransferAmount('');
+  };
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,15 +126,67 @@ export default function AccountsClient() {
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sourceAccountId || !targetAccountId || !transferAmount) return;
+
+    if (!sourceAccountId || !targetAccountId || !transferAmount) {
+      showNotification('error', 'Choose the source, destination, and amount first.');
+      return;
+    }
+
+    if (sourceAccountId === targetAccountId) {
+      showNotification('error', 'Source and destination accounts must be different.');
+      return;
+    }
+
     try {
       const amount = parseFloat(transferAmount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showNotification('error', 'Transfer amount must be greater than zero.');
+        return;
+      }
+
       const sourceAccount = accounts.find((acc) => acc.id === Number(sourceAccountId));
       const targetAccount = accounts.find((acc) => acc.id === Number(targetAccountId));
-      if (sourceAccount && targetAccount) {
-        await updateAccount(sourceAccount.id, { balance: sourceAccount.balance - amount });
-        await updateAccount(targetAccount.id, { balance: targetAccount.balance + amount });
+
+      if (!sourceAccount || !targetAccount) {
+        showNotification('error', 'We could not find one of the selected accounts.');
+        return;
       }
+
+      if (sourceAccount.currency !== targetAccount.currency) {
+        showNotification(
+          'error',
+          'Cross-currency transfers are not supported yet. Pick two accounts with the same currency.'
+        );
+        return;
+      }
+
+      if (sourceAccount.balance < amount) {
+        showNotification(
+          'error',
+          `Insufficient balance in ${sourceAccount.name}. Available: ₹${sourceAccount.balance.toLocaleString(
+            'en-IN',
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}`
+        );
+        return;
+      }
+
+      await Promise.all([
+        updateAccount(sourceAccount.id, { balance: sourceAccount.balance - amount }),
+        updateAccount(targetAccount.id, { balance: targetAccount.balance + amount }),
+      ]);
+
+      showNotification(
+        'success',
+        `Transferred ₹${amount.toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })} from ${sourceAccount.name} to ${targetAccount.name}.`
+      );
+      resetTransferForm();
       setIsTransferModalOpen(false);
     } catch {
       showNotification('error', 'Transfer failed. Please try again.');
@@ -155,6 +213,44 @@ export default function AccountsClient() {
   const totalBalanceINR = accounts
     .filter((a) => a.currency === 'INR')
     .reduce((sum, acc) => sum + acc.balance, 0);
+
+  const liquidityChartAccounts = useMemo(
+    () =>
+      accounts
+        .filter((account) => account.currency === 'INR' && account.balance > 0)
+        .sort((left, right) => right.balance - left.balance),
+    [accounts]
+  );
+
+  const selectedSourceAccount = useMemo(
+    () => accounts.find((account) => account.id === Number(sourceAccountId)) || null,
+    [accounts, sourceAccountId]
+  );
+
+  const selectedTargetAccount = useMemo(
+    () => accounts.find((account) => account.id === Number(targetAccountId)) || null,
+    [accounts, targetAccountId]
+  );
+
+  const eligibleSourceAccounts = useMemo(
+    () =>
+      accounts.filter(
+        (account) =>
+          account.id !== Number(targetAccountId) &&
+          (!selectedTargetAccount || account.currency === selectedTargetAccount.currency)
+      ),
+    [accounts, selectedTargetAccount, targetAccountId]
+  );
+
+  const eligibleTargetAccounts = useMemo(
+    () =>
+      accounts.filter(
+        (account) =>
+          account.id !== Number(sourceAccountId) &&
+          (!selectedSourceAccount || account.currency === selectedSourceAccount.currency)
+      ),
+    [accounts, selectedSourceAccount, sourceAccountId]
+  );
 
   if (loading) {
     return (
@@ -248,7 +344,10 @@ export default function AccountsClient() {
             <span className="hide-sm">Export</span> CSV
           </button>
           <button
-            onClick={() => setIsTransferModalOpen(true)}
+            onClick={() => {
+              resetTransferForm();
+              setIsTransferModalOpen(true);
+            }}
             style={{
               padding: '10px 18px',
               borderRadius: '12px',
@@ -268,7 +367,7 @@ export default function AccountsClient() {
             onMouseLeave={(e) => (e.currentTarget.style.background = '#050505')}
             aria-label="Transfer funds between accounts"
           >
-            <ArrowRightLeft size={16} color="#818cf8" aria-hidden="true" /> Transfer
+            <ArrowRightLeft size={16} color="#43c08a" aria-hidden="true" /> Transfer
           </button>
           <button
             onClick={() => {
@@ -444,74 +543,194 @@ export default function AccountsClient() {
 
             <div
               style={{
-                width: 'clamp(200px, 30vw, 280px)',
-                height: 'clamp(200px, 30vw, 280px)',
+                width: 'clamp(190px, 24vw, 240px)',
+                height: 'clamp(190px, 24vw, 240px)',
                 position: 'relative',
               }}
             >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={accounts}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="60%"
-                    outerRadius="90%"
-                    paddingAngle={3}
-                    dataKey="balance"
-                    animationBegin={0}
-                    animationDuration={1500}
-                  >
-                    {accounts.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                        stroke="none"
-                        style={{
-                          filter: `drop-shadow(0 0 12px ${COLORS[index % COLORS.length]}40)`,
-                        }}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: '#000000',
-                      border: '1px solid #1a1a1a',
-                      borderRadius: '12px',
-                      padding: '12px',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
-                      fontSize: '0.8rem',
-                    }}
-                    formatter={(value: number | string | undefined) => [
-                      `₹${Number(value || 0).toLocaleString()}`,
-                      'Balance',
-                    ]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
               <div
                 style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  pointerEvents: 'none',
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
                 }}
               >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={
+                        liquidityChartAccounts.length > 0
+                          ? liquidityChartAccounts
+                          : [{ id: 0, name: 'No liquidity', balance: 1 }]
+                      }
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="58%"
+                      outerRadius="82%"
+                      paddingAngle={liquidityChartAccounts.length > 0 ? 4 : 0}
+                      minAngle={liquidityChartAccounts.length > 0 ? 6 : 0}
+                      dataKey="balance"
+                      animationBegin={0}
+                      animationDuration={1200}
+                      stroke="rgba(7, 16, 24, 0.9)"
+                      strokeWidth={2}
+                    >
+                      {(liquidityChartAccounts.length > 0
+                        ? liquidityChartAccounts
+                        : [{ id: 0 } as const]
+                      ).map((_, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={
+                            liquidityChartAccounts.length > 0
+                              ? ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length]
+                              : 'rgba(160, 188, 180, 0.24)'
+                          }
+                          style={{
+                            filter:
+                              liquidityChartAccounts.length > 0
+                                ? `drop-shadow(0 0 10px ${
+                                    ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length]
+                                  }35)`
+                                : 'none',
+                          }}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: 'rgba(8, 16, 20, 0.96)',
+                        border: '1px solid rgba(160, 188, 180, 0.22)',
+                        borderRadius: '14px',
+                        padding: '12px',
+                        boxShadow: '0 16px 32px rgba(0, 0, 0, 0.45)',
+                        fontSize: '0.8rem',
+                      }}
+                      itemStyle={{ color: '#f4f8f7' }}
+                      labelStyle={{ color: '#9aaea9', fontWeight: 700 }}
+                      formatter={(value: number | string | undefined) => [
+                        `₹${Number(value || 0).toLocaleString()}`,
+                        'Balance',
+                      ]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
                 <div
                   style={{
-                    color: '#94a3b8',
-                    fontSize: '0.6rem',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    pointerEvents: 'none',
                   }}
                 >
-                  Total
+                  <div
+                    style={{
+                      color: '#9aaea9',
+                      fontSize: '0.62rem',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {liquidityChartAccounts.length > 0 ? 'Cash Split' : 'No Cash'}
+                  </div>
+                  <div style={{ color: '#f4f8f7', fontSize: '1.1rem', fontWeight: '900' }}>
+                    {liquidityChartAccounts.length}
+                  </div>
                 </div>
-                <div style={{ color: '#fff', fontSize: '1rem', fontWeight: '900' }}>
-                  {accounts.length}
-                </div>
+              </div>
+              <div
+                style={{
+                  marginTop: '14px',
+                  display: 'grid',
+                  gap: '8px',
+                }}
+              >
+                {liquidityChartAccounts.length > 0 ? (
+                  liquidityChartAccounts.slice(0, 4).map((account, index) => {
+                    const share =
+                      totalBalanceINR > 0 ? (account.balance / totalBalanceINR) * 100 : 0;
+
+                    return (
+                      <div
+                        key={account.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          borderRadius: '14px',
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(160, 188, 180, 0.12)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            minWidth: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '10px',
+                              height: '10px',
+                              borderRadius: '50%',
+                              background:
+                                ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length],
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                color: '#f4f8f7',
+                                fontSize: '0.82rem',
+                                fontWeight: '800',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {account.name}
+                            </div>
+                            <div style={{ color: '#9aaea9', fontSize: '0.72rem' }}>
+                              {share.toFixed(1)}% of liquid balance
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            color: '#d9f3e9',
+                            fontSize: '0.82rem',
+                            fontWeight: '800',
+                            flexShrink: 0,
+                          }}
+                        >
+                          ₹{account.balance.toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div
+                    style={{
+                      padding: '18px 16px',
+                      borderRadius: '16px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(160, 188, 180, 0.12)',
+                      color: '#9aaea9',
+                      fontSize: '0.78rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Add funds to an INR account to see your liquidity split here.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -564,8 +783,11 @@ export default function AccountsClient() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.borderColor = COLORS[idx % COLORS.length] + '60';
-                e.currentTarget.style.boxShadow = `0 10px 20px -8px ${COLORS[idx % COLORS.length]}30`;
+                e.currentTarget.style.borderColor =
+                  ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length] + '60';
+                e.currentTarget.style.boxShadow = `0 10px 20px -8px ${
+                  ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
+                }30`;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
@@ -582,7 +804,9 @@ export default function AccountsClient() {
                   right: 0,
                   width: '120px',
                   height: '120px',
-                  background: `radial-gradient(circle, ${COLORS[idx % COLORS.length]}10 0%, transparent 70%)`,
+                  background: `radial-gradient(circle, ${
+                    ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
+                  }10 0%, transparent 70%)`,
                   filter: 'blur(30px)',
                 }}
               />
@@ -600,11 +824,13 @@ export default function AccountsClient() {
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <div
                     style={{
-                      background: `${COLORS[idx % COLORS.length]}15`,
+                      background: `${ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]}15`,
                       padding: '8px',
                       borderRadius: '10px',
-                      color: COLORS[idx % COLORS.length],
-                      border: `1px solid ${COLORS[idx % COLORS.length]}20`,
+                      color: ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length],
+                      border: `1px solid ${
+                        ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
+                      }20`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -716,7 +942,9 @@ export default function AccountsClient() {
                     setIsAddFundsModalOpen(true);
                   }}
                   style={{
-                    background: `linear-gradient(135deg, ${COLORS[idx % COLORS.length]} 0%, ${COLORS[idx % COLORS.length]}dd 100%)`,
+                    background: `linear-gradient(135deg, ${
+                      ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
+                    } 0%, ${ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]}dd 100%)`,
                     color: '#fff',
                     border: 'none',
                     width: '36px',
@@ -726,7 +954,9 @@ export default function AccountsClient() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    boxShadow: `0 4px 8px ${COLORS[idx % COLORS.length]}30`,
+                    boxShadow: `0 4px 8px ${
+                      ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
+                    }30`,
                   }}
                 >
                   <Plus size={16} strokeWidth={3} />
@@ -1059,7 +1289,9 @@ export default function AccountsClient() {
                 <select
                   id="source-account"
                   value={sourceAccountId}
-                  onChange={(e) => setSourceAccountId(Number(e.target.value))}
+                  onChange={(e) =>
+                    setSourceAccountId(e.target.value === '' ? '' : Number(e.target.value))
+                  }
                   style={{
                     background: '#000000',
                     border: '1px solid #111111',
@@ -1076,13 +1308,56 @@ export default function AccountsClient() {
                   <option value="" disabled>
                     Select Source
                   </option>
-                  {accounts.map((acc) => (
+                  {eligibleSourceAccounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
                       {acc.name} (₹{acc.balance.toLocaleString()})
                     </option>
                   ))}
                 </select>
               </div>
+              {(selectedSourceAccount || selectedTargetAccount) && (
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(160, 188, 180, 0.12)',
+                    display: 'grid',
+                    gap: '6px',
+                  }}
+                >
+                  {selectedSourceAccount && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <span style={{ color: '#9aaea9' }}>Source balance</span>
+                      <span style={{ color: '#f4f8f7', fontWeight: '800' }}>
+                        ₹{selectedSourceAccount.balance.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  )}
+                  {selectedTargetAccount && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <span style={{ color: '#9aaea9' }}>Destination currency</span>
+                      <span style={{ color: '#d9f3e9', fontWeight: '800' }}>
+                        {selectedTargetAccount.currency}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label
                   htmlFor="target-account"
@@ -1098,7 +1373,9 @@ export default function AccountsClient() {
                 <select
                   id="target-account"
                   value={targetAccountId}
-                  onChange={(e) => setTargetAccountId(Number(e.target.value))}
+                  onChange={(e) =>
+                    setTargetAccountId(e.target.value === '' ? '' : Number(e.target.value))
+                  }
                   style={{
                     background: '#000000',
                     border: '1px solid #111111',
@@ -1115,7 +1392,7 @@ export default function AccountsClient() {
                   <option value="" disabled>
                     Select Destination
                   </option>
-                  {accounts.map((acc) => (
+                  {eligibleTargetAccounts.map((acc) => (
                     <option key={acc.id} value={acc.id}>
                       {acc.name} (₹{acc.balance.toLocaleString()})
                     </option>
