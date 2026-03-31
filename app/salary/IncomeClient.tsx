@@ -225,7 +225,13 @@ export default function IncomeClient() {
         {/* Period Selector & Quick Filters */}
         <div
           className="mobile-tab-scroll"
-          style={{ marginBottom: '32px', display: 'flex', gap: '8px', paddingBottom: '8px' }}
+          style={{
+            marginBottom: '32px',
+            display: 'flex',
+            width: 'fit-content',
+            gap: '8px',
+            paddingBottom: '8px',
+          }}
         >
           {(['month', 'quarter', 'year', 'all'] as const).map((period) => (
             <button

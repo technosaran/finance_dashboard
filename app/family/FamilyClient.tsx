@@ -339,6 +339,7 @@ export default function FamilyClient() {
           className="mobile-tab-scroll"
           style={{
             display: 'flex',
+            width: 'fit-content',
             gap: '8px',
             marginBottom: 'clamp(20px, 4vw, 32px)',
           }}

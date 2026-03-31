@@ -766,6 +766,7 @@ export default function StocksClient() {
         className="mobile-tab-scroll"
         style={{
           display: 'flex',
+          width: 'fit-content',
           background: '#050505',
           padding: '6px',
           borderRadius: '16px',

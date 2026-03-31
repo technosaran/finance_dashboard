@@ -604,6 +604,7 @@ export default function BondsClient() {
         className="mobile-tab-scroll"
         style={{
           display: 'flex',
+          width: 'fit-content',
           background: '#050505',
           padding: '6px',
           borderRadius: '16px',
@@ -804,9 +805,7 @@ export default function BondsClient() {
                                 padding: '4px',
                                 transition: 'all 0.2s',
                               }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.transform = 'scale(1.2)')
-                              }
+                              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
                               onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                             >
                               <ArrowRight size={16} strokeWidth={3} />
@@ -952,7 +951,14 @@ export default function BondsClient() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      textAlign: 'right',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}
+                  >
                     <div>
                       <div
                         style={{
@@ -961,8 +967,7 @@ export default function BondsClient() {
                           color: tx.transactionType === 'BUY' ? '#f87171' : '#34d399',
                         }}
                       >
-                        {tx.transactionType === 'BUY' ? '-' : '+'}₹
-                        {tx.totalAmount.toLocaleString()}
+                        {tx.transactionType === 'BUY' ? '-' : '+'}₹{tx.totalAmount.toLocaleString()}
                       </div>
                     </div>
                     <button
@@ -1296,18 +1301,14 @@ export default function BondsClient() {
                           onMouseEnter={(e) =>
                             (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')
                           }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = 'transparent')
-                          }
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         >
                           <div style={{ color: '#fff', fontWeight: 'bold' }}>{result.symbol}</div>
                           <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
                             {result.companyName}
                           </div>
                           <div style={{ color: '#64748b', fontSize: '0.72rem' }}>
-                            {result.couponRate
-                              ? `${result.couponRate}% coupon`
-                              : 'Coupon pending'}
+                            {result.couponRate ? `${result.couponRate}% coupon` : 'Coupon pending'}
                             {result.maturityDate ? ` • Matures ${result.maturityDate}` : ''}
                           </div>
                         </div>

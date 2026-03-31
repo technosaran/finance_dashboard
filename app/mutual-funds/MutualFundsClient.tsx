@@ -677,12 +677,13 @@ export default function MutualFundsClient() {
         className="mobile-tab-scroll"
         style={{
           display: 'flex',
+          width: 'fit-content',
           background: '#050505',
           padding: '6px',
           borderRadius: '20px',
           border: '1px solid #111111',
           marginBottom: '32px',
-          width: '100%',
+          maxWidth: '100%',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
         }}
