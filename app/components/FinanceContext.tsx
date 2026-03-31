@@ -155,8 +155,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
-      .order('date', { ascending: false })
-      .limit(100);
+      .order('date', { ascending: false });
     if (error) logError('Error refreshing transactions:', error);
     else setTransactions(data.map(dbTransactionToTransaction));
   }, []);
@@ -1116,7 +1115,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           mfTxResult,
         ] = await Promise.allSettled([
           supabase.from('accounts').select('*').order('name'),
-          supabase.from('transactions').select('*').order('date', { ascending: false }).limit(100),
+          supabase.from('transactions').select('*').order('date', { ascending: false }),
           supabase.from('app_settings').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('stocks').select('*'),
           supabase.from('mutual_funds').select('*'),

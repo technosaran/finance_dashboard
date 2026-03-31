@@ -38,6 +38,11 @@ import { useLedger, usePortfolio, useSettings } from '../components/FinanceConte
 import { MutualFund, MutualFundTransaction } from '@/lib/types';
 import { calculateMfCharges } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
+import {
+  calculateLifetimePerformance,
+  calculatePositionMetrics,
+  calculatePositionMetricsFromInvestment,
+} from '@/lib/utils/portfolio';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
 
@@ -84,7 +89,10 @@ export default function MutualFundsClient() {
     mutualFunds.forEach((mf) => {
       const key = mf.schemeCode.toUpperCase();
       if (!groups[key]) {
-        groups[key] = { ...mf };
+        groups[key] = {
+          ...mf,
+          ...calculatePositionMetricsFromInvestment(mf.units, mf.investmentAmount, mf.currentNav),
+        };
       } else {
         const existing = groups[key];
         const totalUnits = existing.units + mf.units;
@@ -96,15 +104,13 @@ export default function MutualFundsClient() {
         const totalPrevValue = existingPrevNav * existing.units + mfPrevNav * mf.units;
 
         existing.units = totalUnits;
-        existing.investmentAmount = totalInvestment;
         existing.avgNav = totalUnits > 0 ? totalInvestment / totalUnits : 0;
         existing.currentNav = mf.currentNav; // Latest LTP
         existing.previousNav = totalUnits > 0 ? totalPrevValue / totalUnits : existing.currentNav;
-
-        existing.currentValue += mf.currentValue;
-        existing.pnl += mf.pnl;
-        existing.pnlPercentage =
-          existing.investmentAmount > 0 ? (existing.pnl / existing.investmentAmount) * 100 : 0;
+        Object.assign(
+          existing,
+          calculatePositionMetricsFromInvestment(totalUnits, totalInvestment, existing.currentNav)
+        );
       }
     });
     // Filter out closed positions (units = 0) to mimic Zerodha/brokerage behavior
@@ -223,8 +229,12 @@ export default function MutualFundsClient() {
     }, 0);
 
   // Lifetime Earned = (Total Sells + Current Value) - (Total Buys + Charges)
-  const lifetimeEarned = totalSells + totalCurrentValue - (totalBuys + totalMfCharges);
-  const lifetimeReturnPercentage = totalBuys > 0 ? (lifetimeEarned / totalBuys) * 100 : 0;
+  const { lifetimeEarned, lifetimeReturnPercentage } = calculateLifetimePerformance(
+    totalBuys,
+    totalSells,
+    totalCurrentValue,
+    totalMfCharges
+  );
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -286,7 +296,7 @@ export default function MutualFundsClient() {
       const data = await res.json();
       if (data.currentNav) {
         setCurrentNav(data.currentNav.toString());
-        setPreviousNav(data.previousNav || data.currentNav);
+        setPreviousNav(data.previousNav ?? data.currentNav);
         setCategory(data.category);
       }
     } catch (error) {
@@ -299,8 +309,11 @@ export default function MutualFundsClient() {
     const unitsVal = parseFloat(units);
     const avgNavVal = parseFloat(avgNav);
     const curNavVal = parseFloat(currentNav);
-    const investment = unitsVal * avgNavVal;
-    const currentValue = unitsVal * curNavVal;
+    const { investmentAmount, currentValue, pnl, pnlPercentage } = calculatePositionMetrics(
+      unitsVal,
+      avgNavVal,
+      curNavVal
+    );
 
     const fundData = {
       schemeName: fundName,
@@ -309,11 +322,11 @@ export default function MutualFundsClient() {
       units: unitsVal,
       avgNav: avgNavVal,
       currentNav: curNavVal,
-      previousNav: previousNav || curNavVal,
-      investmentAmount: investment,
+      previousNav: previousNav ?? curNavVal,
+      investmentAmount,
       currentValue,
-      pnl: currentValue - investment,
-      pnlPercentage: investment > 0 ? ((currentValue - investment) / investment) * 100 : 0,
+      pnl,
+      pnlPercentage,
       isin,
       folioNumber,
     };
@@ -338,7 +351,7 @@ export default function MutualFundsClient() {
           transactionType: 'BUY',
           units: unitsVal,
           nav: avgNavVal,
-          totalAmount: investment,
+          totalAmount: investmentAmount,
           transactionDate: new Date().toISOString().split('T')[0],
           accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
           notes: 'Initial portfolio entry',
@@ -363,7 +376,7 @@ export default function MutualFundsClient() {
     setUnits(mf.units.toString());
     setAvgNav(mf.avgNav.toString());
     setCurrentNav(mf.currentNav.toString());
-    setPreviousNav(mf.previousNav || mf.currentNav);
+    setPreviousNav(mf.previousNav ?? mf.currentNav);
     setIsin(mf.isin || '');
     setFolioNumber(mf.folioNumber || '');
     setIsModalOpen(true);

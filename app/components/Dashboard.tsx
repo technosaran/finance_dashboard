@@ -5,6 +5,8 @@ import { AlertTriangle } from 'lucide-react';
 import { useLedger, usePortfolio, useSettings } from './FinanceContext';
 import { useAuth } from '@/app/components/AuthContext';
 import { MutualFundTransaction } from '@/lib/types';
+import { calculateMfCharges } from '@/lib/utils/charges';
+import { calculateLifetimePerformance } from '@/lib/utils/portfolio';
 import { SkeletonCard } from './SkeletonLoader';
 import { EmptyPortfolioVisual } from './Visuals';
 import { QuickStatsRow } from './dashboard/QuickStatsRow';
@@ -74,8 +76,15 @@ function getUserDisplayName(
 
 export default function Dashboard() {
   const { accounts, goals, transactions, loading, error } = useLedger();
-  const { stocks, mutualFunds, stockTransactions, mutualFundTransactions, fnoTrades, bonds } =
-    usePortfolio();
+  const {
+    stocks,
+    mutualFunds,
+    stockTransactions,
+    mutualFundTransactions,
+    fnoTrades,
+    bonds,
+    bondTransactions,
+  } = usePortfolio();
   const { settings } = useSettings();
   const { user } = useAuth();
 
@@ -116,9 +125,12 @@ export default function Dashboard() {
       (sum, transaction) => sum + (transaction.brokerage || 0) + (transaction.taxes || 0),
       0
     );
-    const stockLifetime = stockSells + stocksValue - (stockBuys + stockCharges);
-
-    const mutualFundStampDutyRate = 0.00005;
+    const stockLifetime = calculateLifetimePerformance(
+      stockBuys,
+      stockSells,
+      stocksValue,
+      stockCharges
+    ).lifetimeEarned;
 
     const mutualFundBuys = mutualFundTransactions
       .filter(
@@ -134,21 +146,39 @@ export default function Dashboard() {
         (transaction: MutualFundTransaction) =>
           transaction.transactionType === 'BUY' || transaction.transactionType === 'SIP'
       )
-      .reduce((sum, transaction) => sum + transaction.totalAmount * mutualFundStampDutyRate, 0);
-    const mutualFundLifetime =
-      mutualFundSells + mutualFundsValue - (mutualFundBuys + mutualFundCharges);
+      .reduce(
+        (sum, transaction) =>
+          sum + calculateMfCharges(transaction.transactionType, transaction.totalAmount).stampDuty,
+        0
+      );
+    const mutualFundLifetime = calculateLifetimePerformance(
+      mutualFundBuys,
+      mutualFundSells,
+      mutualFundsValue,
+      mutualFundCharges
+    ).lifetimeEarned;
 
     const fnoLifetime = fnoTrades
       .filter((trade) => trade.status === 'CLOSED')
       .reduce((sum, trade) => sum + trade.pnl, 0);
 
-    const bondLifetime = bonds.reduce((sum, bond) => sum + bond.pnl, 0);
+    const bondBuys = bondTransactions
+      .filter((transaction) => transaction.transactionType === 'BUY')
+      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
+    const bondSells = bondTransactions
+      .filter((transaction) => transaction.transactionType === 'SELL')
+      .reduce((sum, transaction) => sum + transaction.totalAmount, 0);
+    const bondLifetime = calculateLifetimePerformance(
+      bondBuys,
+      bondSells,
+      bondsValue
+    ).lifetimeEarned;
 
     const globalLifetimeWealth = stockLifetime + mutualFundLifetime + fnoLifetime + bondLifetime;
 
     const stockPnl = stocks
       .filter((stock) => stock.quantity > 0)
-      .reduce((sum, stock) => sum + stock.pnl, 0);
+      .reduce((sum, stock) => sum + (stock.currentValue - stock.investmentAmount), 0);
     const mutualFundPnl = mutualFundsValue - mutualFundInvestment;
     const bondPnl = bondsValue - bondInvestment;
     const totalUnrealizedPnl = stockPnl + mutualFundPnl + bondPnl;
@@ -176,7 +206,16 @@ export default function Dashboard() {
       totalUnrealizedPnl,
       stockDayChange: stockDayChange + mutualFundDayChange,
     };
-  }, [accounts, stocks, mutualFunds, bonds, stockTransactions, mutualFundTransactions, fnoTrades]);
+  }, [
+    accounts,
+    stocks,
+    mutualFunds,
+    bonds,
+    stockTransactions,
+    mutualFundTransactions,
+    fnoTrades,
+    bondTransactions,
+  ]);
 
   const allocationData = useMemo(
     () =>
@@ -331,7 +370,9 @@ export default function Dashboard() {
                 flexWrap: 'wrap',
               }}
             >
-              <span role="img" aria-label={greeting.emojiLabel}>{greeting.emoji}</span>{' '}
+              <span role="img" aria-label={greeting.emojiLabel}>
+                {greeting.emoji}
+              </span>{' '}
               {greeting.text}, <span className="gradient-text">{displayName}.</span>
             </h1>
             <p
@@ -366,7 +407,11 @@ export default function Dashboard() {
         totalNetWorth={financialMetrics.totalNetWorth}
         globalLifetimeWealth={financialMetrics.globalLifetimeWealth}
         liquidityINR={financialMetrics.liquidityINR}
-        investmentsTotal={financialMetrics.stocksValue + financialMetrics.mutualFundsValue}
+        investmentsTotal={
+          financialMetrics.stocksValue +
+          financialMetrics.mutualFundsValue +
+          financialMetrics.bondsValue
+        }
         allocationData={allocationData}
       />
 

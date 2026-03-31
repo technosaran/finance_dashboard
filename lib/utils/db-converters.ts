@@ -286,7 +286,7 @@ export const dbStockToStock = (dbStock: StockRow): Stock => ({
   currentValue: Number(dbStock.current_value),
   pnl: Number(dbStock.pnl),
   pnlPercentage: Number(dbStock.pnl_percentage),
-  previousPrice: dbStock.previous_price ? Number(dbStock.previous_price) : undefined,
+  previousPrice: dbStock.previous_price != null ? Number(dbStock.previous_price) : undefined,
 });
 
 export const dbStockTransactionToStockTransaction = (
@@ -298,8 +298,8 @@ export const dbStockTransactionToStockTransaction = (
   quantity: Number(dbTransaction.quantity),
   price: Number(dbTransaction.price),
   totalAmount: Number(dbTransaction.total_amount),
-  brokerage: dbTransaction.brokerage ? Number(dbTransaction.brokerage) : undefined,
-  taxes: dbTransaction.taxes ? Number(dbTransaction.taxes) : undefined,
+  brokerage: dbTransaction.brokerage != null ? Number(dbTransaction.brokerage) : undefined,
+  taxes: dbTransaction.taxes != null ? Number(dbTransaction.taxes) : undefined,
   transactionDate: dbTransaction.transaction_date,
   notes: dbTransaction.notes || undefined,
   accountId: dbTransaction.account_id ? Number(dbTransaction.account_id) : undefined,
@@ -309,7 +309,7 @@ export const dbWatchlistToWatchlistItem = (dbWatchlist: WatchlistRow): Watchlist
   id: Number(dbWatchlist.id),
   symbol: dbWatchlist.symbol,
   companyName: dbWatchlist.company_name,
-  targetPrice: dbWatchlist.target_price ? Number(dbWatchlist.target_price) : undefined,
+  targetPrice: dbWatchlist.target_price != null ? Number(dbWatchlist.target_price) : undefined,
   notes: dbWatchlist.notes || undefined,
 });
 
@@ -327,7 +327,7 @@ export const dbMutualFundToMutualFund = (dbMF: MutualFundRow): MutualFund => ({
   pnlPercentage: Number(dbMF.pnl_percentage),
   folioNumber: dbMF.folio_number || undefined,
   isin: dbMF.isin || undefined,
-  previousNav: dbMF.previous_nav ? Number(dbMF.previous_nav) : undefined,
+  previousNav: dbMF.previous_nav != null ? Number(dbMF.previous_nav) : undefined,
 });
 
 export const dbMutualFundTransactionToMutualFundTransaction = (
@@ -351,11 +351,11 @@ export const dbFnoTradeToFnoTrade = (dbTx: FnoTradeRow): FnoTrade => ({
   product: dbTx.product as FnoTrade['product'],
   quantity: Number(dbTx.quantity),
   avgPrice: Number(dbTx.avg_price),
-  exitPrice: dbTx.exit_price ? Number(dbTx.exit_price) : undefined,
+  exitPrice: dbTx.exit_price != null ? Number(dbTx.exit_price) : undefined,
   entryDate: dbTx.entry_date,
   exitDate: dbTx.exit_date || undefined,
   status: dbTx.status as FnoTrade['status'],
-  pnl: dbTx.pnl ? Number(dbTx.pnl) : 0,
+  pnl: dbTx.pnl != null ? Number(dbTx.pnl) : 0,
   notes: dbTx.notes || undefined,
   accountId: dbTx.account_id ? Number(dbTx.account_id) : undefined,
 });
@@ -368,14 +368,14 @@ export const dbBondToBond = (dbBond: BondRow): Bond => ({
   quantity: Number(dbBond.quantity),
   avgPrice: Number(dbBond.avg_price),
   currentPrice: Number(dbBond.current_price),
-  couponRate: dbBond.coupon_rate ? Number(dbBond.coupon_rate) : undefined,
+  couponRate: dbBond.coupon_rate != null ? Number(dbBond.coupon_rate) : undefined,
   maturityDate: dbBond.maturity_date || undefined,
   status: dbBond.status || 'ACTIVE',
   investmentAmount: Number(dbBond.investment_amount),
   currentValue: Number(dbBond.current_value),
   pnl: Number(dbBond.pnl),
   pnlPercentage: Number(dbBond.pnl_percentage),
-  yieldToMaturity: dbBond.yield_to_maturity ? Number(dbBond.yield_to_maturity) : undefined,
+  yieldToMaturity: dbBond.yield_to_maturity != null ? Number(dbBond.yield_to_maturity) : undefined,
 });
 
 export const dbBondTransactionToBondTransaction = (dbTx: BondTransactionRow): BondTransaction => ({

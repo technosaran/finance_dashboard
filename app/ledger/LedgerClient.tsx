@@ -5,16 +5,10 @@ import { Transaction } from '@/lib/types';
 import {
   ArrowDownRight,
   ArrowUpRight,
-  Book,
   Download,
   Edit3,
-  History,
-  Layers,
   Plus,
-  Search,
   Trash2,
-  TrendingDown,
-  TrendingUp,
   Wallet,
   X,
 } from 'lucide-react';
@@ -75,10 +69,6 @@ export default function LedgerClient() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('All');
-  const [filterAccount, setFilterAccount] = useState<number | 'All'>('All');
-  const [filterType, setFilterType] = useState<'All' | 'Income' | 'Expense'>('All');
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
@@ -92,55 +82,12 @@ export default function LedgerClient() {
     [accounts]
   );
 
-  const categories = useMemo(
-    () =>
-      ['All', ...new Set(transactions.map((transaction) => String(transaction.category)))].sort(),
-    [transactions]
-  );
-
-  const filteredTransactions = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    return [...transactions]
-      .filter((transaction) => {
-        const accountName = transaction.accountId
-          ? (accountNameById.get(transaction.accountId) ?? '').toLowerCase()
-          : '';
-        const matchesSearch =
-          normalizedQuery.length === 0 ||
-          transaction.description.toLowerCase().includes(normalizedQuery) ||
-          String(transaction.category).toLowerCase().includes(normalizedQuery) ||
-          accountName.includes(normalizedQuery);
-
-        return (
-          matchesSearch &&
-          (filterCategory === 'All' || String(transaction.category) === filterCategory) &&
-          (filterAccount === 'All' || transaction.accountId === filterAccount) &&
-          (filterType === 'All' || transaction.type === filterType)
-        );
-      })
-      .sort((left, right) => {
-        const dateCompare = right.date.localeCompare(left.date);
-        return dateCompare !== 0 ? dateCompare : right.id - left.id;
-      });
-  }, [transactions, searchQuery, filterCategory, filterAccount, filterType, accountNameById]);
-
-  const stats = useMemo(() => {
-    const income = filteredTransactions
-      .filter((transaction) => transaction.type === 'Income')
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-    const expense = filteredTransactions
-      .filter((transaction) => transaction.type === 'Expense')
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-
-    return { income, expense, balance: income - expense };
-  }, [filteredTransactions]);
-
-  const hasActiveFilters =
-    searchQuery.trim().length > 0 ||
-    filterType !== 'All' ||
-    filterCategory !== 'All' ||
-    filterAccount !== 'All';
+  const sortedTransactions = useMemo(() => {
+    return [...transactions].sort((left, right) => {
+      const dateCompare = right.date.localeCompare(left.date);
+      return dateCompare !== 0 ? dateCompare : right.id - left.id;
+    });
+  }, [transactions]);
 
   const formatCurrency = (value: number) => `${currencySymbol}${value.toLocaleString()}`;
   const formatDate = (value: string) =>
@@ -158,13 +105,6 @@ export default function LedgerClient() {
     setDate(new Date().toISOString().split('T')[0]);
     setAccountId('');
     setEditId(null);
-  };
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setFilterType('All');
-    setFilterCategory('All');
-    setFilterAccount('All');
   };
 
   const handleEdit = (transaction: Transaction) => {
@@ -253,36 +193,9 @@ export default function LedgerClient() {
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         <div className="page-header" style={{ alignItems: 'flex-start', gap: '24px' }}>
           <div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}
-            >
-              <div
-                style={{
-                  background: 'rgba(99, 102, 241, 0.1)',
-                  padding: '10px',
-                  borderRadius: '12px',
-                  color: '#6366f1',
-                }}
-              >
-                <Book size={24} strokeWidth={2.5} />
-              </div>
-              <h1
-                className="page-title"
-                style={{
-                  background:
-                    'linear-gradient(to bottom, var(--text-primary), var(--text-secondary))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                Ledger
-              </h1>
-            </div>
-            <p
-              className="page-subtitle"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <History size={16} /> Transaction history across your accounts
+            <h1 className="page-title">Ledger</h1>
+            <p className="page-subtitle">
+              {sortedTransactions.length.toLocaleString()} entries across your accounts
             </p>
           </div>
 
@@ -327,157 +240,6 @@ export default function LedgerClient() {
         </div>
 
         <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '20px',
-            marginBottom: '32px',
-          }}
-        >
-          <div
-            className="stat-card stat-card--green"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                right: '-20px',
-                top: '-20px',
-                color: 'rgba(16, 185, 129, 0.05)',
-              }}
-            >
-              <TrendingUp size={120} />
-            </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-            >
-              <div
-                style={{
-                  background: '#10b981',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              >
-                <ArrowUpRight size={16} strokeWidth={3} />
-              </div>
-              <span
-                style={{
-                  color: '#34d399',
-                  fontWeight: '800',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Total Inflow
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              {formatCurrency(stats.income)}
-            </div>
-          </div>
-
-          <div
-            className="stat-card stat-card--red"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.02) 100%)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                right: '-20px',
-                top: '-20px',
-                color: 'rgba(244, 63, 94, 0.05)',
-              }}
-            >
-              <TrendingDown size={120} />
-            </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-            >
-              <div
-                style={{
-                  background: '#f43f5e',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              >
-                <ArrowDownRight size={16} strokeWidth={3} />
-              </div>
-              <span
-                style={{
-                  color: '#f87171',
-                  fontWeight: '800',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Total Outflow
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              {formatCurrency(stats.expense)}
-            </div>
-          </div>
-
-          <div
-            className="stat-card stat-card--indigo"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(10, 10, 10, 0.4) 100%)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                right: '-20px',
-                top: '-10px',
-                color: 'rgba(99, 102, 241, 0.05)',
-              }}
-            >
-              <Wallet size={120} />
-            </div>
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}
-            >
-              <div
-                style={{
-                  background: '#6366f1',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  color: '#fff',
-                }}
-              >
-                <Layers size={16} />
-              </div>
-              <span
-                style={{
-                  color: '#a5b4fc',
-                  fontWeight: '800',
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Net Movement
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: '950', color: '#fff' }}>
-              {formatCurrency(stats.balance)}
-            </div>
-          </div>
-        </div>
-
-        <div
           className="premium-card fade-in"
           style={{
             width: '100%',
@@ -489,217 +251,6 @@ export default function LedgerClient() {
           }}
         >
           <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '16px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div
-                  style={{
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    padding: '10px',
-                    borderRadius: '12px',
-                    color: '#6366f1',
-                  }}
-                >
-                  <Layers size={22} />
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: '950', color: '#fff', margin: 0 }}>
-                    All Data Window
-                  </h3>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: '700',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {filteredTransactions.length} of {transactions.length} records visible
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                <span
-                  style={{
-                    ...getPillStyle('rgba(255, 255, 255, 0.05)', '#9fb0ac'),
-                    padding: '7px 12px',
-                  }}
-                >
-                  Combined view
-                </span>
-                <span
-                  style={{
-                    ...getPillStyle('rgba(30, 166, 114, 0.12)', '#86d4ad'),
-                    padding: '7px 12px',
-                  }}
-                >
-                  Click a row to edit
-                </span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: '12px',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                background: 'rgba(0, 0, 0, 0.2)',
-                padding: '12px',
-                borderRadius: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
-              }}
-            >
-              <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
-                <Search
-                  size={14}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#475569',
-                  }}
-                />
-                <input
-                  className="form-input"
-                  type="text"
-                  placeholder="Description or category..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  style={{
-                    fontSize: '0.82rem',
-                    paddingLeft: '36px',
-                    borderRadius: '10px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    width: '100%',
-                    margin: 0,
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  background: '#0a0a0a',
-                  padding: '3px',
-                  borderRadius: '10px',
-                  border: '1px solid #111111',
-                }}
-              >
-                {(['All', 'Income', 'Expense'] as const).map((filterValue) => (
-                  <button
-                    key={filterValue}
-                    type="button"
-                    onClick={() => setFilterType(filterValue)}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background:
-                        filterType === filterValue
-                          ? filterValue === 'Income'
-                            ? '#10b981'
-                            : filterValue === 'Expense'
-                              ? '#f43f5e'
-                              : '#6366f1'
-                          : 'transparent',
-                      color: filterType === filterValue ? '#fff' : '#475569',
-                      fontSize: '0.65rem',
-                      fontWeight: '900',
-                      cursor: 'pointer',
-                      transition: '0.2s',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {filterValue}
-                  </button>
-                ))}
-              </div>
-
-              <select
-                className="form-input"
-                name="categoryFilter"
-                value={filterCategory}
-                onChange={(event) => setFilterCategory(event.target.value)}
-                style={{
-                  fontSize: '0.8rem',
-                  minWidth: '160px',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  margin: 0,
-                }}
-              >
-                {categories.map((categoryName) => (
-                  <option key={categoryName} value={categoryName}>
-                    {categoryName === 'All' ? 'All Categories' : categoryName}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="form-input"
-                name="accountFilter"
-                value={filterAccount}
-                onChange={(event) =>
-                  setFilterAccount(
-                    event.target.value === 'All' ? 'All' : parseInt(event.target.value, 10)
-                  )
-                }
-                style={{
-                  fontSize: '0.8rem',
-                  minWidth: '170px',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  margin: 0,
-                }}
-              >
-                <option value="All">All Accounts</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name}
-                  </option>
-                ))}
-              </select>
-
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: '900',
-                    color: '#f43f5e',
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    background: 'rgba(244, 63, 94, 0.1)',
-                    border: '1px solid rgba(244, 63, 94, 0.2)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <X size={12} /> Clear filters
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div
             style={{
               background: 'rgba(0, 0, 0, 0.2)',
               borderRadius: '20px',
@@ -707,7 +258,7 @@ export default function LedgerClient() {
               overflow: 'hidden',
             }}
           >
-            {filteredTransactions.length > 0 ? (
+            {sortedTransactions.length > 0 ? (
               <div style={{ maxHeight: '780px', overflow: 'auto' }}>
                 <table
                   className="table-stack"
@@ -725,7 +276,7 @@ export default function LedgerClient() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTransactions.map((transaction, index) => {
+                    {sortedTransactions.map((transaction, index) => {
                       const accountName = transaction.accountId
                         ? (accountNameById.get(transaction.accountId) ?? 'Unassigned')
                         : 'Unassigned';
@@ -889,7 +440,7 @@ export default function LedgerClient() {
               <div style={{ padding: '80px 40px', textAlign: 'center' }}>
                 <EmptyTransactionsVisual />
                 <h3 style={{ color: '#fff', margin: '0 0 12px 0', fontSize: '1.1rem' }}>
-                  No matching entries
+                  No ledger entries yet
                 </h3>
                 <p
                   style={{
@@ -899,7 +450,7 @@ export default function LedgerClient() {
                     fontSize: '0.85rem',
                   }}
                 >
-                  No records found in this window. Try clearing your filters.
+                  Add your first entry to start building the ledger.
                 </p>
               </div>
             )}

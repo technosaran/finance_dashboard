@@ -8,6 +8,11 @@ import { Stock, StockTransaction } from '@/lib/types';
 import { calculateStockCharges, getStockChargeMeta, StockChargeMode } from '@/lib/utils/charges';
 import { logError } from '@/lib/utils/logger';
 import {
+  calculateLifetimePerformance,
+  calculatePositionMetrics,
+  calculatePositionMetricsFromInvestment,
+} from '@/lib/utils/portfolio';
+import {
   TrendingUp,
   TrendingDown,
   Plus,
@@ -589,7 +594,7 @@ export default function StocksClient() {
       const data = await res.json();
       if (!data.error) {
         setCurrentPrice(data.currentPrice.toString());
-        setPreviousPrice(data.previousClose || data.currentPrice);
+        setPreviousPrice(data.previousClose ?? data.currentPrice);
         setExchange(data.exchange.includes('BSE') ? 'BSE' : 'NSE');
       }
     } catch (error) {
@@ -624,10 +629,11 @@ export default function StocksClient() {
       return;
     }
 
-    const investment = qty * avg;
-    const currentValue = qty * current;
-    const pnl = currentValue - investment;
-    const pnlPercentage = (pnl / investment) * 100;
+    const { investmentAmount, currentValue, pnl, pnlPercentage } = calculatePositionMetrics(
+      qty,
+      avg,
+      current
+    );
 
     const stockData = {
       symbol: symbol.trim().toUpperCase(),
@@ -635,10 +641,10 @@ export default function StocksClient() {
       quantity: qty,
       avgPrice: avg,
       currentPrice: current,
-      previousPrice: previousPrice || current,
+      previousPrice: previousPrice ?? current,
       sector: resolveStockSector(symbol.trim().toUpperCase(), companyName, sector),
       exchange,
-      investmentAmount: investment,
+      investmentAmount,
       currentValue,
       pnl,
       pnlPercentage,
@@ -790,7 +796,7 @@ export default function StocksClient() {
     setQuantity(stock.quantity.toString());
     setAvgPrice(stock.avgPrice.toString());
     setCurrentPrice(stock.currentPrice.toString());
-    setPreviousPrice(stock.previousPrice || stock.currentPrice);
+    setPreviousPrice(stock.previousPrice ?? stock.currentPrice);
     setSector(resolveStockSector(stock.symbol, stock.companyName, stock.sector));
     setExchange(stock.exchange);
     setIsModalOpen(true);
@@ -833,7 +839,15 @@ export default function StocksClient() {
       const key = `${stock.symbol.toUpperCase()}_${stock.exchange.toUpperCase()}`;
       const resolvedSector = resolveStockSector(stock.symbol, stock.companyName, stock.sector);
       if (!groups[key]) {
-        groups[key] = { ...stock, sector: resolvedSector };
+        groups[key] = {
+          ...stock,
+          sector: resolvedSector,
+          ...calculatePositionMetricsFromInvestment(
+            stock.quantity,
+            stock.investmentAmount,
+            stock.currentPrice
+          ),
+        };
       } else {
         const existing = groups[key];
         const totalQty = existing.quantity + stock.quantity;
@@ -848,15 +862,13 @@ export default function StocksClient() {
 
         existing.sector = existing.sector || resolvedSector;
         existing.quantity = totalQty;
-        existing.investmentAmount = totalInvestment;
         existing.avgPrice = totalQty > 0 ? totalInvestment / totalQty : 0;
         existing.currentPrice = stock.currentPrice; // Latest LTP
         existing.previousPrice = totalQty > 0 ? totalPrevValue / totalQty : existing.currentPrice;
-
-        existing.currentValue += stock.currentValue;
-        existing.pnl += stock.pnl;
-        existing.pnlPercentage =
-          existing.investmentAmount > 0 ? (existing.pnl / existing.investmentAmount) * 100 : 0;
+        Object.assign(
+          existing,
+          calculatePositionMetricsFromInvestment(totalQty, totalInvestment, existing.currentPrice)
+        );
       }
     });
     // Filter out stocks with 0 quantity (closed positions) to mimic Zerodha/brokerage behavior
@@ -903,13 +915,13 @@ export default function StocksClient() {
         else if (t.transactionType === 'SELL') sells += t.totalAmount;
         charges += (t.brokerage || 0) + (t.taxes || 0);
       });
-      const earned = sells + totalCurrentValue - (buys + charges);
+      const lifetime = calculateLifetimePerformance(buys, sells, totalCurrentValue, charges);
       return {
         totalBuys: buys,
         totalSells: sells,
         totalCharges: charges,
-        lifetimeEarned: earned,
-        lifetimeReturnPercentage: buys > 0 ? (earned / buys) * 100 : 0,
+        lifetimeEarned: lifetime.lifetimeEarned,
+        lifetimeReturnPercentage: lifetime.lifetimeReturnPercentage,
       };
     }, [stockTransactions, totalCurrentValue]);
 

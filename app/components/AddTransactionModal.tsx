@@ -255,13 +255,13 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         const data = await res.json();
         setSelectedItem({ ...item, ...data });
         setPrice(data.currentPrice.toString());
-        setPreviousPrice(data.previousClose || data.currentPrice);
+        setPreviousPrice(data.previousClose ?? data.currentPrice);
       } else if (type === 'MUTUAL_FUND' && 'schemeCode' in item) {
         const res = await fetch(`/api/mf/quote?code=${item.schemeCode}`);
         const data = await res.json();
         setSelectedItem({ ...item, ...data });
         setPrice(data.currentNav.toString());
-        setPreviousPrice(data.previousNav || data.currentNav);
+        setPreviousPrice(data.previousNav ?? data.currentNav);
       }
     } catch (error) {
       logError('Quote fetch failed:', error);
@@ -304,7 +304,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         quantity: 0,
         avgPrice: p,
         currentPrice: p,
-        previousPrice: previousPrice || p,
+        previousPrice: previousPrice ?? p,
         exchange: selectedItem.exchange?.includes('BSE') ? 'BSE' : 'NSE',
         investmentAmount: 0,
         currentValue: 0,
@@ -364,7 +364,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         units: 0,
         avgNav: p,
         currentNav: p,
-        previousNav: previousPrice || p,
+        previousNav: previousPrice ?? p,
         investmentAmount: 0,
         currentValue: 0,
         pnl: 0,

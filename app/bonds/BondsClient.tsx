@@ -22,6 +22,7 @@ import {
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 import { logError } from '@/lib/utils/logger';
 import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
+import { calculateLifetimePerformance, calculateWeightedAverageYield } from '@/lib/utils/portfolio';
 
 import { Bond } from '@/lib/types';
 
@@ -327,15 +328,7 @@ export default function BondsClient() {
       );
     }, 0);
     const totalPnl = totalCurrent - totalInvested;
-    const yieldBearingBonds = activeBonds.filter(
-      (bond) => (bond.yieldToMaturity ?? bond.couponRate ?? 0) > 0
-    );
-    const avgYield =
-      yieldBearingBonds.length > 0
-        ? yieldBearingBonds.reduce((sum, bond) => {
-            return sum + (bond.yieldToMaturity ?? bond.couponRate ?? 0);
-          }, 0) / yieldBearingBonds.length
-        : 0;
+    const avgYield = calculateWeightedAverageYield(activeBonds);
 
     return { totalInvested, totalCurrent, totalPnl, avgYield, activeCount: activeBonds.length };
   }, [bonds]);
@@ -347,9 +340,13 @@ export default function BondsClient() {
       if (t.transactionType === 'BUY') totalBuys += t.totalAmount;
       else if (t.transactionType === 'SELL') totalSells += t.totalAmount;
     });
-    const lifetimeEarned = totalSells + stats.totalCurrent - totalBuys;
-    const lifetimeReturnPct = totalBuys > 0 ? (lifetimeEarned / totalBuys) * 100 : 0;
-    return { totalBuys, totalSells, lifetimeEarned, lifetimeReturnPct };
+    const lifetime = calculateLifetimePerformance(totalBuys, totalSells, stats.totalCurrent);
+    return {
+      totalBuys,
+      totalSells,
+      lifetimeEarned: lifetime.lifetimeEarned,
+      lifetimeReturnPct: lifetime.lifetimeReturnPercentage,
+    };
   }, [bondTransactions, stats.totalCurrent]);
 
   const handleAction = async (e: React.FormEvent) => {
