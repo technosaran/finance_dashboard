@@ -181,8 +181,7 @@ BEGIN
                         (
                             v_new_qty * COALESCE(v_target.current_price, v_target.avg_price, NEW.price)
                         ) - (v_new_qty * COALESCE(v_target.avg_price, 0))
-                    ) / (v_new_qty * COALESCE(v_target.avg_price, 0))
-                ) * 100
+                    ) / (v_new_qty * COALESCE(v_target.avg_price, 0)) * 100
                 ELSE 0
             END,
             updated_at = NOW()
