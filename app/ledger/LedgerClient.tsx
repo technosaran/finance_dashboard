@@ -3,6 +3,7 @@
 import { CSSProperties, FormEvent, useMemo, useState } from 'react';
 import { Transaction } from '@/lib/types';
 import {
+  Activity,
   ArrowDownRight,
   ArrowUpRight,
   ChevronLeft,
@@ -11,6 +12,8 @@ import {
   Edit3,
   Plus,
   Trash2,
+  TrendingDown,
+  TrendingUp,
   Wallet,
   X,
 } from 'lucide-react';
@@ -100,6 +103,18 @@ export default function LedgerClient() {
       return dateCompare !== 0 ? dateCompare : right.id - left.id;
     });
   }, [transactions]);
+
+  const totalIncome = useMemo(
+    () => transactions.filter((t) => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0),
+    [transactions]
+  );
+
+  const totalExpenses = useMemo(
+    () => transactions.filter((t) => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0),
+    [transactions]
+  );
+
+  const netBalance = totalIncome - totalExpenses;
 
   const transactionDates = useMemo(() => {
     const set = new Set<string>();
@@ -217,7 +232,10 @@ export default function LedgerClient() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div
+            className="mobile-page-header__actions"
+            style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}
+          >
             <button
               onClick={() => {
                 exportTransactionsToCSV(transactions);
@@ -257,6 +275,87 @@ export default function LedgerClient() {
           </div>
         </div>
 
+        {/* Summary stats */}
+        <div
+          className="fade-in"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
+          }}
+        >
+          {/* Total Income */}
+          <div className="stat-card stat-card--green">
+            <div className="stat-card__glow" style={{ background: 'rgba(16, 185, 129, 0.15)' }} />
+            <div
+              className="stat-card__icon-box"
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: '#10b981',
+                marginBottom: '16px',
+              }}
+            >
+              <TrendingUp size={22} />
+            </div>
+            <div className="stat-card__value" style={{ color: '#10b981' }}>
+              {formatCurrency(totalIncome)}
+            </div>
+            <div className="stat-card__meta">Total Income</div>
+          </div>
+
+          {/* Total Expenses */}
+          <div className="stat-card stat-card--red">
+            <div className="stat-card__glow" style={{ background: 'rgba(244, 63, 94, 0.15)' }} />
+            <div
+              className="stat-card__icon-box"
+              style={{
+                background: 'rgba(244, 63, 94, 0.12)',
+                color: '#f43f5e',
+                marginBottom: '16px',
+              }}
+            >
+              <TrendingDown size={22} />
+            </div>
+            <div className="stat-card__value" style={{ color: '#f43f5e' }}>
+              {formatCurrency(totalExpenses)}
+            </div>
+            <div className="stat-card__meta">Total Expenses</div>
+          </div>
+
+          {/* Net Balance */}
+          <div
+            className={`stat-card ${netBalance >= 0 ? 'stat-card--indigo' : 'stat-card--amber'}`}
+          >
+            <div
+              className="stat-card__glow"
+              style={{
+                background:
+                  netBalance >= 0 ? 'rgba(99, 102, 241, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+              }}
+            />
+            <div
+              className="stat-card__icon-box"
+              style={{
+                background:
+                  netBalance >= 0 ? 'rgba(99, 102, 241, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                color: netBalance >= 0 ? '#818cf8' : '#f59e0b',
+                marginBottom: '16px',
+              }}
+            >
+              <Activity size={22} />
+            </div>
+            <div
+              className="stat-card__value"
+              style={{ color: netBalance >= 0 ? '#818cf8' : '#f59e0b' }}
+            >
+              {netBalance >= 0 ? '+' : '-'}
+              {formatCurrency(Math.abs(netBalance))}
+            </div>
+            <div className="stat-card__meta">Net Balance</div>
+          </div>
+        </div>
+
         <div
           className="premium-card fade-in"
           style={{
@@ -268,7 +367,10 @@ export default function LedgerClient() {
             backdropFilter: 'blur(32px)',
           }}
         >
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+          <div
+            className="flex-col-mobile"
+            style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}
+          >
             {/* Transactions table */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
@@ -310,12 +412,14 @@ export default function LedgerClient() {
                             <tr
                               key={transaction.id}
                               onClick={() => handleEdit(transaction)}
+                              className="ledger-table-row"
                               style={{
                                 cursor: 'pointer',
                                 background:
                                   index % 2 === 0
                                     ? 'rgba(255, 255, 255, 0.018)'
                                     : 'rgba(255, 255, 255, 0.032)',
+                                transition: 'background 0.15s ease',
                               }}
                             >
                               <td data-label="Entry" style={getBodyCellStyle()}>
@@ -347,22 +451,12 @@ export default function LedgerClient() {
                                         fontWeight: 800,
                                         fontSize: '0.95rem',
                                         color: '#fff',
-                                        marginBottom: '4px',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
                                       }}
                                     >
                                       {transaction.description}
-                                    </div>
-                                    <div
-                                      style={{
-                                        fontSize: '0.74rem',
-                                        color: '#64748b',
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      Opens the entry editor
                                     </div>
                                   </div>
                                 </div>
