@@ -2877,6 +2877,10 @@ select:focus {
     transform: translateX(4px);
     background: #0a0a0a;
   }
+
+  .ledger-table-row:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
 }
 
 /* Expense category card */
