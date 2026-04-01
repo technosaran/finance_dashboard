@@ -44,6 +44,13 @@ export default function LoginPage() {
 
   return (
     <div className="login-container">
+      <style jsx global>{`
+        html,
+        body {
+          overflow: hidden !important;
+          height: 100% !important;
+        }
+      `}</style>
       <div className="login-bg-orb login-bg-orb--primary" />
       <div className="login-bg-orb login-bg-orb--secondary" />
 

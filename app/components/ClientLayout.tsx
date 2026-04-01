@@ -213,8 +213,13 @@ function AuthConsumer({
           )}
           <main
             id="main-content"
-            className="main-content"
-            style={{ flex: 1, overflowY: 'auto' }}
+            className={isAuthPage ? '' : 'main-content'}
+            style={{
+              flex: 1,
+              overflowY: isAuthPage ? 'hidden' : 'auto',
+              display: isAuthPage ? 'flex' : 'block',
+              position: 'relative',
+            }}
             role="main"
             aria-label="Main content"
           >
