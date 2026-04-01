@@ -5,19 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../components/AuthContext';
 import {
   Command,
-  Mail,
-  Lock,
   Eye,
   EyeOff,
   ArrowRight,
-  Loader2,
   Shield,
   TrendingUp,
   PieChart,
   BarChart3,
   Wallet,
   KeyRound,
-  AtSign,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -81,26 +77,28 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="lp-root">
+    <div className="lp-root font-inter">
       <style jsx global>{`
         html,
         body {
           overflow: hidden !important;
           height: 100% !important;
+          background: #000 !important;
         }
       `}</style>
+
+      <div className="lp-transition-overlay" />
 
       {/* ── Left branding panel ── */}
       <div className="lp-left" aria-hidden="true">
         <div className="lp-left-orb lp-left-orb--a" />
         <div className="lp-left-orb lp-left-orb--b" />
-        <div className="lp-left-orb lp-left-orb--c" />
 
-        <div className="lp-left-inner">
+        <div className="lp-left-inner lp-text-stagger">
           {/* Brand */}
           <div className="lp-brand">
             <div className="lp-logo">
-              <Command size={28} />
+              <Command size={32} />
             </div>
             <span className="lp-brand-name">
               FIN<span className="lp-brand-accent">CORE</span>
@@ -109,9 +107,13 @@ export default function LoginPage() {
 
           {/* Hero text */}
           <div className="lp-hero">
-            <h2 className="lp-hero-title">Your wealth,&nbsp;one&nbsp;view.</h2>
+            <h2 className="lp-hero-title text-balance">
+              Wealth tracking, <br />
+              reimagined.
+            </h2>
             <p className="lp-hero-sub">
-              The all-in-one finance dashboard built for serious investors.
+              The all-in-one finance dashboard for serious investors. Control your entire portfolio
+              in one seamless view.
             </p>
           </div>
 
@@ -120,7 +122,7 @@ export default function LoginPage() {
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <li key={title} className="lp-feature-item">
                 <div className="lp-feature-icon">
-                  <Icon size={16} />
+                  <Icon size={20} />
                 </div>
                 <div>
                   <p className="lp-feature-title">{title}</p>
@@ -133,65 +135,57 @@ export default function LoginPage() {
           {/* Bottom stats strip */}
           <div className="lp-stats">
             <div className="lp-stat">
-              <span className="lp-stat-value">10K+</span>
+              <span className="lp-stat-value tracking-tightest">10K+</span>
               <span className="lp-stat-label">Active users</span>
             </div>
-            <div className="lp-stat-divider" />
             <div className="lp-stat">
-              <span className="lp-stat-value">₹500Cr+</span>
+              <span className="lp-stat-value tracking-tightest">₹500Cr+</span>
               <span className="lp-stat-label">Wealth tracked</span>
             </div>
-            <div className="lp-stat-divider" />
-            <div className="lp-stat">
-              <span className="lp-stat-value">99.9%</span>
-              <span className="lp-stat-label">Uptime</span>
-            </div>
           </div>
+        </div>
+
+        <div className="lp-scroll-hint">
+          <span>Explore Platform</span>
+          <div className="lp-scroll-line" />
         </div>
       </div>
 
       {/* ── Right form panel ── */}
       <div className="lp-right">
-        <div className="lp-right-orb lp-right-orb--a" />
-        <div className="lp-right-orb lp-right-orb--b" />
-        <div className="lp-right-orb lp-right-orb--c" />
-
-        <div className="lp-form-wrap">
+        <div className="lp-form-wrap lp-form-entrance">
           {/* Mobile-only brand mark */}
           <div className="lp-mobile-brand">
             <div className="lp-logo lp-logo--sm">
-              <Command size={20} />
+              <Command size={24} />
             </div>
-            <span className="lp-brand-name lp-brand-name--sm">
-              FIN<span className="lp-brand-accent">CORE</span>
-            </span>
+            <span className="lp-brand-name lp-brand-name--sm">FINCORE</span>
           </div>
 
           <div className="lp-card">
             {/* Private access badge */}
             <div className="lp-access-badge">
-              <KeyRound size={11} aria-hidden="true" />
-              <span>Private Access &middot; Invite Only</span>
+              <KeyRound size={14} aria-hidden="true" />
+              <span>Private Beta Access</span>
             </div>
 
             <div className="lp-form-header">
-              <h1 className="lp-form-title">Welcome back</h1>
-              <p className="lp-form-subtitle">Sign in to your finance dashboard</p>
+              <h1 className="lp-form-title tracking-tighter">Welcome back</h1>
+              <p className="lp-form-subtitle">Secure access to your dashboard</p>
             </div>
 
             {error && (
-              <div className="login-error" role="alert">
+              <div className="login-error input--error" role="alert">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleEmailLogin} className="login-form" noValidate>
-              <div>
+              <div className="input-group">
                 <label className="login-label" htmlFor="lp-email">
                   Email Address
                 </label>
                 <div className="login-input-wrapper">
-                  <Mail size={18} className="login-input-icon" />
                   <input
                     id="lp-email"
                     type="email"
@@ -201,23 +195,21 @@ export default function LoginPage() {
                     required
                     aria-label="Email Address"
                     aria-required="true"
-                    aria-invalid={error ? 'true' : 'false'}
                     autoComplete="email"
                     autoFocus
                     disabled={isLoading}
-                    className={`login-input${error ? ' login-input--error' : ''}${isLoading ? ' login-input--disabled' : ''}`}
+                    className={`login-input ${error ? 'login-input--error' : ''}`}
                   />
                 </div>
               </div>
 
-              <div>
+              <div className="input-group">
                 <div className="login-password-header">
-                  <label className="login-label" htmlFor="lp-password" style={{ marginBottom: 0 }}>
+                  <label className="login-label" htmlFor="lp-password">
                     Password
                   </label>
                 </div>
                 <div className="login-input-wrapper">
-                  <Lock size={18} className="login-input-icon" />
                   <input
                     id="lp-password"
                     type={showPassword ? 'text' : 'password'}
@@ -227,10 +219,9 @@ export default function LoginPage() {
                     required
                     aria-label="Password"
                     aria-required="true"
-                    aria-invalid={error ? 'true' : 'false'}
                     autoComplete="current-password"
                     disabled={isLoading}
-                    className={`login-input login-input--password${error ? ' login-input--error' : ''}${isLoading ? ' login-input--disabled' : ''}`}
+                    className={`login-input ${error ? 'login-input--error' : ''}`}
                   />
                   <button
                     type="button"
@@ -238,23 +229,18 @@ export default function LoginPage() {
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     className="login-password-toggle"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                aria-busy={isLoading}
-                aria-label={isLoading ? 'Signing in…' : 'Sign in to your account'}
-                className="login-submit"
-              >
+              <button type="submit" disabled={isLoading} className="login-submit">
                 {isLoading ? (
-                  <>
-                    <Loader2 size={20} className="animate-spin" />
-                    Signing in…
-                  </>
+                  <div className="loading-dots">
+                    <span>•</span>
+                    <span>•</span>
+                    <span>•</span>
+                  </div>
                 ) : (
                   <>
                     Sign In <ArrowRight size={20} />
@@ -264,19 +250,16 @@ export default function LoginPage() {
             </form>
 
             <div className="lp-security-note">
-              <Shield size={13} />
-              <span>Protected by Supabase authentication</span>
+              <Shield size={14} />
+              <span>AES-256 Encrypted Session</span>
             </div>
           </div>
 
           <div className="lp-private-notice">
-            <AtSign size={14} aria-hidden="true" />
-            <span>
-              Private site &mdash; to request access, email{' '}
-              <a href="mailto:saransci2006@gmail.com" className="lp-private-notice__link">
-                saransci2006@gmail.com
-              </a>
-            </span>
+            <span>To request access, contact</span>
+            <a href="mailto:saransci2006@gmail.com" className="lp-private-notice__link">
+              saransci2006@gmail.com
+            </a>
           </div>
         </div>
       </div>

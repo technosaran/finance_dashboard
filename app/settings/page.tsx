@@ -159,305 +159,276 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="page-container">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
+    <div className="page-container" style={{ paddingTop: '20px' }}>
+      <header className="page-header section-fade-in" style={{ animationDelay: '0s' }}>
         <div>
-          <h1
-            style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Settings
-          </h1>
-          <p
-            style={{
-              color: '#94a3b8',
-              fontSize: 'clamp(0.875rem, 2vw, 1rem)',
-              marginTop: '8px',
-            }}
-          >
-            Manage your preferences and application defaults
-          </p>
+          <h1 className="page-title font-outfit text-gradient tracking-tighter">Settings</h1>
+          <p className="page-subtitle">Configure your workspace preferences and defaults</p>
         </div>
-      </div>
+      </header>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '12px',
-          overflowX: 'auto',
-          paddingBottom: '16px',
-          marginBottom: '24px',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
+      <div className="settings-container">
+        {/* Navigation Sidebar */}
+        <nav className="settings-nav section-fade-in" style={{ animationDelay: '0.1s' }}>
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 20px',
-                borderRadius: '12px',
-                border: 'none',
-                background: isActive
-                  ? 'linear-gradient(135deg, #1a8e68 0%, #146d63 100%)'
-                  : 'rgba(10, 10, 10, 0.5)',
-                color: isActive ? '#fff' : '#94a3b8',
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s',
-                boxShadow: isActive ? '0 4px 12px rgba(13, 78, 68, 0.28)' : 'none',
-                flexShrink: 0,
-              }}
+              className={`settings-nav-item ${activeTab === tab.id ? 'settings-nav-item--active' : ''}`}
             >
               {tab.icon}
               {tab.label}
+              {activeTab === tab.id && <ChevronRight size={14} style={{ marginLeft: 'auto' }} />}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </nav>
 
-      <div className="fade-in">
-        {activeTab === 'general' && (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <SectionCard
-              title="Your Profile"
-              description="Choose how your name appears in the app"
-              icon={<Shield size={22} />}
-              iconColor="#6366f1"
-              iconBackground="rgba(99, 102, 241, 0.1)"
-              style={{ marginBottom: '24px' }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label
+        {/* Content Area */}
+        <section className="settings-content section-fade-in" style={{ animationDelay: '0.2s' }}>
+          {activeTab === 'general' && (
+            <div className="settings-group">
+              <h2 className="settings-section-title">General Preferences</h2>
+
+              <SectionCard
+                title="Your Profile"
+                description="Customize how you are identified within FINCORE"
+                icon={<Users size={20} />}
+                iconColor="#818cf8"
+                iconBackground="rgba(129, 140, 248, 0.1)"
+              >
+                <div className="settings-item">
+                  <label className="settings-label">Display Name</label>
+                  <input
+                    type="text"
+                    value={settings.displayName || ''}
+                    onChange={(e) => updateSettings({ displayName: e.target.value })}
+                    placeholder="Enter your name"
+                    className="login-input"
+                  />
+                  <p className="settings-description">
+                    This name will be visible on your main dashboard.
+                  </p>
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title="Default Accounts"
+                description="Set default accounts to speed up transaction entry"
+                icon={<Layers size={20} />}
+                iconColor="#34d399"
+                iconBackground="rgba(52, 211, 153, 0.1)"
+              >
+                <div style={{ display: 'grid', gap: '24px' }}>
+                  <AccountSelect
+                    label="Stock Trading Account"
+                    value={settings.defaultStockAccountId}
+                    onChange={(val) => updateSettings({ defaultStockAccountId: val })}
+                    accounts={accounts}
+                    icon={<TrendingUp size={16} />}
+                  />
+                  <AccountSelect
+                    label="Mutual Fund Account"
+                    value={settings.defaultMfAccountId}
+                    onChange={(val) => updateSettings({ defaultMfAccountId: val })}
+                    accounts={accounts}
+                    icon={<Wallet size={16} />}
+                  />
+                  <AccountSelect
+                    label="Income Credit Account"
+                    value={settings.defaultSalaryAccountId}
+                    onChange={(val) => updateSettings({ defaultSalaryAccountId: val })}
+                    accounts={accounts}
+                    icon={<Banknote size={16} />}
+                  />
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title="Advanced Charges"
+                description="Brokerage and regulatory charges information"
+                icon={<Info size={20} />}
+                iconColor="#3b82f6"
+                iconBackground="rgba(59, 130, 246, 0.1)"
+              >
+                <div
+                  className="glass-panel"
                   style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '700',
+                    padding: '20px',
+                    fontSize: '0.9rem',
                     color: '#94a3b8',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    lineHeight: '1.6',
                   }}
                 >
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  value={settings.displayName || ''}
-                  onChange={(e) => updateSettings({ displayName: e.target.value })}
-                  placeholder="Enter your name"
-                  style={textInputStyle}
-                />
-                <p style={{ fontSize: '0.75rem', color: '#475569', marginTop: '4px' }}>
-                  This name is shown on the dashboard.
-                </p>
-              </div>
-            </SectionCard>
+                  Regulatory fees (STT, SEBI, GST) and exchange charges are automatically calculated
+                  based on the latest Indian market standards. You can review precise breakdowns
+                  when entering any transaction.
+                </div>
+              </SectionCard>
+            </div>
+          )}
 
-            <SectionCard
-              title="Default Accounts"
-              description="Choose default accounts for new entries"
-              icon={<Layers size={22} />}
-              iconColor="#10b981"
-              iconBackground="rgba(16, 185, 129, 0.1)"
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <AccountSelect
-                  label="Stock Trading Account"
-                  value={settings.defaultStockAccountId}
-                  onChange={(val) => updateSettings({ defaultStockAccountId: val })}
-                  accounts={accounts}
-                  icon={<TrendingUp size={16} />}
-                />
-                <AccountSelect
-                  label="Mutual Fund Account"
-                  value={settings.defaultMfAccountId}
-                  onChange={(val) => updateSettings({ defaultMfAccountId: val })}
-                  accounts={accounts}
-                  icon={<Wallet size={16} />}
-                />
-                <AccountSelect
-                  label="Salary Credit Account"
-                  value={settings.defaultSalaryAccountId}
-                  onChange={(val) => updateSettings({ defaultSalaryAccountId: val })}
-                  accounts={accounts}
-                  icon={<Banknote size={16} />}
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Broker Integration"
-              description="Charges are calculated inside trade forms"
-              icon={<Info size={22} />}
-              iconColor="#3b82f6"
-              iconBackground="rgba(59, 130, 246, 0.1)"
-              style={{ marginTop: '24px' }}
-            >
-              <div
-                style={{
-                  padding: '18px',
-                  borderRadius: '16px',
-                  background: 'rgba(59, 130, 246, 0.05)',
-                  border: '1px solid rgba(59, 130, 246, 0.12)',
-                  color: '#cbd5e1',
-                  lineHeight: 1.6,
-                }}
+          {activeTab === 'modules' && (
+            <div className="settings-group">
+              <h2 className="settings-section-title">Core Modules</h2>
+              <SectionCard
+                title="Module Configuration"
+                description="Enable or disable entire platform capabilities"
+                icon={<Eye size={20} />}
+                iconColor="#a855f7"
+                iconBackground="rgba(168, 85, 247, 0.1)"
               >
-                Delivery, Coin, and F&amp;O charge estimates are applied automatically. You can
-                review the breakdown while entering trades instead of maintaining separate settings.
-              </div>
-            </SectionCard>
-          </div>
-        )}
+                <div style={{ textAlign: 'center', padding: '48px 24px' }}>
+                  <div
+                    style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '20px',
+                      background: 'rgba(255,255,255,0.03)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 24px',
+                      color: '#52525b',
+                    }}
+                  >
+                    <Layers size={32} />
+                  </div>
+                  <p style={{ fontWeight: '600', color: '#fff', marginBottom: '8px' }}>
+                    Global Modules Enabled
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.875rem',
+                      color: '#71717a',
+                      maxWidth: '320px',
+                      margin: '0 auto',
+                    }}
+                  >
+                    All core modules are currently active. Use the <strong>Sidebar</strong> tab to
+                    manage their visibility in the navigation.
+                  </p>
+                </div>
+              </SectionCard>
+            </div>
+          )}
 
-        {activeTab === 'modules' && (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <SectionCard
-              title="Module Overview"
-              description="Use Sidebar settings to show or hide sections"
-              icon={<Eye size={22} />}
-              iconColor="#a855f7"
-              iconBackground="rgba(168, 85, 247, 0.1)"
-            >
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                <p style={{ fontSize: '0.95rem', fontWeight: '600' }}>
-                  All modules are enabled for your account.
-                </p>
-                <p style={{ fontSize: '0.8rem', marginTop: '8px' }}>
-                  Use the Sidebar tab to control what appears in navigation.
-                </p>
-              </div>
-            </SectionCard>
-          </div>
-        )}
-
-        {activeTab === 'sidebar' && (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <SectionCard
-              title="Sidebar Visibility"
-              description="Choose which sections appear in navigation"
-              icon={<LayoutPanelLeft size={22} />}
-              iconColor="#f59e0b"
-              iconBackground="rgba(245, 158, 11, 0.1)"
-            >
+          {activeTab === 'sidebar' && (
+            <div className="settings-group">
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '16px',
-                }}
-              >
-                {SIDEBAR_ITEMS.map((item) => (
-                  <ToggleCard
-                    key={item.key}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    color={item.color}
-                    isActive={settings[item.key] !== false}
-                    onToggle={() => updateSettings({ [item.key]: !settings[item.key] })}
-                    compact
-                  />
-                ))}
-              </div>
-            </SectionCard>
-          </div>
-        )}
-
-        {activeTab === 'system' && (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <SectionCard
-              title="Danger Zone"
-              description="Actions that affect all app settings"
-              icon={<Shield size={22} />}
-              iconColor="#ef4444"
-              iconBackground="rgba(239, 68, 68, 0.1)"
-            >
-              <div
-                style={{
-                  padding: '20px',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  background: 'rgba(239, 68, 68, 0.05)',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '16px',
+                  alignItems: 'flex-end',
+                  marginBottom: '8px',
                 }}
               >
-                <div>
-                  <div style={{ color: '#ef4444', fontWeight: '700', marginBottom: '4px' }}>
-                    Reset settings
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                    Restore the app configuration to its default state
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={resetToDefaults}
+                <h2 className="settings-section-title" style={{ marginBottom: 0 }}>
+                  Sidebar Visibility
+                </h2>
+                <div className="settings-badge">Visibility Management</div>
+              </div>
+
+              <SectionCard
+                title="Navigation Items"
+                description="Control which sections appear in your main sidebar"
+                icon={<LayoutPanelLeft size={20} />}
+                iconColor="#f59e0b"
+                iconBackground="rgba(245, 158, 11, 0.1)"
+              >
+                <div
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    background: '#ef4444',
-                    color: '#fff',
-                    border: 'none',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: '16px',
                   }}
                 >
-                  <Undo size={16} /> Reset
-                </button>
-              </div>
+                  {SIDEBAR_ITEMS.map((item) => (
+                    <ToggleCard
+                      key={item.key}
+                      label={item.label}
+                      description={item.description}
+                      icon={item.icon}
+                      color={item.color}
+                      isActive={settings[item.key] !== false}
+                      onToggle={() => updateSettings({ [item.key]: !settings[item.key] })}
+                    />
+                  ))}
+                </div>
+              </SectionCard>
+            </div>
+          )}
+
+          {activeTab === 'system' && (
+            <div className="settings-group">
+              <h2 className="settings-section-title">System & Security</h2>
+              <SectionCard
+                title="Data Integrity"
+                description="Manage your application state and configuration"
+                icon={<Shield size={20} />}
+                iconColor="#ef4444"
+                iconBackground="rgba(239, 68, 68, 0.1)"
+              >
+                <div
+                  style={{
+                    borderRadius: '16px',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    background: 'rgba(239, 68, 68, 0.03)',
+                    padding: '24px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '24px',
+                  }}
+                >
+                  <div>
+                    <h4 style={{ color: '#ef4444', fontWeight: '700', margin: 0 }}>
+                      Reset to Defaults
+                    </h4>
+                    <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '6px 0 0' }}>
+                      Revert all workspace preferences to factory settings. This action is
+                      permanent.
+                    </p>
+                  </div>
+                  <button
+                    onClick={resetToDefaults}
+                    className="btn-primary"
+                    style={{
+                      marginTop: 0,
+                      padding: '10px 20px',
+                      fontSize: '0.9rem',
+                      background: '#ef4444',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <Undo size={16} /> Reset Now
+                  </button>
+                </div>
+              </SectionCard>
 
               <div
                 style={{
-                  marginTop: '24px',
-                  padding: '16px',
-                  borderRadius: '12px',
-                  background: 'rgba(59, 130, 246, 0.05)',
-                  border: '1px solid rgba(59, 130, 246, 0.1)',
+                  marginTop: '12px',
+                  padding: '16px 20px',
+                  background: 'rgba(255,255,255,0.02)',
+                  borderRadius: '16px',
                   display: 'flex',
                   gap: '12px',
+                  alignItems: 'flex-start',
                 }}
               >
-                <Info size={20} color="#3b82f6" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  Preferences are saved to your profile and applied across your signed-in session.
+                <Shield size={18} color="#71717a" style={{ marginTop: '2px' }} />
+                <div style={{ fontSize: '0.8125rem', color: '#52525b', lineHeight: 1.5 }}>
+                  Your configuration is securely encrypted and stored in your private vault. These
+                  settings are synchronized across all your registered devices in real-time.
                 </div>
               </div>
-            </SectionCard>
-          </div>
-        )}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
@@ -470,7 +441,6 @@ function SectionCard({
   iconColor,
   iconBackground,
   children,
-  style,
 }: {
   title: string;
   description: string;
@@ -478,35 +448,31 @@ function SectionCard({
   iconColor: string;
   iconBackground: string;
   children: ReactNode;
-  style?: CSSProperties;
 }) {
   return (
-    <div className="premium-card" style={style}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          marginBottom: '24px',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          paddingBottom: '16px',
-        }}
-      >
+    <div className="settings-card">
+      <header style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
         <div
           style={{
-            padding: '10px',
-            borderRadius: '10px',
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
             background: iconBackground,
             color: iconColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {icon}
         </div>
         <div>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>{title}</h3>
-          <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{description}</p>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#fff', margin: 0 }}>
+            {title}
+          </h3>
+          <p style={{ fontSize: '0.875rem', color: '#71717a', margin: '4px 0 0' }}>{description}</p>
         </div>
-      </div>
+      </header>
       {children}
     </div>
   );
@@ -526,38 +492,21 @@ function AccountSelect({
   icon: ReactNode;
 }) {
   return (
-    <div>
+    <div className="settings-item">
       <label
-        style={{
-          fontSize: '0.8rem',
-          fontWeight: '700',
-          color: '#94a3b8',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}
+        className="settings-label"
+        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
       >
-        <span>{icon}</span> {label}
+        {icon} {label}
       </label>
       <div style={{ position: 'relative' }}>
         <select
           value={value || ''}
           onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
-          style={{
-            width: '100%',
-            background: '#000000',
-            border: '1px solid #1a1a1a',
-            padding: '12px 16px',
-            borderRadius: '12px',
-            color: '#fff',
-            fontSize: '0.9rem',
-            appearance: 'none',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
+          className="login-input"
+          style={{ appearance: 'none', cursor: 'pointer', paddingRight: '44px' }}
         >
-          <option value="">Select manually each time</option>
+          <option value="">Select account...</option>
           {accounts.map((acc) => (
             <option key={acc.id} value={acc.id}>
               {acc.name} ({acc.currency === 'INR' ? '₹' : '$'}
@@ -567,7 +516,7 @@ function AccountSelect({
         </select>
         <ChevronRight
           size={16}
-          color="#64748b"
+          color="#52525b"
           style={{
             position: 'absolute',
             right: '16px',
@@ -588,7 +537,6 @@ function ToggleCard({
   onToggle,
   color,
   icon,
-  compact = false,
 }: {
   label: string;
   description: string;
@@ -596,97 +544,65 @@ function ToggleCard({
   onToggle: () => void;
   color: string;
   icon: ReactNode;
-  compact?: boolean;
 }) {
   return (
     <button
-      type="button"
       onClick={onToggle}
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: compact ? '16px' : '20px',
-        background: isActive ? `${color}08` : 'rgba(255,255,255,0.02)',
-        borderRadius: '16px',
-        border: `1px solid ${isActive ? `${color}20` : 'rgba(255,255,255,0.05)'}`,
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        width: '100%',
-        textAlign: 'left',
-      }}
-      className="toggle-card"
+      className={`settings-toggle-row ${isActive ? 'settings-toggle-row--active' : ''}`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div
           style={{
-            fontSize: compact ? '1.2rem' : '1.5rem',
-            width: compact ? '32px' : '40px',
-            height: compact ? '32px' : '40px',
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            background: isActive ? `${color}20` : 'rgba(255,255,255,0.03)',
+            color: isActive ? color : '#52525b',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: isActive ? `${color}15` : 'rgba(255,255,255,0.05)',
-            borderRadius: '10px',
-            color,
+            transition: 'all 0.2s',
           }}
         >
           {icon}
         </div>
-        <div>
+        <div style={{ textAlign: 'left' }}>
           <div
             style={{
               fontWeight: '700',
-              fontSize: '0.95rem',
-              color: isActive ? '#fff' : '#94a3b8',
-              marginBottom: '2px',
+              fontSize: '0.9375rem',
+              color: isActive ? '#fff' : '#71717a',
             }}
           >
             {label}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{description}</div>
+          <div style={{ fontSize: '0.75rem', color: '#52525b' }}>{description}</div>
         </div>
       </div>
 
       <div
-        role="switch"
-        aria-checked={isActive}
         style={{
-          width: '44px',
-          height: '24px',
-          background: isActive ? color : '#1a1a1a',
-          borderRadius: '100px',
+          width: '40px',
+          height: '20px',
+          borderRadius: '20px',
+          background: isActive ? color : '#1c1c1c',
           position: 'relative',
-          transition: 'background 0.3s',
-          flexShrink: 0,
+          transition: 'background 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         <div
           style={{
-            width: '18px',
-            height: '18px',
-            background: '#fff',
+            width: '14px',
+            height: '14px',
             borderRadius: '50%',
+            background: '#fff',
             position: 'absolute',
             top: '3px',
             left: isActive ? '23px' : '3px',
-            transition: 'left 0.3s',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            transition: 'left 0.3s cubic-bezier(0.19, 1, 0.22, 1)',
           }}
         />
       </div>
     </button>
   );
 }
-
-const textInputStyle: CSSProperties = {
-  background: '#000000',
-  border: '2px solid #111111',
-  padding: '14px 16px',
-  borderRadius: '14px',
-  color: '#fff',
-  fontSize: '1rem',
-  outline: 'none',
-  transition: 'border-color 0.2s',
-  width: '100%',
-};
