@@ -167,10 +167,10 @@ export default function LedgerClient() {
     try {
       if (editId) {
         await updateTransaction(editId, transactionData);
-        showNotification('success', 'Transaction updated successfully');
+        showNotification('success', 'Transaction updated');
       } else {
         await addTransaction(transactionData);
-        showNotification('success', 'Transaction recorded successfully');
+        showNotification('success', 'Transaction recorded');
       }
 
       resetForm();
@@ -185,564 +185,513 @@ export default function LedgerClient() {
       <div
         className="main-content"
         style={{
-          backgroundColor: '#000000',
-          minHeight: '100vh',
-          color: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          minHeight: '80vh',
         }}
       >
         <div style={{ textAlign: 'center' }}>
           <div
-            className="loader"
+            className="spin-animation"
             style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid rgba(99, 102, 241, 0.1)',
-              borderTopColor: '#6366f1',
+              width: '48px',
+              height: '48px',
+              border: '4px solid var(--accent-light)',
+              borderTopColor: 'var(--accent)',
               borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
               margin: '0 auto 20px',
             }}
-          ></div>
-          <div style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: '500' }}>
-            Loading transactions...
-          </div>
+          />
+          <div className="stat-label">Analyzing Ledger...</div>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
-    <div
-      className="page-container"
-      style={{
-        minHeight: '100vh',
-        padding: 'clamp(16px, 4vw, 24px)',
-      }}
-    >
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        <div className="page-header" style={{ alignItems: 'flex-start', gap: '24px' }}>
-          <div>
-            <h1 className="page-title">Ledger</h1>
-            <p className="page-subtitle">
-              {sortedTransactions.length.toLocaleString()} entries across your accounts
-            </p>
+    <div className="main-content fade-in">
+      <div className="page-header" style={{ marginBottom: '32px' }}>
+        <div>
+          <h1 className="page-title gradient-text">Ledger</h1>
+          <p className="page-subtitle">
+            {sortedTransactions.length.toLocaleString()} entries across all accounts
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => {
+              exportTransactionsToCSV(transactions);
+              showNotification('success', 'Ledger exported successfully');
+            }}
+            className="glass-button hide-xs"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Download size={18} /> Export
+          </button>
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="header-add-btn"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Plus size={20} /> Add Entry
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div
+        className="dashboard-grid"
+        style={{
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          marginBottom: '32px',
+        }}
+      >
+        <div className="premium-card" style={{ padding: '24px' }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+          >
+            <div>
+              <div className="stat-label">Total Income</div>
+              <div
+                className="stat-value"
+                style={{
+                  fontSize: '2rem',
+                  marginTop: '4px',
+                  background: 'linear-gradient(to bottom, #4ade80, #22c55e)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {formatCurrency(totalIncome)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: 'rgba(34, 197, 94, 0.1)',
+                color: '#22c55e',
+                padding: '12px',
+                borderRadius: '12px',
+              }}
+            >
+              <TrendingUp size={24} />
+            </div>
+          </div>
+        </div>
+
+        <div className="premium-card" style={{ padding: '24px' }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+          >
+            <div>
+              <div className="stat-label">Total Expenses</div>
+              <div
+                className="stat-value"
+                style={{
+                  fontSize: '2rem',
+                  marginTop: '4px',
+                  background: 'linear-gradient(to bottom, #fb7185, #ef4444)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {formatCurrency(totalExpenses)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                padding: '12px',
+                borderRadius: '12px',
+              }}
+            >
+              <TrendingDown size={24} />
+            </div>
+          </div>
+        </div>
+
+        <div className="premium-card" style={{ padding: '24px' }}>
+          <div
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+          >
+            <div>
+              <div className="stat-label">Net Balance</div>
+              <div
+                className="stat-value"
+                style={{
+                  fontSize: '2rem',
+                  marginTop: '4px',
+                  background:
+                    netBalance >= 0
+                      ? 'linear-gradient(to bottom, #818cf8, #6366f1)'
+                      : 'linear-gradient(to bottom, #f59e0b, #d97706)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {netBalance >= 0 ? '+' : '-'}
+                {formatCurrency(Math.abs(netBalance))}
+              </div>
+            </div>
+            <div
+              style={{
+                background: netBalance >= 0 ? 'rgba(99, 102, 241, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                color: netBalance >= 0 ? '#6366f1' : '#f59e0b',
+                padding: '12px',
+                borderRadius: '12px',
+              }}
+            >
+              <Wallet size={24} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '24px', flexDirection: 'column' }}>
+        <div className="premium-card" style={{ padding: 0, overflow: 'visible' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--surface-border)',
+            }}
+          >
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Transactions</h3>
+            <div className="hide-sm" style={{ display: 'flex', gap: '8px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'var(--surface-hover)',
+                  padding: '6px 12px',
+                  borderRadius: '100px',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--surface-border)',
+                }}
+              >
+                <Activity size={14} /> Active Period
+              </div>
+            </div>
           </div>
 
-          <div
-            className="mobile-page-header__actions"
-            style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}
-          >
-            <button
-              onClick={() => {
-                exportTransactionsToCSV(transactions);
-                showNotification('success', 'Ledger exported to CSV');
-              }}
+          <div style={{ maxHeight: '600px', overflowY: 'auto', position: 'relative' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                <tr
+                  style={{
+                    background: 'var(--surface)',
+                    borderBottom: '1px solid var(--surface-border)',
+                  }}
+                >
+                  {tableHeaders.map((header) => (
+                    <th
+                      key={header.label}
+                      style={{
+                        padding: '16px 24px',
+                        textAlign: header.align || 'left',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: 'var(--text-secondary)',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      {header.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedTransactions.length > 0 ? (
+                  sortedTransactions.map((transaction) => {
+                    const isIncome = transaction.type === 'Income';
+                    const accountName = transaction.accountId
+                      ? (accountNameById.get(transaction.accountId) ?? 'N/A')
+                      : 'N/A';
+
+                    return (
+                      <tr
+                        key={transaction.id}
+                        onClick={() => handleEdit(transaction)}
+                        style={{
+                          borderBottom: '1px solid var(--surface-border)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        className="ledger-row-hover"
+                      >
+                        <td style={{ padding: '16px 24px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                background: isIncome
+                                  ? 'rgba(34, 197, 94, 0.1)'
+                                  : 'rgba(239, 68, 68, 0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: isIncome ? '#22c55e' : '#ef4444',
+                              }}
+                            >
+                              {isIncome ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                            </div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {transaction.description}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              background: 'var(--accent-light)',
+                              color: 'var(--accent-hover)',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {transaction.category}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '0.85rem',
+                              color: isIncome ? '#22c55e' : '#ef4444',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {isIncome ? 'Income' : 'Expense'}
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '0.85rem',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            <Wallet size={14} /> {accountName}
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: '16px 24px',
+                            fontSize: '0.85rem',
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          {formatDate(transaction.date)}
+                        </td>
+                        <td
+                          style={{
+                            padding: '16px 24px',
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: isIncome ? '#22c55e' : '#ef4444',
+                            fontSize: '1rem',
+                          }}
+                        >
+                          {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(transaction);
+                              }}
+                              style={{
+                                color: 'var(--text-secondary)',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                transition: 'all 0.2s',
+                              }}
+                              className="action-btn--hover"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const confirmed = await customConfirm({
+                                  title: 'Delete entry',
+                                  message: 'Are you sure you want to delete this transaction?',
+                                  type: 'error',
+                                  confirmLabel: 'Delete',
+                                });
+                                if (confirmed) {
+                                  await deleteTransaction(transaction.id);
+                                  showNotification('success', 'Transaction deleted');
+                                }
+                              }}
+                              style={{
+                                color: 'var(--error)',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                transition: 'all 0.2s',
+                              }}
+                              className="action-btn-danger--hover"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '80px 24px', textAlign: 'center' }}>
+                      <EmptyTransactionsVisual />
+                      <div className="stat-label" style={{ marginTop: '16px' }}>
+                        No transactions found
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Calendar & Mini Stats */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px',
+          }}
+        >
+          <div className="premium-card" style={{ padding: '24px' }}>
+            <h3
               style={{
-                padding: 'clamp(12px, 2.5vw, 14px) clamp(16px, 3vw, 20px)',
-                minHeight: '44px',
-                borderRadius: '16px',
-                background: 'rgba(0, 0, 0, 0.6)',
-                color: '#94a3b8',
-                border: '1px solid #111111',
-                cursor: 'pointer',
+                fontSize: '1.1rem',
+                marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                fontWeight: '700',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                backdropFilter: 'blur(8px)',
               }}
             >
-              <Download size={18} /> Export
-            </button>
-            <button
-              onClick={() => {
-                resetForm();
-                setIsModalOpen(true);
-              }}
-              className="header-add-btn"
-              style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)',
-              }}
-            >
-              <Plus size={20} strokeWidth={3} /> Add entry
-            </button>
-          </div>
-        </div>
-
-        {/* Summary stats */}
-        <div
-          className="fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-            gap: '16px',
-            marginBottom: '24px',
-          }}
-        >
-          {/* Total Income */}
-          <div className="stat-card stat-card--green">
-            <div className="stat-card__glow" style={{ background: 'rgba(16, 185, 129, 0.15)' }} />
-            <div
-              className="stat-card__icon-box"
-              style={{
-                background: 'rgba(16, 185, 129, 0.12)',
-                color: '#10b981',
-                marginBottom: '16px',
-              }}
-            >
-              <TrendingUp size={22} />
-            </div>
-            <div className="stat-card__value" style={{ color: '#10b981' }}>
-              {formatCurrency(totalIncome)}
-            </div>
-            <div className="stat-card__meta">Total Income</div>
-          </div>
-
-          {/* Total Expenses */}
-          <div className="stat-card stat-card--red">
-            <div className="stat-card__glow" style={{ background: 'rgba(244, 63, 94, 0.15)' }} />
-            <div
-              className="stat-card__icon-box"
-              style={{
-                background: 'rgba(244, 63, 94, 0.12)',
-                color: '#f43f5e',
-                marginBottom: '16px',
-              }}
-            >
-              <TrendingDown size={22} />
-            </div>
-            <div className="stat-card__value" style={{ color: '#f43f5e' }}>
-              {formatCurrency(totalExpenses)}
-            </div>
-            <div className="stat-card__meta">Total Expenses</div>
-          </div>
-
-          {/* Net Balance */}
-          <div
-            className={`stat-card ${netBalance >= 0 ? 'stat-card--indigo' : 'stat-card--amber'}`}
-          >
-            <div
-              className="stat-card__glow"
-              style={{
-                background:
-                  netBalance >= 0 ? 'rgba(99, 102, 241, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-              }}
-            />
-            <div
-              className="stat-card__icon-box"
-              style={{
-                background:
-                  netBalance >= 0 ? 'rgba(99, 102, 241, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                color: netBalance >= 0 ? '#818cf8' : '#f59e0b',
-                marginBottom: '16px',
-              }}
-            >
-              <Activity size={22} />
-            </div>
-            <div
-              className="stat-card__value"
-              style={{ color: netBalance >= 0 ? '#818cf8' : '#f59e0b' }}
-            >
-              {netBalance >= 0 ? '+' : '-'}
-              {formatCurrency(Math.abs(netBalance))}
-            </div>
-            <div className="stat-card__meta">Net Balance</div>
-          </div>
-        </div>
-
-        <div
-          className="premium-card fade-in"
-          style={{
-            width: '100%',
-            padding: 'clamp(16px, 3vw, 24px)',
-            background: 'rgba(11, 21, 25, 0.45)',
-            borderRadius: '24px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(32px)',
-          }}
-        >
-          <div
-            className="flex-col-mobile"
-            style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}
-          >
-            {/* Transactions table */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  background: 'rgba(0, 0, 0, 0.2)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(255, 255, 255, 0.03)',
-                  overflow: 'hidden',
-                }}
-              >
-                {sortedTransactions.length > 0 ? (
-                  <div style={{ maxHeight: '780px', overflow: 'auto' }}>
-                    <table
-                      className="table-stack"
-                      style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}
-                    >
-                      <thead>
-                        <tr
-                          style={{
-                            background: 'rgba(6, 12, 16, 0.96)',
-                            backdropFilter: 'blur(14px)',
-                          }}
-                        >
-                          {tableHeaders.map((header) => (
-                            <th key={header.label} style={getHeaderCellStyle(header.align)}>
-                              {header.label}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedTransactions.map((transaction, index) => {
-                          const accountName = transaction.accountId
-                            ? (accountNameById.get(transaction.accountId) ?? 'Unassigned')
-                            : 'Unassigned';
-                          const isIncome = transaction.type === 'Income';
-
-                          return (
-                            <tr
-                              key={transaction.id}
-                              onClick={() => handleEdit(transaction)}
-                              className="ledger-table-row"
-                              style={{
-                                cursor: 'pointer',
-                                background:
-                                  index % 2 === 0
-                                    ? 'rgba(255, 255, 255, 0.018)'
-                                    : 'rgba(255, 255, 255, 0.032)',
-                                transition: 'background 0.15s ease',
-                              }}
-                            >
-                              <td data-label="Entry" style={getBodyCellStyle()}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                  <div
-                                    style={{
-                                      width: '42px',
-                                      height: '42px',
-                                      borderRadius: '12px',
-                                      background: isIncome
-                                        ? 'rgba(16, 185, 129, 0.1)'
-                                        : 'rgba(244, 63, 94, 0.1)',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      color: isIncome ? '#10b981' : '#f43f5e',
-                                      flexShrink: 0,
-                                    }}
-                                  >
-                                    {isIncome ? (
-                                      <ArrowUpRight size={18} strokeWidth={2.5} />
-                                    ) : (
-                                      <ArrowDownRight size={18} strokeWidth={2.5} />
-                                    )}
-                                  </div>
-                                  <div style={{ minWidth: 0 }}>
-                                    <div
-                                      style={{
-                                        fontWeight: 800,
-                                        fontSize: '0.95rem',
-                                        color: '#fff',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                      }}
-                                    >
-                                      {transaction.description}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td data-label="Category" style={getBodyCellStyle()}>
-                                <span style={getPillStyle('rgba(99, 102, 241, 0.1)', '#a5b4fc')}>
-                                  {transaction.category}
-                                </span>
-                              </td>
-                              <td data-label="Type" style={getBodyCellStyle()}>
-                                <span
-                                  style={getPillStyle(
-                                    isIncome
-                                      ? 'rgba(16, 185, 129, 0.12)'
-                                      : 'rgba(244, 63, 94, 0.12)',
-                                    isIncome ? '#34d399' : '#fb7185'
-                                  )}
-                                >
-                                  {transaction.type}
-                                </span>
-                              </td>
-                              <td
-                                data-label="Account"
-                                style={{ ...getBodyCellStyle(), color: '#d5dfdc', fontWeight: 700 }}
-                              >
-                                <span
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                  }}
-                                >
-                                  <Wallet size={14} color="#6b827d" />
-                                  {accountName}
-                                </span>
-                              </td>
-                              <td
-                                data-label="Date"
-                                style={{
-                                  ...getBodyCellStyle(),
-                                  color: '#9fb0ac',
-                                  fontWeight: 700,
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {formatDate(transaction.date)}
-                              </td>
-                              <td
-                                data-label="Amount"
-                                style={{
-                                  ...getBodyCellStyle('right'),
-                                  color: isIncome ? '#10b981' : '#f43f5e',
-                                  fontWeight: 950,
-                                  fontSize: '1rem',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {isIncome ? '+' : '-'}
-                                {formatCurrency(transaction.amount)}
-                              </td>
-                              <td data-label="Actions" style={getBodyCellStyle('right')}>
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-end',
-                                    gap: '6px',
-                                  }}
-                                >
-                                  <button
-                                    className="action-btn action-btn--edit"
-                                    type="button"
-                                    style={{ padding: '6px', borderRadius: '8px' }}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleEdit(transaction);
-                                    }}
-                                  >
-                                    <Edit3 size={14} />
-                                  </button>
-                                  <button
-                                    className="action-btn action-btn--delete"
-                                    type="button"
-                                    style={{ padding: '6px', borderRadius: '8px' }}
-                                    onClick={async (event) => {
-                                      event.stopPropagation();
-                                      const isConfirmed = await customConfirm({
-                                        title: 'Delete entry?',
-                                        message: 'This ledger entry will be permanently deleted.',
-                                        type: 'error',
-                                        confirmLabel: 'Delete',
-                                      });
-                                      if (isConfirmed) {
-                                        await deleteTransaction(transaction.id);
-                                        showNotification('success', 'Entry deleted');
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div style={{ padding: '80px 40px', textAlign: 'center' }}>
-                    <EmptyTransactionsVisual />
-                    <h3 style={{ color: '#fff', margin: '0 0 12px 0', fontSize: '1.1rem' }}>
-                      No ledger entries yet
-                    </h3>
-                    <p
-                      style={{
-                        color: '#64748b',
-                        maxWidth: '300px',
-                        margin: '0 auto',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      Add your first entry to start building the ledger.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mini Calendar */}
+              <Activity size={20} className="text-glow" /> Activity Calendar
+            </h3>
+            {/* Standard Calendar Rendering */}
             {(() => {
               const calYear = calendarDate.getFullYear();
               const calMonth = calendarDate.getMonth();
               const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
               const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
-              const todayStr = toCalendarDateStr(
-                today.getFullYear(),
-                today.getMonth(),
-                today.getDate()
-              );
               const monthName = calendarDate.toLocaleDateString(undefined, {
                 month: 'long',
                 year: 'numeric',
               });
-              const cells: Array<number | null> = [
+              const cells = [
                 ...Array(firstDayOfWeek).fill(null),
                 ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
               ];
+
               return (
-                <div
-                  style={{
-                    width: '220px',
-                    flexShrink: 0,
-                    background: 'rgba(0, 0, 0, 0.25)',
-                    borderRadius: '18px',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    padding: '16px',
-                  }}
-                >
-                  {/* Calendar header */}
+                <div>
                   <div
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
                       justifyContent: 'space-between',
-                      marginBottom: '12px',
+                      alignItems: 'center',
+                      marginBottom: '16px',
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setCalendarDate(new Date(calYear, calMonth - 1, 1))}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#7e928e',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
-                      aria-label="Previous month"
-                    >
-                      <ChevronLeft size={14} />
-                    </button>
-                    <span
-                      style={{
-                        color: '#d5dfdc',
-                        fontSize: '0.72rem',
-                        fontWeight: 900,
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {monthName}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setCalendarDate(new Date(calYear, calMonth + 1, 1))}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#7e928e',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
-                      aria-label="Next month"
-                    >
-                      <ChevronRight size={14} />
-                    </button>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{monthName}</div>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={() => setCalendarDate(new Date(calYear, calMonth - 1, 1))}
+                        className="glass-button"
+                        style={{ padding: '4px', borderRadius: '8px' }}
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={() => setCalendarDate(new Date(calYear, calMonth + 1, 1))}
+                        className="glass-button"
+                        style={{ padding: '4px', borderRadius: '8px' }}
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Day labels */}
                   <div
                     style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(7, 1fr)',
-                      gap: '2px',
-                      marginBottom: '4px',
+                      gap: '8px',
+                      textAlign: 'center',
                     }}
                   >
-                    {CALENDAR_DAY_LABELS.map((d, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          textAlign: 'center',
-                          fontSize: '0.6rem',
-                          fontWeight: 900,
-                          color: '#4a6560',
-                          letterSpacing: '0.04em',
-                          padding: '2px 0',
-                        }}
-                      >
-                        {d}
+                    {CALENDAR_DAY_LABELS.map((label) => (
+                      <div key={label} className="stat-label" style={{ fontSize: '0.65rem' }}>
+                        {label}
                       </div>
                     ))}
-                  </div>
-
-                  {/* Date grid */}
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(7, 1fr)',
-                      gap: '2px',
-                    }}
-                  >
                     {cells.map((day, idx) => {
-                      if (day === null) {
-                        return <div key={`empty-${idx}`} />;
-                      }
+                      if (day === null) return <div key={`empty-${idx}`} />;
                       const dateStr = toCalendarDateStr(calYear, calMonth, day);
-                      const isToday = dateStr === todayStr;
+                      const isToday = dateStr === today.toISOString().split('T')[0];
                       const hasTx = transactionDates.has(dateStr);
+
                       return (
                         <div
                           key={dateStr}
                           style={{
-                            position: 'relative',
+                            aspectRatio: '1',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            width: '26px',
-                            height: '26px',
-                            borderRadius: '7px',
-                            fontSize: '0.65rem',
-                            fontWeight: isToday ? 900 : 600,
+                            fontSize: '0.8rem',
+                            borderRadius: '8px',
                             background: isToday
-                              ? 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)'
-                              : 'transparent',
-                            color: isToday ? '#fff' : hasTx ? '#43c08a' : '#7e928e',
-                            boxShadow: isToday ? '0 2px 8px rgba(30, 166, 114, 0.45)' : 'none',
+                              ? 'var(--accent)'
+                              : hasTx
+                                ? 'var(--accent-light)'
+                                : 'transparent',
+                            color: isToday
+                              ? '#fff'
+                              : hasTx
+                                ? 'var(--accent-hover)'
+                                : 'var(--text-secondary)',
+                            fontWeight: isToday || hasTx ? 700 : 400,
+                            position: 'relative',
                             cursor: 'default',
+                            border: isToday ? 'none' : '1px solid transparent',
                           }}
                         >
                           {day}
                           {hasTx && !isToday && (
-                            <span
+                            <div
                               style={{
-                                position: 'absolute',
-                                bottom: '3px',
                                 width: '4px',
                                 height: '4px',
                                 borderRadius: '50%',
-                                background: '#43c08a',
+                                background: 'var(--accent)',
+                                position: 'absolute',
+                                bottom: '4px',
                               }}
                             />
                           )}
@@ -754,166 +703,210 @@ export default function LedgerClient() {
               );
             })()}
           </div>
+
+          <div
+            className="premium-card"
+            style={{
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'var(--accent-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent)',
+                  margin: '0 auto 20px',
+                }}
+              >
+                <Activity size={32} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Insight</h3>
+              <p
+                style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  maxWidth: '240px',
+                  margin: '0 auto',
+                }}
+              >
+                You have {sortedTransactions.length} entries. Keep tracking to build a clear
+                financial picture.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Modern Modal */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '540px' }}>
+        <div className="modal-overlay fade-in">
+          <div className="modal-card slide-up" style={{ maxWidth: '500px', width: '100%' }}>
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '32px',
+                marginBottom: '24px',
               }}
             >
-              <h2
-                style={{
-                  fontSize: 'clamp(1.4rem, 3vw, 1.75rem)',
-                  fontWeight: 950,
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {editId ? 'Edit entry' : 'New ledger entry'}
-              </h2>
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                  {editId ? 'Edit Entry' : 'New Entry'}
+                </h2>
+                <p className="stat-label">Fill in the details below</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="modal-close">
                 <X size={24} />
               </button>
             </div>
 
             <form
               onSubmit={handleAddTransaction}
-              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Entry type</label>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '4px',
-                      background: '#000000',
-                      padding: '4px',
-                      borderRadius: '12px',
-                      border: '1px solid #111111',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setType('Expense')}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        minHeight: '44px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: type === 'Expense' ? '#f43f5e' : 'transparent',
-                        color: type === 'Expense' ? '#fff' : '#475569',
-                        fontWeight: 950,
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      EXPENSE
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setType('Income')}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        minHeight: '44px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: type === 'Income' ? '#10b981' : 'transparent',
-                        color: type === 'Income' ? '#fff' : '#475569',
-                        fontWeight: 950,
-                        fontSize: '0.7rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      INCOME
-                    </button>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Date</label>
-                  <input
-                    className="form-input"
-                    type="date"
-                    value={date}
-                    onChange={(event) => setDate(event.target.value)}
-                  />
-                </div>
+              <div
+                style={{
+                  display: 'flex',
+                  background: 'var(--surface-hover)',
+                  padding: '4px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--surface-border)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setType('Expense')}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: type === 'Expense' ? '#ef4444' : 'transparent',
+                    color: type === 'Expense' ? '#fff' : 'var(--text-secondary)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Expense
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('Income')}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: type === 'Income' ? '#22c55e' : 'transparent',
+                    color: type === 'Income' ? '#fff' : 'var(--text-secondary)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Income
+                </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label className="form-label">Description</label>
                 <input
                   className="form-input"
-                  placeholder="e.g. Monthly Rent Payment"
+                  placeholder="What was this for?"
                   value={description}
-                  onChange={(event) => setDescription(event.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   required
                 />
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-                  gap: '20px',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Category</label>
-                  <input
-                    className="form-input"
-                    placeholder="Food, Rent, etc."
-                    value={category}
-                    onChange={(event) => setCategory(event.target.value)}
-                    required
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Amount ({currencySymbol})</label>
                   <input
                     className="form-input"
                     type="number"
                     placeholder="0.00"
                     value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Date</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
                     required
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">Source Account</label>
-                <select
-                  className="form-input"
-                  value={accountId}
-                  onChange={(event) => setAccountId(event.target.value)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value="">No Account Linked</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name} ({formatCurrency(account.balance)})
-                    </option>
-                  ))}
-                </select>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Category</label>
+                  <input
+                    className="form-input"
+                    placeholder="e.g. Food"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Account</label>
+                  <select
+                    className="form-input"
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
+                  >
+                    <option value="">No Account</option>
+                    {accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <button type="submit" className="btn-primary btn-primary--indigo">
-                {editId ? 'Save changes' : 'Save entry'}
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{ marginTop: '12px', padding: '14px', fontSize: '1rem' }}
+              >
+                {editId ? 'Update Entry' : 'Save Entry'}
               </button>
             </form>
           </div>
         </div>
       )}
+
+      <style>{`
+        .ledger-row-hover:hover {
+          background: var(--surface-hover);
+          transform: scale(1.002);
+        }
+        .action-btn--hover:hover {
+          background: var(--accent-light);
+          color: var(--accent-hover) !important;
+        }
+        .action-btn-danger--hover:hover {
+          background: var(--error-light);
+          color: var(--error) !important;
+        }
+      `}</style>
     </div>
   );
 }
