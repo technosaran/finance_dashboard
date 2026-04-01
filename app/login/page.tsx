@@ -16,6 +16,8 @@ import {
   PieChart,
   BarChart3,
   Wallet,
+  KeyRound,
+  AtSign,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -151,6 +153,8 @@ export default function LoginPage() {
       {/* ── Right form panel ── */}
       <div className="lp-right">
         <div className="lp-right-orb lp-right-orb--a" />
+        <div className="lp-right-orb lp-right-orb--b" />
+        <div className="lp-right-orb lp-right-orb--c" />
 
         <div className="lp-form-wrap">
           {/* Mobile-only brand mark */}
@@ -163,98 +167,116 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <div className="lp-form-header">
-            <h1 className="lp-form-title">Welcome back</h1>
-            <p className="lp-form-subtitle">Sign in to your finance dashboard</p>
+          <div className="lp-card">
+            {/* Private access badge */}
+            <div className="lp-access-badge">
+              <KeyRound size={11} aria-hidden="true" />
+              <span>Private Access &middot; Invite Only</span>
+            </div>
+
+            <div className="lp-form-header">
+              <h1 className="lp-form-title">Welcome back</h1>
+              <p className="lp-form-subtitle">Sign in to your finance dashboard</p>
+            </div>
+
+            {error && (
+              <div className="login-error" role="alert">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleEmailLogin} className="login-form" noValidate>
+              <div>
+                <label className="login-label" htmlFor="lp-email">
+                  Email Address
+                </label>
+                <div className="login-input-wrapper">
+                  <Mail size={18} className="login-input-icon" />
+                  <input
+                    id="lp-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    required
+                    aria-label="Email Address"
+                    aria-required="true"
+                    aria-invalid={error ? 'true' : 'false'}
+                    autoComplete="email"
+                    autoFocus
+                    disabled={isLoading}
+                    className={`login-input${error ? ' login-input--error' : ''}${isLoading ? ' login-input--disabled' : ''}`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="login-password-header">
+                  <label className="login-label" htmlFor="lp-password" style={{ marginBottom: 0 }}>
+                    Password
+                  </label>
+                </div>
+                <div className="login-input-wrapper">
+                  <Lock size={18} className="login-input-icon" />
+                  <input
+                    id="lp-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    aria-label="Password"
+                    aria-required="true"
+                    aria-invalid={error ? 'true' : 'false'}
+                    autoComplete="current-password"
+                    disabled={isLoading}
+                    className={`login-input login-input--password${error ? ' login-input--error' : ''}${isLoading ? ' login-input--disabled' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="login-password-toggle"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                aria-busy={isLoading}
+                aria-label={isLoading ? 'Signing in…' : 'Sign in to your account'}
+                className="login-submit"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    Sign In <ArrowRight size={20} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="lp-security-note">
+              <Shield size={13} />
+              <span>Protected by Supabase authentication</span>
+            </div>
           </div>
 
-          {error && (
-            <div className="login-error" role="alert">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleEmailLogin} className="login-form" noValidate>
-            <div>
-              <label className="login-label" htmlFor="lp-email">
-                Email Address
-              </label>
-              <div className="login-input-wrapper">
-                <Mail size={18} className="login-input-icon" />
-                <input
-                  id="lp-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  required
-                  aria-label="Email Address"
-                  aria-required="true"
-                  aria-invalid={error ? 'true' : 'false'}
-                  autoComplete="email"
-                  autoFocus
-                  disabled={isLoading}
-                  className={`login-input${error ? ' login-input--error' : ''}${isLoading ? ' login-input--disabled' : ''}`}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="login-password-header">
-                <label className="login-label" htmlFor="lp-password" style={{ marginBottom: 0 }}>
-                  Password
-                </label>
-              </div>
-              <div className="login-input-wrapper">
-                <Lock size={18} className="login-input-icon" />
-                <input
-                  id="lp-password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  aria-label="Password"
-                  aria-required="true"
-                  aria-invalid={error ? 'true' : 'false'}
-                  autoComplete="current-password"
-                  disabled={isLoading}
-                  className={`login-input login-input--password${error ? ' login-input--error' : ''}${isLoading ? ' login-input--disabled' : ''}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="login-password-toggle"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              aria-busy={isLoading}
-              aria-label={isLoading ? 'Signing in…' : 'Sign in to your account'}
-              className="login-submit"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  Signing in…
-                </>
-              ) : (
-                <>
-                  Sign In <ArrowRight size={20} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="lp-security-note">
-            <Shield size={13} />
-            <span>Protected by Supabase authentication</span>
+          <div className="lp-private-notice">
+            <AtSign size={14} aria-hidden="true" />
+            <span>
+              Private site &mdash; to request access, email{' '}
+              <a href="mailto:saransci2006@gmail.com" className="lp-private-notice__link">
+                saransci2006@gmail.com
+              </a>
+            </span>
           </div>
         </div>
       </div>
