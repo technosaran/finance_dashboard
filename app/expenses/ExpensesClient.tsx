@@ -59,7 +59,6 @@ export default function ExpensesClient() {
     if (activeTab === 'This Year') {
       return totalExpenses / Math.max(new Date().getMonth() + 1, 1);
     } else if (expenseItems.length > 0) {
-      // For all time, calculate based on date range
       const dates = expenseItems.map((e) => new Date(e.date).getTime());
       const earliest = Math.min(...dates);
       const latest = Math.max(...dates);
@@ -68,6 +67,24 @@ export default function ExpensesClient() {
     }
     return 0;
   })();
+
+  // Calculate monthly data for the last 6 months
+  const monthlyData = (() => {
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthLabel = d.toLocaleString('default', { month: 'short' });
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const total = expenseItems
+        .filter((item) => item.date.startsWith(monthKey))
+        .reduce((sum, item) => sum + item.amount, 0);
+      months.push({ label: monthLabel, total });
+    }
+    return months;
+  })();
+
+  const maxMonthSpend = Math.max(...monthlyData.map((d) => d.total), 1);
 
   // Form State
   const [amount, setAmount] = useState('');
@@ -161,534 +178,546 @@ export default function ExpensesClient() {
   }
 
   return (
-    <div
-      className="main-content"
-      style={{ backgroundColor: '#000000', minHeight: '100vh', color: '#f8fafc' }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header Section */}
-        <div className="page-header">
-          <div>
-            <h1
-              className="page-title"
-              style={{
-                background: 'linear-gradient(to right, #fff, #94a3b8)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Expenses
-            </h1>
-            <p className="page-subtitle">Track and manage your spending across categories</p>
+    <div className="main-content fade-in" style={{ padding: '40px' }}>
+      {/* Header Section: Ultra-minimalist */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: '56px',
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: '3rem',
+              fontWeight: 950,
+              letterSpacing: '-2px',
+              fontFamily: 'var(--font-outfit)',
+            }}
+          >
+            Expenses<span style={{ color: 'var(--error)' }}>.</span>
+          </h1>
+          <p className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Real-time spending intelligence
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div
+            className="glass-container"
+            style={{ display: 'flex', padding: '5px', borderRadius: '14px' }}
+          >
+            {['This Year', 'All Time'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as 'This Year' | 'All Time')}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: activeTab === tab ? 'var(--error)' : 'transparent',
+                  color: activeTab === tab ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: 800,
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="header-add-btn header-add-btn--red"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '14px 24px',
+              borderRadius: '16px',
+              boxShadow: '0 12px 30px rgba(239, 68, 68, 0.2)',
+            }}
+          >
+            <Plus size={20} /> New Expense
+          </button>
+        </div>
+      </div>
+
+      {/* Hero Analytics Section */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '32px',
+          marginBottom: '64px',
+        }}
+      >
+        <div className="premium-card" style={{ padding: '32px', position: 'relative' }}>
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at top right, var(--error-light), transparent 70%)',
+              position: 'absolute',
+              inset: 0,
+              opacity: 0.5,
+            }}
+          />
+          <div style={{ position: 'relative' }}>
+            <span
+              className="stat-label"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--error)' }}
+            >
+              <TrendingDown size={14} /> Total Outflow
+            </span>
             <div
               style={{
-                display: 'flex',
-                background: '#050505',
-                padding: '6px',
-                borderRadius: '14px',
-                border: '1px solid #111111',
+                fontSize: '3.5rem',
+                fontWeight: 950,
+                letterSpacing: '-3px',
+                marginTop: '12px',
               }}
             >
-              {['This Year', 'All Time'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab as 'This Year' | 'All Time')}
-                  aria-pressed={activeTab === tab}
-                  style={{
-                    padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 20px)',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background:
-                      activeTab === tab
-                        ? 'linear-gradient(135deg, #1a1a1a 0%, #111111 100%)'
-                        : 'transparent',
-                    color: activeTab === tab ? '#fff' : '#64748b',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    transition: '0.3s',
-                    fontSize: 'clamp(0.8rem, 2vw, 0.85rem)',
-                    minHeight: '44px',
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
+              ₹{totalExpenses.toLocaleString()}
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              aria-label="Add new expense"
-              className="header-add-btn header-add-btn--red"
-            >
-              <Plus size={18} strokeWidth={3} /> Add Expense
-            </button>
+            <p className="stat-label" style={{ marginTop: '12px', fontSize: '0.75rem' }}>
+              {activeTab === 'This Year' ? 'Since Jan 1st' : 'Accumulated total spend'}
+            </p>
           </div>
         </div>
 
-        {/* Key Summary Cards */}
-        <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
-            gap: '32px',
-            marginBottom: '48px',
-          }}
-        >
-          {[
-            {
-              label:
-                activeTab === 'This Year' ? 'Total Expenses (Year)' : 'Total Expenses (All Time)',
-              value: `₹${totalExpenses.toLocaleString()}`,
-              icon: <TrendingDown size={22} />,
-              color: '#ef4444',
-              sub: 'Money spent',
-              gradient: 'linear-gradient(135deg, #ef444420 0%, #dc262610 100%)',
-              cardClass: 'stat-card stat-card--red',
-            },
-            {
-              label: 'Average per Month',
-              value: `₹${avgMonthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-              icon: <Calendar size={22} />,
-              color: '#f59e0b',
-              sub: 'Monthly spending',
-              gradient: 'linear-gradient(135deg, #f59e0b20 0%, #d9770610 100%)',
-              cardClass: 'stat-card stat-card--amber',
-            },
-            {
-              label: 'Expense Categories',
-              value: categories.length,
-              icon: <ShoppingBag size={22} />,
-              color: '#6366f1',
-              sub: 'Tracked categories',
-              gradient: 'linear-gradient(135deg, #6366f120 0%, #4f46e510 100%)',
-              cardClass: 'stat-card stat-card--indigo',
-            },
-          ].map((stat, i) => (
-            <div key={i} className={stat.cardClass}>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: stat.gradient,
-                  opacity: 0.5,
-                }}
-                aria-hidden="true"
-              />
-              <div style={{ position: 'relative', zIndex: 1 }}>
+        <div className="premium-card" style={{ padding: '32px', position: 'relative' }}>
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at top right, var(--warning-light), transparent 70%)',
+              position: 'absolute',
+              inset: 0,
+              opacity: 0.5,
+            }}
+          />
+          <div style={{ position: 'relative' }}>
+            <span
+              className="stat-label"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--warning)' }}
+            >
+              <Calendar size={14} /> Monthly Velocity
+            </span>
+            <div
+              style={{
+                fontSize: '3.5rem',
+                fontWeight: 950,
+                letterSpacing: '-3px',
+                marginTop: '12px',
+              }}
+            >
+              ₹{avgMonthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </div>
+            <p className="stat-label" style={{ marginTop: '12px', fontSize: '0.75rem' }}>
+              Typical monthly expenditure
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Detail Grid */}
+      <div
+        className="dashboard-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 360px',
+          gap: '40px',
+          alignItems: 'start',
+        }}
+      >
+        {/* Recent History Table-less List */}
+        <div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '32px',
+            }}
+          >
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Recent Transactions</h3>
+            <span className="stat-label" style={{ fontSize: '0.6rem' }}>
+              Last 15 ENTRIES
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {expenseItems.length > 0 ? (
+              expenseItems.slice(0, 15).map((item) => (
                 <div
+                  key={item.id}
+                  className="ledger-row-hover"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '20px',
+                    padding: '20px 24px',
+                    borderRadius: '20px',
+                    background: 'rgba(255, 255, 255, 0.01)',
+                    border: '1px solid var(--surface-border)',
                   }}
                 >
                   <div
                     style={{
-                      background: `${stat.color}15`,
-                      padding: '10px',
-                      borderRadius: '14px',
-                      color: stat.color,
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '16px',
+                      background: 'var(--surface-hover)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      marginRight: '20px',
                     }}
-                    aria-hidden="true"
                   >
-                    {stat.icon}
+                    {getCategoryIcon(item.category)}
                   </div>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: '800',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      color: '#94a3b8',
-                    }}
-                  >
-                    {stat.label}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
-                    fontWeight: '900',
-                    color: '#fff',
-                    marginBottom: '8px',
-                    letterSpacing: '-1px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.85rem', color: stat.color, fontWeight: '700' }}>
-                  {stat.sub}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div
-          className="section-fade-in"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))',
-            gap: '40px',
-          }}
-        >
-          {/* Categories List */}
-          <div>
-            <h3
-              style={{
-                fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-                fontWeight: '900',
-                marginBottom: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: '#fff',
-              }}
-            >
-              <ShoppingBag size={20} color="#6366f1" aria-hidden="true" /> Expense Categories
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {categories.length > 0 ? (
-                categories.map(([name, stats]) => (
-                  <div key={name} className="expense-category-card">
+                  <div style={{ flex: 1, minWidth: 0, marginRight: '24px' }}>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        marginBottom: '4px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item.description}
+                    </div>
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '20px',
-                        flex: 1,
-                        minWidth: 0,
+                        gap: '12px',
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)',
                       }}
                     >
-                      <div
-                        style={{
-                          width: '52px',
-                          height: '52px',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          borderRadius: '16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#f87171',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      >
-                        {getCategoryIcon(name)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            color: '#fff',
-                            fontWeight: '800',
-                            fontSize: 'clamp(0.95rem, 2vw, 1.1rem)',
-                            marginBottom: '4px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {name}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span
-                            style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600' }}
-                          >
-                            {stats.count} entries
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: 'clamp(1.2rem, 2.5vw, 1.4rem)',
-                          fontWeight: '900',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        ₹{stats.total.toLocaleString()}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.75rem',
-                          color: '#64748b',
-                          fontWeight: '800',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Total Spent
-                      </div>
+                      <span style={{ fontWeight: 700, color: 'var(--text-tertiary)' }}>
+                        {item.category}
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {new Date(item.date).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div
-                  style={{
-                    padding: '80px 24px',
-                    textAlign: 'center',
-                    background: '#050505',
-                    borderRadius: '24px',
-                    border: '1px dashed #111111',
-                    color: '#94a3b8',
-                  }}
-                >
-                  <EmptyTransactionsVisual />
-                  <p style={{ marginTop: '24px', fontWeight: '700' }}>No categories yet.</p>
+                  <div style={{ textAlign: 'right', marginRight: '24px' }}>
+                    <div style={{ fontWeight: 950, color: '#ff4d4d', fontSize: '1.1rem' }}>
+                      -₹{item.amount.toLocaleString()}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleEdit(item)}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: '0.2s',
+                      }}
+                      className="action-btn--hover"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const confirmed = await customConfirm({
+                          title: 'Delete record',
+                          message: 'This action cannot be undone.',
+                          type: 'error',
+                          confirmLabel: 'Delete',
+                        });
+                        if (confirmed) await deleteTransaction(item.id);
+                      }}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: '0.2s',
+                      }}
+                      className="action-btn-danger--hover"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Recent Expenses History */}
-          <div>
-            <h3
-              style={{
-                fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-                fontWeight: '900',
-                marginBottom: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                color: '#fff',
-              }}
-            >
+              ))
+            ) : (
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  padding: '8px',
-                  borderRadius: '12px',
+                  padding: '100px 40px',
+                  textAlign: 'center',
+                  background: 'rgba(255,255,255,0.01)',
+                  borderRadius: '32px',
+                  border: '1px dashed var(--surface-border)',
                 }}
-                aria-hidden="true"
               >
-                <Clock size={20} color="#fff" />
+                <EmptyTransactionsVisual />
+                <p className="stat-label" style={{ marginTop: '24px' }}>
+                  Awaiting your first expense...
+                </p>
               </div>
-              <span>Recent Expenses</span>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar: Analytics & Insights */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }} className="hide-md">
+          {/* Monthly Trend - Linear Style */}
+          <div className="premium-card" style={{ padding: '32px' }}>
+            <h3
+              style={{
+                fontSize: '0.9rem',
+                fontWeight: 800,
+                marginBottom: '40px',
+                color: 'var(--text-secondary)',
+                letterSpacing: '1px',
+              }}
+            >
+              MONTHLY VELOCITY
             </h3>
             <div
               style={{
-                background: '#050505',
-                borderRadius: '28px',
-                border: '1px solid #111111',
-                padding: '24px',
                 display: 'flex',
-                flexDirection: 'column',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                height: '160px',
                 gap: '12px',
+                position: 'relative',
               }}
             >
-              {expenseItems.length > 0 ? (
-                expenseItems.slice(0, 8).map((item) => (
+              {monthlyData.map((d, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
                   <div
-                    key={item.id}
-                    className="tx-row tx-row--expense"
-                    style={{ flexWrap: 'wrap' }}
+                    style={{
+                      width: '100%',
+                      height: `${(d.total / maxMonthSpend) * 100}%`,
+                      background:
+                        i === monthlyData.length - 1
+                          ? 'linear-gradient(to top, var(--error), #ff6b6b)'
+                          : 'var(--surface-hover)',
+                      borderRadius: '8px 8px 4px 4px',
+                      minHeight: d.total > 0 ? '6px' : '0',
+                      transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
+                      position: 'relative',
+                      border:
+                        i === monthlyData.length - 1 ? 'none' : '1px solid var(--surface-border)',
+                    }}
                   >
+                    {d.total > 0 && (
+                      <div
+                        className="stat-label"
+                        style={{
+                          position: 'absolute',
+                          top: '-24px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          fontSize: '0.6rem',
+                          color: i === monthlyData.length - 1 ? '#fff' : 'var(--text-secondary)',
+                        }}
+                      >
+                        {d.total > 1000 ? `${(d.total / 1000).toFixed(0)}k` : d.total}
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className="stat-label"
+                    style={{
+                      fontSize: '0.65rem',
+                      color: i === monthlyData.length - 1 ? '#fff' : 'var(--text-secondary)',
+                    }}
+                  >
+                    {d.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top Expenditures */}
+          <div className="premium-card" style={{ padding: '32px' }}>
+            <h3
+              style={{
+                fontSize: '0.9rem',
+                fontWeight: 800,
+                marginBottom: '32px',
+                color: 'var(--text-secondary)',
+                letterSpacing: '1px',
+              }}
+            >
+              BURN BY CATEGORY
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {categories.slice(0, 5).map(([name, stats]) => {
+                const perc = (stats.total / totalExpenses) * 100;
+                return (
+                  <div key={name}>
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        flex: 1,
-                        minWidth: 0,
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        marginBottom: '10px',
                       }}
                     >
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          padding: '8px',
-                          borderRadius: '10px',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      >
-                        {getCategoryIcon(item.category)}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontWeight: '800',
-                            fontSize: '1rem',
-                            color: '#e2e8f0',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {item.description}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600' }}>
-                          {item.category} |{' '}
-                          {new Date(item.date).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </div>
-                      </div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>{name}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 950, color: 'var(--error)' }}>
+                        ₹{stats.total.toLocaleString()}
+                      </span>
                     </div>
                     <div
                       style={{
-                        textAlign: 'right',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
+                        height: '6px',
+                        background: 'var(--surface-hover)',
+                        borderRadius: '100px',
+                        overflow: 'hidden',
                       }}
                     >
                       <div
                         style={{
-                          color: '#ef4444',
-                          fontWeight: '950',
-                          fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          width: `${perc}%`,
+                          height: '100%',
+                          background: 'var(--error)',
+                          borderRadius: '100px',
+                          opacity: 0.8,
+                          transition: 'width 1s ease',
                         }}
-                      >
-                        -₹{item.amount.toLocaleString()}
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(item);
-                          }}
-                          className="action-btn action-btn--edit"
-                          aria-label="Edit expense"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const isConfirmed = await customConfirm({
-                              title: 'Delete Expense',
-                              message: 'Are you sure you want to delete this expense record?',
-                              type: 'error',
-                              confirmLabel: 'Delete',
-                            });
-                            if (isConfirmed) {
-                              await deleteTransaction(item.id);
-                              showNotification('success', 'Expense record removed');
-                            }
-                          }}
-                          className="action-btn action-btn--delete"
-                          aria-label="Delete expense"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      />
                     </div>
                   </div>
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                  <EmptyTransactionsVisual />
-                  <p style={{ color: '#94a3b8', marginTop: '20px', fontWeight: '700' }}>
-                    No expense history found.
-                  </p>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Simple Modal - Add Expense */}
+      {/* Refined Modal - New UI */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '480px' }}>
+        <div
+          className="modal-overlay"
+          style={{ backdropFilter: 'blur(30px) saturate(200%)', background: 'rgba(0,0,0,0.6)' }}
+        >
+          <div
+            className="modal-card"
+            style={{ maxWidth: '520px', padding: '48px', borderRadius: '40px' }}
+          >
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '32px',
-                gap: '12px',
+                alignItems: 'baseline',
+                marginBottom: '40px',
               }}
             >
-              <h2
-                style={{
-                  fontSize: 'clamp(1.3rem, 3vw, 1.8rem)',
-                  fontWeight: '900',
-                  margin: 0,
-                  color: '#fff',
-                }}
-              >
-                {editId ? 'Edit expense' : 'Add expense'}
-              </h2>
+              <div>
+                <h2 style={{ fontSize: '2rem', fontWeight: 950, letterSpacing: '-1.5px' }}>
+                  {editId ? 'Modify Entry' : 'Log Expense'}
+                </h2>
+                <p className="stat-label" style={{ fontSize: '0.7rem' }}>
+                  Keep your records precise
+                </p>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                aria-label="Close modal"
                 className="modal-close"
-                style={{ flexShrink: 0 }}
+                style={{ position: 'relative', top: 'auto', right: 'auto' }}
               >
                 <X size={20} />
               </button>
             </div>
+
             <form
               onSubmit={handleLogExpense}
-              aria-label="Log expense form"
-              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">What did you spend on?</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem' }}>
+                  What did you spend on?
+                </label>
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Groceries, Uber ride, Movie tickets"
+                  placeholder="Groceries, Uber, etc."
                   required
-                  aria-label="Expense description"
                   className="form-input"
+                  style={{
+                    fontSize: '1.1rem',
+                    padding: '20px',
+                    borderRadius: '20px',
+                    borderColor: 'var(--surface-border)',
+                  }}
                   autoFocus
                 />
               </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-                  gap: '20px',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Amount (₹)</label>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem' }}>
+                    Amount (₹)
+                  </label>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
                     required
-                    aria-label="Expense amount"
                     className="form-input"
+                    style={{ fontSize: '1.1rem', padding: '20px', borderRadius: '20px' }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <label className="form-label">Date</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem' }}>
+                    Date
+                  </label>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    aria-label="Expense date"
                     className="form-input"
+                    style={{ fontSize: '1rem', padding: '20px', borderRadius: '20px' }}
                   />
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">Category</label>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem' }}>
+                  Category
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  aria-label="Expense category"
                   className="form-input"
+                  style={{ fontSize: '1rem', padding: '18px', borderRadius: '20px' }}
                 >
                   <option value="Food">Food & Dining</option>
                   <option value="Transport">Transport</option>
@@ -700,35 +729,43 @@ export default function ExpensesClient() {
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label className="form-label">Bank Account (Optional)</label>
-                <select
-                  value={selectedAccountId}
-                  onChange={(e) =>
-                    setSelectedAccountId(e.target.value ? Number(e.target.value) : '')
-                  }
-                  aria-label="Select bank account"
-                  className="form-input"
-                >
-                  <option value="">Log only, do not deduct from an account</option>
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} - ₹{acc.balance.toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
               <button
                 type="submit"
-                aria-label="Save expense"
                 className="btn-primary btn-primary--red"
+                style={{
+                  padding: '24px',
+                  borderRadius: '24px',
+                  fontSize: '1.05rem',
+                  fontWeight: 900,
+                  marginTop: '12px',
+                  boxShadow: '0 20px 40px rgba(239, 68, 68, 0.25)',
+                }}
               >
-                {editId ? 'Update Expense' : 'Track This Expense'}
+                {editId ? 'Confirm Updates' : 'Sync Expense'}
               </button>
             </form>
           </div>
         </div>
       )}
+      <style>{`
+        .ledger-row-hover:hover {
+          background: var(--surface-hover);
+        }
+        .action-btn--hover:hover {
+          background: var(--accent-light);
+          color: var(--accent-hover) !important;
+        }
+        .action-btn-danger--hover:hover {
+          background: var(--error-light);
+          color: var(--error) !important;
+        }
+        .glass-container {
+          background: var(--surface-hover);
+          border: 1px solid var(--surface-border);
+          box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
+        }
+      `}</style>
     </div>
   );
 }

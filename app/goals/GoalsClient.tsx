@@ -104,76 +104,131 @@ export default function GoalsClient() {
   }
 
   return (
-    <div className="main-content fade-in">
-      <div className="page-header" style={{ marginBottom: '32px' }}>
-        <div>
-          <h1 className="page-title gradient-text">Goals</h1>
-          <p className="page-subtitle">Track your financial milestones and peak performance</p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => {
-              exportGoalsToCSV(goals);
-              showNotification('success', 'Goals exported successfully');
-            }}
-            className="glass-button hide-xs"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <Download size={18} /> Export
-          </button>
-          <button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
-            }}
-            className="header-add-btn"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <Plus size={20} /> Create Goal
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Highlight */}
-      <div className="premium-card" style={{ padding: '32px', marginBottom: '32px' }}>
+    <div className="main-content fade-in" style={{ padding: '40px' }}>
+      <div style={{ margin: '0 auto' }}>
+        {/* Header - Ultra Minimalist Iris */}
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            marginBottom: '56px',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <h1
+              style={{
+                fontSize: '3.5rem',
+                fontWeight: 950,
+                letterSpacing: '-2px',
+                fontFamily: 'var(--font-outfit)',
+              }}
+            >
+              Goals<span style={{ color: '#8b5cf6' }}>.</span>
+            </h1>
+            <p className="stat-label" style={{ fontSize: '0.85rem' }}>
+              Track your financial milestones and peak performance
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <button
+              onClick={() => {
+                exportGoalsToCSV(goals);
+                showNotification('success', 'Goals exported successfully');
+              }}
+              className="glass-button hide-xs"
+              style={{ padding: '12px 20px', borderRadius: '14px' }}
+            >
+              <Download size={18} />
+            </button>
+            <button
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
+              className="header-add-btn"
+              style={{
+                padding: '14px 28px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                boxShadow: '0 12px 30px rgba(139, 92, 246, 0.25)',
+              }}
+            >
+              <Plus size={20} /> Create Goal
+            </button>
+          </div>
+        </div>
+
+        {/* Hero Section - Oversized Progress */}
+        <div
+          className="premium-card"
+          style={{
+            padding: '48px',
+            marginBottom: '64px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at top right, rgba(139, 92, 246, 0.15), transparent 70%)',
+              position: 'absolute',
+              inset: 0,
+            }}
+          />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
             <div style={{ flex: 1 }}>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}
+              <span
+                className="stat-label"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: '#a78bfa',
+                  marginBottom: '16px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: 900,
+                }}
               >
-                <Trophy size={18} className="text-glow" style={{ color: 'var(--accent)' }} />
-                <span className="stat-label">Overall Progress</span>
-              </div>
+                <Trophy size={16} /> Portfolio Progression
+              </span>
               <div
                 style={{
-                  fontSize: '3.5rem',
-                  fontWeight: 900,
-                  letterSpacing: '-2px',
-                  lineHeight: 1,
+                  fontSize: '6rem',
+                  fontWeight: 950,
+                  letterSpacing: '-5px',
                   fontFamily: 'var(--font-outfit)',
+                  lineHeight: 0.9,
                 }}
               >
                 {overallProgress.toFixed(1)}%
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '48px' }} className="hide-sm">
+            <div style={{ display: 'flex', gap: '48px', textAlign: 'right' }} className="hide-sm">
               <div>
-                <div className="stat-label">Total Saved</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)' }}>
+                <div className="stat-label" style={{ fontSize: '0.7rem', marginBottom: '8px' }}>
+                  Total Retained
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--success)' }}>
                   ₹{totalCurrent.toLocaleString()}
                 </div>
               </div>
               <div>
-                <div className="stat-label">Total Target</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                <div className="stat-label" style={{ fontSize: '0.7rem', marginBottom: '8px' }}>
+                  Aspiration Total
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 950, color: '#fff' }}>
                   ₹{totalTarget.toLocaleString()}
                 </div>
               </div>
@@ -182,248 +237,464 @@ export default function GoalsClient() {
 
           <div
             style={{
-              width: '100%',
-              height: '10px',
+              marginTop: '48px',
+              height: '12px',
               background: 'var(--surface-hover)',
               borderRadius: '100px',
               overflow: 'hidden',
               border: '1px solid var(--surface-border)',
+              position: 'relative',
             }}
           >
             <div
               style={{
                 width: `${overallProgress}%`,
                 height: '100%',
-                background: 'linear-gradient(90deg, var(--accent) 0%, #34d399 100%)',
+                background: 'linear-gradient(90deg, #8b5cf6 0%, #34d399 100%)',
                 borderRadius: '100px',
-                transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 0 20px rgba(30, 166, 114, 0.3)',
+                transition: 'width 2s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: '0 0 30px rgba(139, 92, 246, 0.4)',
               }}
             />
           </div>
         </div>
-      </div>
 
-      {/* Goals Grid */}
-      <div
-        className="dashboard-grid"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}
-      >
-        {goals.length > 0 ? (
-          goals.map((goal) => {
-            const progress = (goal.currentAmount / goal.targetAmount) * 100;
-            const isCompleted = progress >= 100;
+        {/* Dashboard Grid */}
+        <div
+          className="dashboard-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 340px',
+            gap: '40px',
+            alignItems: 'start',
+          }}
+        >
+          {/* Main Content: Goals Grid */}
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '32px',
+              }}
+            >
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 950 }}>Active Milestones</h3>
+              <span className="stat-label" style={{ fontSize: '0.65rem' }}>
+                {goals.length} TARGETS FOUND
+              </span>
+            </div>
 
-            return (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+                gap: '24px',
+              }}
+            >
+              {goals.length > 0 ? (
+                goals.map((goal) => {
+                  const progress = (goal.currentAmount / goal.targetAmount) * 100;
+                  const isCompleted = progress >= 100;
+
+                  return (
+                    <div
+                      key={goal.id}
+                      className="premium-card goal-card-hover"
+                      style={{
+                        padding: '32px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '28px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        background: 'rgba(255,255,255,0.01)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div
+                            style={{
+                              width: '52px',
+                              height: '52px',
+                              borderRadius: '18px',
+                              background: isCompleted ? '#22c55e22' : '#8b5cf622',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: isCompleted ? '#22c55e' : '#8b5cf6',
+                            }}
+                          >
+                            {isCompleted ? <CheckCircle2 size={24} /> : <Flame size={24} />}
+                          </div>
+                          <div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{goal.name}</h3>
+                            <span
+                              className="stat-label"
+                              style={{
+                                fontSize: '0.7rem',
+                                color: isCompleted ? '#22c55e' : '#a78bfa',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {goal.category}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => handleEdit(goal)}
+                            style={{
+                              padding: '10px',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-secondary)',
+                              cursor: 'pointer',
+                            }}
+                            className="action-btn--hover"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const confirmed = await customConfirm({
+                                title: 'Remove Landmark',
+                                message: `Permanently delete "${goal.name}"?`,
+                                type: 'error',
+                                confirmLabel: 'Delete',
+                              });
+                              if (confirmed) await deleteGoal(goal.id);
+                            }}
+                            style={{
+                              padding: '10px',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-secondary)',
+                              cursor: 'pointer',
+                            }}
+                            className="action-btn-danger--hover"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: '12px',
+                          }}
+                        >
+                          <span style={{ fontSize: '1.3rem', fontWeight: 950 }}>
+                            {progress.toFixed(0)}%
+                          </span>
+                          <span className="stat-label" style={{ fontSize: '0.75rem' }}>
+                            {isCompleted ? 'Goal Fully Met' : 'In Progress'}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            height: '6px',
+                            background: 'var(--surface-hover)',
+                            borderRadius: '100px',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${Math.min(progress, 100)}%`,
+                              height: '100%',
+                              background: isCompleted ? '#22c55e' : '#8b5cf6',
+                              borderRadius: '100px',
+                              transition: 'width 1.5s ease',
+                              opacity: 0.8,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          paddingTop: '20px',
+                          borderTop: '1px solid var(--surface-border)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '32px' }}>
+                          <div>
+                            <div className="stat-label" style={{ fontSize: '0.65rem' }}>
+                              Target
+                            </div>
+                            <div style={{ fontWeight: 900, fontSize: '1rem' }}>
+                              ₹{goal.targetAmount.toLocaleString()}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="stat-label" style={{ fontSize: '0.65rem' }}>
+                              Saved
+                            </div>
+                            <div
+                              style={{
+                                fontWeight: 900,
+                                fontSize: '1rem',
+                                color: isCompleted ? '#22c55e' : '#fff',
+                              }}
+                            >
+                              ₹{goal.currentAmount.toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div className="stat-label" style={{ fontSize: '0.65rem' }}>
+                            Timeline
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            {goal.deadline
+                              ? new Date(goal.deadline).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })
+                              : 'Ongoing'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                    padding: '120px 40px',
+                    textAlign: 'center',
+                    border: '1px dashed var(--surface-border)',
+                    borderRadius: '40px',
+                    background: 'rgba(255,255,255,0.01)',
+                  }}
+                >
+                  <EmptyGoalsVisual />
+                  <p className="stat-label" style={{ marginTop: '24px' }}>
+                    Awaiting your first milestone definition.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar Analytics - Iris Style */}
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
+            className="hide-md"
+          >
+            {/* Spotlight Card */}
+            {goals.filter((g) => g.currentAmount < g.targetAmount).length > 0 && (
               <div
-                key={goal.id}
-                className="premium-card goal-card-hover"
+                className="premium-card"
                 style={{
-                  padding: '24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px',
-                  position: 'relative',
-                  overflow: 'hidden',
+                  padding: '32px',
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  boxShadow: '0 20px 40px rgba(99, 102, 241, 0.2)',
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '24px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div
-                      style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '12px',
-                        background: isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'var(--accent-light)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: isCompleted ? 'var(--success)' : 'var(--accent)',
-                      }}
-                    >
-                      {isCompleted ? <CheckCircle2 size={22} /> : <Flame size={22} />}
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{goal.name}</h3>
-                      <span className="stat-label" style={{ fontSize: '0.65rem' }}>
-                        {goal.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={() => handleEdit(goal)}
-                      className="glass-button"
-                      style={{ padding: '6px', borderRadius: '8px' }}
-                    >
-                      <Edit3 size={14} />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const confirmed = await customConfirm({
-                          title: 'Delete Goal',
-                          message: `Remove "${goal.name}"? This action cannot be undone.`,
-                          type: 'error',
-                          confirmLabel: 'Delete Goal',
-                        });
-                        if (confirmed) {
-                          await deleteGoal(goal.id);
-                          showNotification('success', 'Goal deleted');
-                        }
-                      }}
-                      className="glass-button"
-                      style={{
-                        padding: '6px',
-                        borderRadius: '8px',
-                        color: 'var(--error)',
-                        borderColor: 'var(--error-light)',
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <div
+                  <Flame size={18} />
+                  <span
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '8px',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span className="stat-label">Progress</span>
-                    <span
-                      style={{
-                        fontSize: '1rem',
-                        fontWeight: 800,
-                        color: isCompleted ? 'var(--success)' : 'var(--text-primary)',
-                      }}
-                    >
-                      {progress.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '6px',
-                      background: 'var(--surface-hover)',
-                      borderRadius: '100px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${Math.min(progress, 100)}%`,
-                        height: '100%',
-                        background: isCompleted ? 'var(--success)' : 'var(--accent)',
-                        borderRadius: '100px',
-                        transition: 'width 1s ease',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    paddingTop: '16px',
-                    borderTop: '1px solid var(--surface-border)',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '24px' }}>
-                    <div>
-                      <div className="stat-label" style={{ fontSize: '0.6rem' }}>
-                        Target
-                      </div>
-                      <div style={{ fontWeight: 700 }}>₹{goal.targetAmount.toLocaleString()}</div>
-                    </div>
-                    <div>
-                      <div className="stat-label" style={{ fontSize: '0.6rem' }}>
-                        Saved
-                      </div>
-                      <div
-                        style={{
-                          fontWeight: 700,
-                          color: isCompleted ? 'var(--success)' : 'var(--accent)',
-                        }}
-                      >
-                        ₹{goal.currentAmount.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div className="stat-label" style={{ fontSize: '0.6rem' }}>
-                      Deadline
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '0.8rem',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      <Clock size={12} />
-                      {goal.deadline
-                        ? new Date(goal.deadline).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : 'No limit'}
-                    </div>
-                  </div>
-                </div>
-
-                {isCompleted && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '-30px',
-                      background: 'var(--success)',
-                      color: '#000',
-                      padding: '4px 40px',
-                      transform: 'rotate(45deg)',
-                      fontSize: '0.6rem',
+                      fontSize: '0.75rem',
                       fontWeight: 900,
                       letterSpacing: '1px',
+                      textTransform: 'uppercase',
                     }}
                   >
-                    COMPLETE
-                  </div>
+                    High Momentum
+                  </span>
+                </div>
+                {(() => {
+                  const nextGoal = [...goals]
+                    .filter((g) => g.currentAmount < g.targetAmount)
+                    .sort(
+                      (a, b) => b.currentAmount / b.targetAmount - a.currentAmount / a.targetAmount
+                    )[0];
+                  const p = (nextGoal.currentAmount / nextGoal.targetAmount) * 100;
+                  return (
+                    <>
+                      <h4
+                        style={{
+                          fontSize: '1.4rem',
+                          fontWeight: 950,
+                          marginBottom: '8px',
+                          letterSpacing: '-0.5px',
+                        }}
+                      >
+                        {nextGoal.name}
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', opacity: 0.9, marginBottom: '24px' }}>
+                        ₹{(nextGoal.targetAmount - nextGoal.currentAmount).toLocaleString()} more
+                        needed for victory
+                      </p>
+                      <div
+                        style={{
+                          height: '8px',
+                          background: 'rgba(255,255,255,0.2)',
+                          borderRadius: '100px',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${p}%`,
+                            height: '100%',
+                            background: '#fff',
+                            borderRadius: '100px',
+                          }}
+                        />
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Sidebar Lists - Linear Style */}
+            <div className="premium-card" style={{ padding: '32px' }}>
+              <h3
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 950,
+                  marginBottom: '32px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.5px',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                LANDMARK ACTIVITY
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {goals.length > 0 ? (
+                  [...goals]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.updatedAt || b.createdAt || 0).getTime() -
+                        new Date(a.updatedAt || a.createdAt || 0).getTime()
+                    )
+                    .slice(0, 4)
+                    .map((goal) => (
+                      <div
+                        key={`side-${goal.id}`}
+                        style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
+                      >
+                        <div
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '10px',
+                            background: 'var(--surface-hover)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#8b5cf6',
+                          }}
+                        >
+                          <Clock size={14} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: '0.8rem',
+                              fontWeight: 800,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {goal.name}
+                          </div>
+                          <div className="stat-label" style={{ fontSize: '0.65rem' }}>
+                            Updated{' '}
+                            {new Date(goal.updatedAt || goal.createdAt || '').toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <p className="stat-label" style={{ textAlign: 'center' }}>
+                    No recent data
+                  </p>
                 )}
               </div>
-            );
-          })
-        ) : (
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              padding: '100px 24px',
-              textAlign: 'center',
-              border: '2px dashed var(--surface-border)',
-              borderRadius: '24px',
-            }}
-          >
-            <div style={{ marginBottom: '24px' }}>
-              <EmptyGoalsVisual />
             </div>
-            <h3 style={{ marginBottom: '8px' }}>No targets set yet</h3>
-            <p className="stat-label">Create your first goal to start tracking milestones.</p>
+
+            <div className="premium-card" style={{ padding: '32px' }}>
+              <h3
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 950,
+                  marginBottom: '32px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.5px',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                HALL OF FAME
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {goals.filter((g) => g.currentAmount >= g.targetAmount).length > 0 ? (
+                  goals
+                    .filter((g) => g.currentAmount >= g.targetAmount)
+                    .map((goal) => (
+                      <div
+                        key={`hof-${goal.id}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '16px',
+                          background: 'rgba(34, 197, 94, 0.05)',
+                          borderRadius: '16px',
+                          border: '1px solid rgba(34, 197, 94, 0.1)',
+                        }}
+                      >
+                        <Trophy size={16} style={{ color: '#22c55e' }} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800 }}>{goal.name}</span>
+                      </div>
+                    ))
+                ) : (
+                  <p className="stat-label" style={{ textAlign: 'center' }}>
+                    Awaiting trophies...
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Modern Modal */}
@@ -549,6 +820,9 @@ export default function GoalsClient() {
           background: rgba(15, 25, 30, 0.9) !important;
           border-color: var(--accent) !important;
           box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px var(--accent-glow) !important;
+        }
+        .activity-item-hover:hover {
+          background: var(--surface-hover);
         }
       `}</style>
     </div>

@@ -258,6 +258,8 @@ export const dbGoalToGoal = (dbGoal: GoalRow): Goal => ({
   deadline: dbGoal.deadline,
   category: dbGoal.category,
   description: dbGoal.description || undefined,
+  createdAt: dbGoal.created_at ? String(dbGoal.created_at) : undefined,
+  updatedAt: dbGoal.updated_at ? String(dbGoal.updated_at) : undefined,
 });
 
 export const dbFamilyTransferToFamilyTransfer = (

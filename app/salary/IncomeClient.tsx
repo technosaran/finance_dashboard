@@ -184,532 +184,508 @@ export default function IncomeClient() {
   if (loading) return null;
 
   return (
-    <div
-      className="main-content"
-      style={{ backgroundColor: '#000000', minHeight: '100vh', padding: '16px' }}
-    >
-      <div style={{ maxWidth: '1220px', margin: '0 auto' }}>
-        <div className="page-header" style={{ marginBottom: '28px' }}>
+    <div className="main-content fade-in" style={{ padding: '40px' }}>
+      <div style={{ margin: '0 auto' }}>
+        {/* Header - Ultra Minimalist Emerald */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            marginBottom: '56px',
+          }}
+        >
           <div>
             <h1
-              className="page-title"
               style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                fontSize: '3rem',
+                fontWeight: 950,
+                letterSpacing: '-2px',
+                fontFamily: 'var(--font-outfit)',
               }}
             >
-              Income Tracker
+              Income<span style={{ color: '#10b981' }}>.</span>
             </h1>
-            <p className="page-subtitle">Family-style overview with fast entry and live charts.</p>
+            <p className="stat-label" style={{ fontSize: '0.85rem' }}>
+              Family-wide earnings and inflow overview
+            </p>
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
-            }}
-            className="header-add-btn header-add-btn--green"
-          >
-            <Plus size={18} /> Add Income
-          </button>
-        </div>
-
-        <div
-          className="mobile-tab-scroll"
-          style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '16px' }}
-        >
-          {(['month', 'quarter', 'year', 'all'] as const).map((period) => (
-            <button
-              key={period}
-              onClick={() => setSelectedPeriod(period)}
-              className={selectedPeriod === period ? 'period-btn period-btn--active' : 'period-btn'}
-              style={selectedPeriod === period ? { borderColor: '#10b981', color: '#10b981' } : {}}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div
+              className="glass-container"
+              style={{ display: 'flex', padding: '5px', borderRadius: '14px' }}
             >
-              {period === 'all' ? 'All' : period}
+              {(['month', 'quarter', 'year', 'all'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: selectedPeriod === period ? '#10b981' : 'transparent',
+                    color: selectedPeriod === period ? '#fff' : 'var(--text-secondary)',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
+              className="header-add-btn header-add-btn--green"
+              style={{
+                padding: '14px 24px',
+                borderRadius: '16px',
+                boxShadow: '0 12px 30px rgba(16, 185, 129, 0.2)',
+              }}
+            >
+              <Plus size={20} /> New Entry
             </button>
-          ))}
+          </div>
         </div>
 
+        {/* High-Impact Stat Cards */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
-            gap: '16px',
-            marginBottom: '24px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '32px',
+            marginBottom: '64px',
           }}
         >
           {[
             {
               label: 'Total Earned',
               value: formatInr(stats.total),
-              sub: `${stats.count} entries`,
-              icon: <DollarSign size={20} />,
+              icon: <TrendingUp size={16} />,
               color: '#10b981',
+              subtitle: `${stats.count} individual credits`,
             },
             {
-              label: 'Average Credit',
+              label: 'Monthly Velocity',
               value: formatInr(stats.average),
-              sub: 'Per entry',
-              icon: <TrendingUp size={20} />,
-              color: '#22c55e',
-            },
-            {
-              label: 'Income Sources',
-              value: String(stats.sources),
-              sub: 'Active now',
-              icon: <Briefcase size={20} />,
+              icon: <Waves size={16} />,
               color: '#06b6d4',
+              subtitle: 'Average per payment cycle',
             },
           ].map((card) => (
             <div
               key={card.label}
-              className="stat-card stat-card--green"
-              style={{ minHeight: 'auto' }}
+              className="premium-card"
+              style={{ padding: '32px', position: 'relative' }}
             >
-              <div className="stat-card__glow" style={{ background: `${card.color}22` }} />
-              <div style={{ position: 'relative', zIndex: 1 }}>
+              <div
+                style={{
+                  background: `radial-gradient(circle at top right, ${card.color}22, transparent 70%)`,
+                  position: 'absolute',
+                  inset: 0,
+                  opacity: 0.6,
+                }}
+              />
+              <div style={{ position: 'relative' }}>
+                <span
+                  className="stat-label"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', color: card.color }}
+                >
+                  {card.icon} {card.label}
+                </span>
                 <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '12px',
+                    fontSize: '3.5rem',
+                    fontWeight: 950,
+                    letterSpacing: '-3px',
+                    marginTop: '12px',
                   }}
                 >
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '12px',
-                      background: `${card.color}18`,
-                      color: card.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {card.icon}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.74rem',
-                      fontWeight: '800',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {card.label}
-                  </div>
+                  {card.value}
                 </div>
-                <div style={{ fontSize: '1.7rem', fontWeight: '900' }}>{card.value}</div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
-                  {card.sub}
-                </div>
+                <p className="stat-label" style={{ marginTop: '12px', fontSize: '0.75rem' }}>
+                  {card.subtitle}
+                </p>
               </div>
             </div>
           ))}
         </div>
 
+        {/* Content Layout */}
         <div
-          className="mobile-tab-scroll"
-          style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '20px' }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 340px',
+            gap: '40px',
+            alignItems: 'start',
+          }}
+          className="dashboard-grid"
         >
-          {(['overview', 'history'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={activeTab === tab ? 'period-btn period-btn--active' : 'period-btn'}
-              style={
-                activeTab === tab
-                  ? {
-                      borderColor: '#10b981',
-                      color: '#10b981',
-                      background: 'rgba(16, 185, 129, 0.08)',
-                    }
-                  : {}
-              }
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'overview' ? (
-          <div style={{ display: 'grid', gap: '24px' }}>
+          {/* Main List */}
+          <div>
             <div
+              className="glass-container"
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-                gap: '24px',
+                display: 'flex',
+                padding: '4px',
+                borderRadius: '12px',
+                width: 'fit-content',
+                marginBottom: '32px',
               }}
             >
-              <div className="premium-card" style={{ padding: '22px' }}>
-                <div style={{ fontWeight: '800', color: '#fff', marginBottom: '16px' }}>
-                  Income Trend
-                </div>
-                <div style={{ height: '260px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={monthlyData}>
-                      <defs>
-                        <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.38} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-                      <XAxis
-                        dataKey="label"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#64748b' }}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#64748b' }}
-                        tickFormatter={(value) => `₹${Math.round(value / 1000)}k`}
-                      />
-                      <RechartsTooltip
-                        contentStyle={{
-                          background: '#020617',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '14px',
-                        }}
-                        formatter={(value) => formatInr(Number(value || 0))}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="total"
-                        stroke="#10b981"
-                        strokeWidth={3}
-                        fill="url(#incomeFill)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              <div className="premium-card" style={{ padding: '22px' }}>
-                <div style={{ fontWeight: '800', color: '#fff', marginBottom: '16px' }}>
-                  Income Mix
-                </div>
-                <div style={{ height: '260px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={56}
-                        outerRadius={90}
-                        paddingAngle={3}
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell
-                            key={entry.name}
-                            fill={
-                              categoryConfig[entry.name]?.color || COLORS[index % COLORS.length]
-                            }
-                          />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip
-                        contentStyle={{
-                          background: '#020617',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderRadius: '14px',
-                        }}
-                        formatter={(value) => formatInr(Number(value || 0))}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              {(['overview', 'history'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: '8px 24px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: activeTab === tab ? 'white' : 'transparent',
+                    color: activeTab === tab ? '#000' : 'var(--text-secondary)',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: '0.2s',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
-            <div className="premium-card" style={{ padding: '22px' }}>
-              <div style={{ fontWeight: '800', color: '#fff', marginBottom: '14px' }}>
-                Recent Income
+
+            {activeTab === 'overview' ? (
+              <div style={{ display: 'grid', gap: '40px' }}>
+                {/* Visual Chart Panel */}
+                <div className="premium-card" style={{ padding: '32px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginBottom: '32px',
+                    }}
+                  >
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 900 }}>Credit Velocity</h3>
+                    <LineChart size={18} className="stat-label" />
+                  </div>
+                  <div style={{ height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={monthlyData}>
+                        <defs>
+                          <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+                        <XAxis
+                          dataKey="label"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: 'var(--text-tertiary)', fontSize: 10, fontWeight: 700 }}
+                        />
+                        <YAxis hide axisLine={false} tickLine={false} domain={['auto', 'auto']} />
+                        <RechartsTooltip
+                          contentStyle={{
+                            background: '#0a0a0a',
+                            border: '1px solid var(--surface-border)',
+                            borderRadius: '16px',
+                            padding: '16px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                          }}
+                          formatter={(value) => [
+                            `₹${(Number(value) || 0).toLocaleString()}`,
+                            'Total',
+                          ]}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="total"
+                          stroke="#10b981"
+                          strokeWidth={3}
+                          fill="url(#incomeFill)"
+                          animationDuration={1500}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Sub-list of Recent */}
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 950, marginBottom: '24px' }}>
+                    History
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {filteredItems.slice(0, 8).map((item) => {
+                      const config =
+                        categoryConfig[item.category as string] || categoryConfig.Other;
+                      return (
+                        <div
+                          key={item.id}
+                          className="ledger-row-hover"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '20px 24px',
+                            borderRadius: '20px',
+                            background: 'rgba(255,255,255,0.01)',
+                            border: '1px solid var(--surface-border)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '44px',
+                              height: '44px',
+                              borderRadius: '14px',
+                              background: 'var(--surface-hover)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: config.color,
+                              marginRight: '20px',
+                            }}
+                          >
+                            {config.icon}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff' }}>
+                              {item.description}
+                            </div>
+                            <div
+                              className="stat-label"
+                              style={{ fontSize: '0.75rem', marginTop: '2px' }}
+                            >
+                              {item.category} • {formatDate(item.date)}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 950, color: '#10b981', fontSize: '1.2rem' }}>
+                              +{formatInr(item.amount)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {filteredItems.slice(0, 5).map((item) => {
+            ) : (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {filteredItems.map((item) => {
                   const config = categoryConfig[item.category as string] || categoryConfig.Other;
                   return (
                     <div
                       key={item.id}
+                      className="ledger-row-hover"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px 14px',
+                        justifyContent: 'space-between',
+                        padding: '16px 24px',
                         borderRadius: '16px',
-                        background: 'rgba(255,255,255,0.03)',
+                        background: 'rgba(255,255,255,0.01)',
+                        border: '1px solid var(--surface-border)',
                       }}
                     >
                       <div
                         style={{
-                          width: '38px',
-                          height: '38px',
-                          borderRadius: '12px',
-                          background: `${config.color}18`,
-                          color: config.color,
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
+                          gap: '16px',
                           flexShrink: 0,
                         }}
                       >
-                        {config.icon}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontWeight: '800',
-                            color: '#fff',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {item.description}
+                        <div style={{ color: config.color }}>{config.icon}</div>
+                        <div style={{ width: '120px', fontWeight: 800 }}>{item.description}</div>
+                        <div className="stat-label" style={{ fontSize: '0.75rem', width: '90px' }}>
+                          {item.category}
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                          {item.category} • {formatDate(item.date)}
+                        <div className="stat-label" style={{ fontSize: '0.75rem', width: '100px' }}>
+                          {formatDate(item.date)}
                         </div>
                       </div>
-                      <div style={{ fontWeight: '900', color: '#10b981' }}>
-                        {formatInr(item.amount)}
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '24px', minWidth: 0 }}
+                      >
+                        <div style={{ fontWeight: 950, color: '#10b981', fontSize: '1.1rem' }}>
+                          {formatInr(item.amount)}
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="action-btn--hover"
+                            style={{
+                              padding: '8px',
+                              borderRadius: '10px',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-secondary)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const ok = await customConfirm({
+                                title: 'Delete Inflow',
+                                message: 'Permanently remove this entry?',
+                                type: 'error',
+                                confirmLabel: 'Delete',
+                              });
+                              if (ok) await deleteTransaction(item.id);
+                            }}
+                            className="action-btn-danger--hover"
+                            style={{
+                              padding: '8px',
+                              borderRadius: '10px',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-secondary)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            )}
           </div>
-        ) : (
-          <div className="premium-card" style={{ padding: '20px' }}>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              {filteredItems.map((item) => {
-                const config = categoryConfig[item.category as string] || categoryConfig.Other;
-                return (
+
+          {/* Sidebar Analytics - Emerald Style */}
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
+            className="hide-md"
+          >
+            <div className="premium-card" style={{ padding: '32px' }}>
+              <h3
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 900,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '1px',
+                  marginBottom: '32px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Inflow Dynamics
+              </h3>
+              <div style={{ height: '220px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={68}
+                      outerRadius={90}
+                      paddingAngle={4}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={categoryConfig[entry.name]?.color || COLORS[index % COLORS.length]}
+                          stroke="transparent"
+                        />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip
+                      contentStyle={{
+                        background: '#0a0a0a',
+                        border: '1px solid var(--surface-border)',
+                        borderRadius: '12px',
+                      }}
+                      formatter={(value) => formatInr(Number(value || 0))}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ marginTop: '24px', display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                {categoryData.map((entry) => (
                   <div
-                    key={item.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '14px',
-                      padding: '14px',
-                      borderRadius: '18px',
-                      background: 'rgba(255,255,255,0.03)',
-                    }}
+                    key={entry.name}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     <div
                       style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '12px',
-                        background: `${config.color}18`,
-                        color: config.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: categoryConfig[entry.name]?.color || '#fff',
                       }}
-                    >
-                      {config.icon}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontWeight: '800',
-                          color: '#fff',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {item.description}
-                      </div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                        {item.category} • {formatDate(item.date)}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: '900', color: '#10b981' }}>
-                        {formatInr(item.amount)}
-                      </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          gap: '6px',
-                          marginTop: '6px',
-                        }}
-                      >
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="action-btn action-btn--edit"
-                          style={{
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const ok = await customConfirm({
-                              title: 'Delete Income',
-                              message: `Delete ${item.description}?`,
-                              type: 'error',
-                              confirmLabel: 'Delete',
-                            });
-                            if (ok) {
-                              await deleteTransaction(item.id);
-                              showNotification('success', 'Income deleted');
-                            }
-                          }}
-                          className="action-btn action-btn--delete"
-                          style={{
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
+                    />
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>{entry.name}</span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
 
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card entry-sheet">
-            <div className="entry-sheet__handle" />
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                resetForm();
-              }}
-              className="modal-close"
-            >
-              <X size={20} />
-            </button>
-            <h2 className="modal-title">{editId ? 'Edit Income' : 'Add Income'}</h2>
-            <p className="modal-subtitle">Compact entry form for quick mobile logging.</p>
-            <form onSubmit={handleSubmit} className="entry-form">
-              <div className="entry-grid">
-                <div>
-                  <label className="form-label">Source</label>
-                  <input
-                    value={sourceName}
-                    onChange={(event) => setSourceName(event.target.value)}
-                    required
-                    autoFocus
-                    className="form-input form-input--green"
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Amount</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    required
-                    className="form-input form-input--green"
-                  />
-                </div>
-              </div>
-              <div className="entry-grid entry-grid--three">
-                <div>
-                  <label className="form-label">Category</label>
-                  <select
-                    value={category}
-                    onChange={(event) => setCategory(event.target.value as TransactionCategory)}
-                    className="form-input form-input--green"
-                  >
-                    {Object.keys(categoryConfig).map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Date</label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(event) => setDate(event.target.value)}
-                    className="form-input form-input--green"
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Account</label>
-                  <select
-                    value={selectedAccountId}
-                    onChange={(event) =>
-                      setSelectedAccountId(event.target.value ? Number(event.target.value) : '')
-                    }
-                    className="form-input form-input--green"
-                  >
-                    <option value="">No account</option>
-                    {accounts.map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div
-                className="entry-summary"
+            <div className="premium-card" style={{ padding: '32px' }}>
+              <h3
                 style={{
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.16)',
+                  fontSize: '0.8rem',
+                  fontWeight: 900,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '1px',
+                  marginBottom: '24px',
+                  textTransform: 'uppercase',
                 }}
               >
-                <div className="entry-summary__row">
-                  <span className="entry-summary__label">Source</span>
-                  <span className="entry-summary__value">{sourceName || 'Untitled income'}</span>
-                </div>
-                <div className="entry-summary__row">
-                  <span className="entry-summary__label">Credit</span>
-                  <span className="entry-summary__value entry-summary__value--positive">
-                    {formatInr(Number(amount) || 0)}
-                  </span>
-                </div>
+                Recent Accumulation
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {monthlyData.map((d, i) => (
+                  <div key={d.key}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>{d.label}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 950, color: '#10b981' }}>
+                        {formatInr(d.total)}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        height: '4px',
+                        background: 'var(--surface-hover)',
+                        borderRadius: '100px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${(d.total / Math.max(...monthlyData.map((v) => v.total))) * 100}%`,
+                          height: '100%',
+                          background: '#10b981',
+                          opacity: 0.8,
+                          borderRadius: '100px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="entry-actions">
-                <button
-                  type="button"
-                  className="entry-secondary-btn"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary btn-primary--green">
-                  {editId ? 'Update Income' : 'Save Income'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
