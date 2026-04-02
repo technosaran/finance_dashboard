@@ -31,141 +31,195 @@ interface BankBranding {
 const BANK_BRANDING: Record<string, BankBranding> = {
   hdfc: {
     name: 'HDFC Bank',
-    color: '#d32f2f',
+    color: '#004c8f',
     keywords: ['hdfc'],
-    logo: 'https://logo.clearbit.com/hdfcbank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg',
   },
   icici: {
     name: 'ICICI Bank',
-    color: '#e65100',
+    color: '#f37021',
     keywords: ['icici'],
-    logo: 'https://logo.clearbit.com/icicibank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/12/ICICI_Bank_Logo.svg',
   },
   sbi: {
     name: 'State Bank of India',
     color: '#00695c',
     keywords: ['sbi', 'state bank'],
-    logo: 'https://logo.clearbit.com/sbi.co.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/c/cc/State_Bank_of_India_logo.svg',
   },
   axis: {
     name: 'Axis Bank',
-    color: '#1a237e',
+    color: '#ae275f',
     keywords: ['axis'],
-    logo: 'https://logo.clearbit.com/axisbank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Axis_Bank_logo.svg',
   },
   kotak: {
     name: 'Kotak Mahindra Bank',
-    color: '#c62828',
+    color: '#ed1c24',
     keywords: ['kotak'],
-    logo: 'https://logo.clearbit.com/kotak.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Kotak_Mahindra_Bank_logo.svg',
   },
   idfc: {
     name: 'IDFC First Bank',
-    color: '#1565c0',
+    color: '#9f2943',
     keywords: ['idfc'],
-    logo: 'https://logo.clearbit.com/idfcfirstbank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/12/IDFC_First_Bank_logo.svg',
   },
   yes: {
     name: 'Yes Bank',
-    color: '#d50000',
+    color: '#0054a6',
     keywords: ['yes bank', 'yes'],
-    logo: 'https://logo.clearbit.com/yesbank.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/YES_Bank_logo.svg',
   },
   indusind: {
     name: 'IndusInd Bank',
-    color: '#ff6f00',
+    color: '#812b10',
     keywords: ['indusind'],
-    logo: 'https://logo.clearbit.com/indusind.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/67/IndusInd_Bank_logo.svg',
   },
   pnb: {
     name: 'Punjab National Bank',
-    color: '#1565c0',
+    color: '#a32020',
     keywords: ['pnb', 'punjab national'],
-    logo: 'https://logo.clearbit.com/pnbindia.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/Punjab_National_Bank_new_logo.svg',
   },
   canara: {
     name: 'Canara Bank',
-    color: '#004d40',
+    color: '#0066a1',
     keywords: ['canara'],
-    logo: 'https://logo.clearbit.com/canarabank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/9/91/Canara_Bank_Logo.svg',
   },
   bob: {
     name: 'Bank of Baroda',
-    color: '#1e3a8a',
+    color: '#f05a28',
     keywords: ['bank of baroda', 'bob'],
-    logo: 'https://logo.clearbit.com/bankofbaroda.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/2/23/Bank_of_Baroda_logo.svg',
   },
   union: {
     name: 'Union Bank of India',
-    color: '#0d47a1',
+    color: '#1a4198',
     keywords: ['union bank', 'union'],
-    logo: 'https://logo.clearbit.com/unionbankofindia.co.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Union_Bank_of_India_Logo.svg',
   },
   uco: {
     name: 'UCO Bank',
-    color: '#b71c1c',
+    color: '#006eb7',
     keywords: ['uco'],
-    logo: 'https://logo.clearbit.com/ucobank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/7/77/UCO_Bank_logo.png',
   },
   boi: {
     name: 'Bank of India',
-    color: '#1e3a8a',
+    color: '#f58220',
     keywords: ['bank of india', 'boi'],
-    logo: 'https://logo.clearbit.com/bankofindia.co.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/10/Bank_of_India_logo.svg',
+  },
+  iob: {
+    name: 'Indian Overseas Bank',
+    color: '#005a9e',
+    keywords: ['iob', 'indian overseas'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/66/Indian_Overseas_Bank_Logo.svg',
+  },
+  central: {
+    name: 'Central Bank of India',
+    color: '#005b8f',
+    keywords: ['central bank', 'cbi'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Central_Bank_of_India.svg',
+  },
+  indianbank: {
+    name: 'Indian Bank',
+    color: '#004990',
+    keywords: ['indian bank', 'ib'],
+    logo: 'https://upload.wikimedia.org/wikipedia/en/2/29/Indian_Bank_logo.svg',
+  },
+  bom: {
+    name: 'Bank of Maharashtra',
+    color: '#005f9e',
+    keywords: ['bank of maharashtra', 'bom', 'maha'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Bank_of_Maharashtra_logo.svg',
+  },
+  psb: {
+    name: 'Punjab & Sind Bank',
+    color: '#0e7a3f',
+    keywords: ['punjab and sind', 'psb', 'punjab & sind'],
+    logo: 'https://upload.wikimedia.org/wikipedia/en/f/fa/Punjab_and_Sind_Bank_logo.svg',
+  },
+  rbl: {
+    name: 'RBL Bank',
+    color: '#004481',
+    keywords: ['rbl'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/0/02/RBL_Bank.svg',
+  },
+  bandhan: {
+    name: 'Bandhan Bank',
+    color: '#00529b',
+    keywords: ['bandhan'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/21/Bandhan_Bank_logo.svg',
+  },
+  cub: {
+    name: 'City Union Bank',
+    color: '#004182',
+    keywords: ['city union', 'cub'],
+    logo: 'https://upload.wikimedia.org/wikipedia/en/b/b5/City_Union_Bank_logo.png',
+  },
+  kvb: {
+    name: 'Karur Vysya Bank',
+    color: '#1d488e',
+    keywords: ['karur vysya', 'kvb'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Karur_Vysya_Bank_Logo.png',
   },
   federal: {
     name: 'Federal Bank',
-    color: '#d84315',
+    color: '#003366',
     keywords: ['federal'],
-    logo: 'https://logo.clearbit.com/federalbank.co.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Federal_Bank_Logo.svg',
   },
   southindian: {
     name: 'South Indian Bank',
     color: '#f57f17',
     keywords: ['south indian', 'sib'],
-    logo: 'https://logo.clearbit.com/southindianbank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2e/South_Indian_Bank_logo.svg',
   },
   karnataka: {
     name: 'Karnataka Bank',
-    color: '#1565c0',
+    color: '#0b523e',
     keywords: ['karnataka bank', 'karnataka'],
-    logo: 'https://logo.clearbit.com/karnatakabank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/7/71/Karnataka_Bank_Logo.svg',
   },
   dbs: {
     name: 'DBS Bank',
-    color: '#0d47a1',
+    color: '#ff3300',
     keywords: ['dbs'],
-    logo: 'https://logo.clearbit.com/dbs.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/23/DBS_Bank_logo.svg',
   },
   citibank: {
     name: 'Citibank',
     color: '#003b70',
     keywords: ['citi'],
-    logo: 'https://logo.clearbit.com/citibank.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1d/Citibank.svg',
   },
   hsbc: {
     name: 'HSBC India',
     color: '#db0011',
     keywords: ['hsbc'],
-    logo: 'https://logo.clearbit.com/hsbc.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/HSBC_logo_%282018%29.svg',
   },
   scb: {
     name: 'Standard Chartered',
-    color: '#003d71',
+    color: '#00a546',
     keywords: ['standard chartered', 'scb'],
-    logo: 'https://logo.clearbit.com/sc.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/25/Standard_Chartered_%282021%29.svg',
   },
   paytm: {
     name: 'Paytm Payments Bank',
-    color: '#00baf2',
+    color: '#002970',
     keywords: ['paytm'],
-    logo: 'https://logo.clearbit.com/paytm.com',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg',
   },
   jupiter: {
     name: 'Jupiter Money',
-    color: '#6c5ce7',
+    color: '#f05a28',
     keywords: ['jupiter'],
-    logo: 'https://logo.clearbit.com/jupiter.money',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/31/Jupiter.money_Logo.svg',
   },
   fi: {
     name: 'Fi Money',
@@ -175,9 +229,21 @@ const BANK_BRANDING: Record<string, BankBranding> = {
   },
   airtel: {
     name: 'Airtel Payments Bank',
-    color: '#e40000',
+    color: '#ff0000',
     keywords: ['airtel'],
-    logo: 'https://logo.clearbit.com/airtel.in',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/Airtel_Payments_Bank_logo.svg',
+  },
+  sbm: {
+    name: 'SBM Bank',
+    color: '#0054a6',
+    keywords: ['sbm'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5a/SBM_Bank_Logo.svg',
+  },
+  barclays: {
+    name: 'Barclays India',
+    color: '#00aeef',
+    keywords: ['barclays'],
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b3/Barclays_logo.svg',
   },
   cash: {
     name: 'Physical Cash',
@@ -185,6 +251,93 @@ const BANK_BRANDING: Record<string, BankBranding> = {
     keywords: ['cash', 'physical cash'],
     logo: '',
   },
+};
+
+const BankLogo = ({
+  branding,
+  size = 48,
+  padding = 6,
+  borderRadius = 14,
+  isCash = false,
+}: {
+  branding: BankBranding;
+  size?: number;
+  padding?: number;
+  borderRadius?: number;
+  isCash?: boolean;
+}) => {
+  const [error, setError] = useState(false);
+  const color = branding.color || DEFAULT_BRAND_COLOR;
+
+  if (isCash) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          flexShrink: 0,
+          borderRadius: borderRadius,
+          background: 'rgba(16,185,129,0.12)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(16,185,129,0.25)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        }}
+      >
+        <Coins size={size * 0.54} color="#10b981" />
+      </div>
+    );
+  }
+
+  if (error || !branding.logo) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          flexShrink: 0,
+          borderRadius: borderRadius,
+          background: `${color}22`,
+          border: `1px solid ${color}44`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: color,
+          fontSize: `${size * 0.4}px`,
+          fontWeight: '900',
+          boxShadow: padding > 0 ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
+        }}
+      >
+        {branding.name ? branding.name.charAt(0) : 'B'}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        borderRadius: borderRadius,
+        background: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: padding,
+        boxShadow: padding > 0 ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
+        overflow: 'hidden',
+      }}
+    >
+      <img
+        src={branding.logo}
+        alt={branding.name}
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
 };
 
 const DEFAULT_BRAND_COLOR = '#1ea672';
@@ -243,7 +396,7 @@ export default function AccountsClient() {
     setTransferAmount('');
   };
 
-  const getBankBranding = (name: string) => {
+  const getBankBranding = (name: string): BankBranding => {
     const lowerName = name.toLowerCase();
     const found = Object.values(BANK_BRANDING).find((b) =>
       b.keywords.some((kw) => lowerName.includes(kw))
@@ -252,6 +405,7 @@ export default function AccountsClient() {
       found || {
         name,
         color: DEFAULT_BRAND_COLOR,
+        keywords: [],
         logo: '',
       }
     );
@@ -300,6 +454,7 @@ export default function AccountsClient() {
     setEditId(null);
     setAccountName('');
     setBankName('');
+    setBankSearchQuery('');
     setAccountType('Savings');
     setBalance('');
     setCurrency('INR');
@@ -340,6 +495,7 @@ export default function AccountsClient() {
     setEditId(account.id);
     setAccountName(account.name);
     setBankName(account.bankName);
+    setBankSearchQuery(account.bankName);
     setAccountType(account.type);
     setBalance(account.balance.toString());
     setCurrency(account.currency);
@@ -369,10 +525,18 @@ export default function AccountsClient() {
     if (!sourceAccountId || !targetAccountId || !transferAmount) return;
     try {
       const amount = parseFloat(transferAmount);
+      if (amount <= 0) {
+        showNotification('error', 'Transfer amount must be greater than 0.');
+        return;
+      }
+      if (sourceAccountId === targetAccountId) {
+        showNotification('error', 'Cannot transfer to the same account.');
+        return;
+      }
       const source = accounts.find((a) => a.id === Number(sourceAccountId));
       const target = accounts.find((a) => a.id === Number(targetAccountId));
       if (!source || !target || source.balance < amount) {
-        showNotification('error', 'Invalid transfer request.');
+        showNotification('error', 'Invalid transfer request or insufficient funds.');
         return;
       }
       await Promise.all([
@@ -646,20 +810,7 @@ export default function AccountsClient() {
                       transition: 'all 0.2s',
                     }}
                   >
-                    <img
-                      src={branding.logo}
-                      alt={branding.name}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 6,
-                        objectFit: 'contain',
-                        background: '#fff',
-                      }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                    <BankLogo branding={branding} size={24} padding={0} borderRadius={6} />
                     <div>
                       <div
                         style={{
@@ -782,48 +933,13 @@ export default function AccountsClient() {
                   }}
                 >
                   {/* Logo / Cash Icon */}
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      flexShrink: 0,
-                      borderRadius: '14px',
-                      background: isCash ? 'rgba(16,185,129,0.12)' : '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                      padding: isCash ? '0' : '6px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                      border: isCash ? '1px solid rgba(16,185,129,0.25)' : 'none',
-                    }}
-                  >
-                    {isCash ? (
-                      <Coins size={26} color="#10b981" />
-                    ) : (
-                      <img
-                        src={branding.logo}
-                        alt={branding.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            const color = branding.color || DEFAULT_BRAND_COLOR;
-                            parent.style.background = `${color}22`;
-                            parent.style.border = `1px solid ${color}44`;
-                            const span = document.createElement('span');
-                            span.style.fontSize = '1.1rem';
-                            span.style.fontWeight = '900';
-                            span.style.color = color;
-                            span.textContent = branding.name.charAt(0);
-                            parent.appendChild(span);
-                          }
-                        }}
-                      />
-                    )}
-                  </div>
+                  <BankLogo
+                    branding={branding}
+                    size={48}
+                    padding={isCash ? 0 : 6}
+                    borderRadius={14}
+                    isCash={isCash}
+                  />
 
                   {/* Account Name + Bank Name */}
                   <div style={{ minWidth: 0, flex: 1 }}>
@@ -1082,20 +1198,7 @@ export default function AccountsClient() {
                           onMouseEnter={(e) => (e.currentTarget.style.background = '#1a1a1a')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         >
-                          <img
-                            src={bank.logo}
-                            alt={bank.name}
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: 6,
-                              objectFit: 'contain',
-                              background: '#fff',
-                            }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
+                          <BankLogo branding={bank} size={24} padding={1} borderRadius={6} />
                           <span style={{ fontSize: '0.9rem' }}>{bank.name}</span>
                         </button>
                       ))}
@@ -1283,7 +1386,7 @@ export default function AccountsClient() {
             >
               <select
                 value={sourceAccountId}
-                onChange={(e) => setSourceAccountId(Number(e.target.value))}
+                onChange={(e) => setSourceAccountId(e.target.value ? Number(e.target.value) : '')}
                 style={{
                   background: '#000',
                   border: '1px solid #1a1a1a',
@@ -1301,7 +1404,7 @@ export default function AccountsClient() {
               </select>
               <select
                 value={targetAccountId}
-                onChange={(e) => setTargetAccountId(Number(e.target.value))}
+                onChange={(e) => setTargetAccountId(e.target.value ? Number(e.target.value) : '')}
                 style={{
                   background: '#000',
                   border: '1px solid #1a1a1a',
