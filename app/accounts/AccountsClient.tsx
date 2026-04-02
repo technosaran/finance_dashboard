@@ -187,6 +187,8 @@ const BANK_BRANDING: Record<string, BankBranding> = {
   },
 };
 
+const DEFAULT_BRAND_COLOR = '#1ea672';
+
 const CHART_COLORS = [
   '#d32f2f',
   '#1976d2',
@@ -249,7 +251,7 @@ export default function AccountsClient() {
     return (
       found || {
         name,
-        color: '#1ea672',
+        color: DEFAULT_BRAND_COLOR,
         logo: '',
       }
     );
@@ -808,9 +810,15 @@ export default function AccountsClient() {
                           target.style.display = 'none';
                           const parent = target.parentElement;
                           if (parent) {
-                            parent.style.background = `${branding.color}22`;
-                            parent.style.border = `1px solid ${branding.color}44`;
-                            parent.innerHTML = `<span style="font-size:1.1rem;font-weight:900;color:${branding.color}">${branding.name.charAt(0)}</span>`;
+                            const color = branding.color || DEFAULT_BRAND_COLOR;
+                            parent.style.background = `${color}22`;
+                            parent.style.border = `1px solid ${color}44`;
+                            const span = document.createElement('span');
+                            span.style.fontSize = '1.1rem';
+                            span.style.fontWeight = '900';
+                            span.style.color = color;
+                            span.textContent = branding.name.charAt(0);
+                            parent.appendChild(span);
                           }
                         }}
                       />
@@ -881,15 +889,15 @@ export default function AccountsClient() {
 
               {/* Account Type Badge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: branding.color || '#1ea672' }}>
+                <span style={{ color: branding.color || DEFAULT_BRAND_COLOR }}>
                   {getAccountIcon(account.type)}
                 </span>
                 <span
                   style={{
                     fontSize: '0.65rem',
                     fontWeight: 700,
-                    color: branding.color || '#1ea672',
-                    background: `${branding.color}18` || 'rgba(30,166,114,0.1)',
+                    color: branding.color || DEFAULT_BRAND_COLOR,
+                    background: branding.color ? `${branding.color}18` : 'rgba(30,166,114,0.1)',
                     padding: '3px 8px',
                     borderRadius: '6px',
                     textTransform: 'uppercase',
