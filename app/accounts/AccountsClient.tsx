@@ -490,283 +490,202 @@ export default function AccountsClient() {
               zIndex: 1,
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              gap: '24px',
+              gap: '32px',
             }}
           >
-            <div style={{ flex: '1', minWidth: '240px' }}>
-              <div
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
-                  fontWeight: '800',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1.2px',
-                  marginBottom: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: '#34d399',
-                    boxShadow: '0 0 10px rgba(52, 211, 153, 0.5)',
-                  }}
-                  aria-hidden="true"
-                />
-                Total Liquidity
-              </div>
-
+            <div style={{ flex: '1.2', minWidth: '320px' }}>
               <div
                 style={{
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'baseline',
-                  gap: '8px',
-                  marginBottom: '16px',
+                  marginBottom: '20px',
                 }}
               >
                 <div
                   style={{
-                    fontSize: 'clamp(2.5rem, 7vw, 3.5rem)',
-                    fontWeight: '950',
-                    color: '#fff',
-                    letterSpacing: '-2px',
-                    textShadow: '0 4px 16px rgba(255, 255, 255, 0.1)',
-                    lineHeight: 1,
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
                 >
-                  ₹{totalBalanceINR.toLocaleString()}
+                  <div
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#1ea672',
+                      boxShadow: '0 0 10px rgba(30, 166, 114, 0.5)',
+                    }}
+                  />
+                  Total Liquidity
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '700' }}>
+                  {liquidityChartAccounts.length} INR Entities
                 </div>
               </div>
 
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                  gap: '12px',
-                  marginTop: '24px',
+                  fontSize: 'clamp(2.5rem, 6vw, 3.25rem)',
+                  fontWeight: '950',
+                  color: '#fff',
+                  letterSpacing: '-2px',
+                  lineHeight: 1,
+                  marginBottom: '32px',
                 }}
               >
-                {liquidityChartAccounts.slice(0, 3).map((acc) => (
+                ₹{totalBalanceINR.toLocaleString()}
+              </div>
+
+              {/* Proportion Bar - Sleeker alternative to Pie Chart */}
+              <div
+                style={{
+                  height: '8px',
+                  width: '100%',
+                  display: 'flex',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  background: 'rgba(255,255,255,0.05)',
+                  marginBottom: '32px',
+                }}
+              >
+                {liquidityChartAccounts.map((acc, idx) => {
+                  const width = (acc.balance / (totalBalanceINR || 1)) * 100;
+                  if (width < 0.5) return null;
+                  return (
+                    <div
+                      key={acc.id}
+                      style={{
+                        width: `${width}%`,
+                        height: '100%',
+                        background: ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length],
+                        transition: '0.4s',
+                      }}
+                      title={`${acc.name}: ${width.toFixed(1)}%`}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Compact Accounts Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: '12px',
+                }}
+              >
+                {liquidityChartAccounts.slice(0, 6).map((acc, idx) => (
                   <div
                     key={acc.id}
                     style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      padding: '12px',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(255,255,255,0.05)',
+                      padding: '12px 16px',
+                      borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
                     }}
                   >
                     <div
                       style={{
-                        color: '#94a3b8',
-                        fontSize: '0.7rem',
-                        fontWeight: '700',
-                        marginBottom: '4px',
+                        width: '3px',
+                        height: '24px',
+                        borderRadius: '2px',
+                        background: ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length],
                       }}
-                    >
-                      {acc.name}
-                    </div>
-                    <div style={{ color: '#fff', fontSize: '1rem', fontWeight: '800' }}>
-                      ₹{acc.balance.toLocaleString()}
+                    />
+                    <div>
+                      <div
+                        style={{
+                          fontSize: '0.7rem',
+                          color: '#94a3b8',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {acc.name}
+                      </div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#fff' }}>
+                        ₹{acc.balance.toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 ))}
+                {liquidityChartAccounts.length > 6 && (
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.04)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748b',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                    }}
+                  >
+                    + {liquidityChartAccounts.length - 6} more accounts
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Visual Balance Distribution (Small Chart) */}
             <div
+              className="hide-mobile"
               style={{
-                width: 'clamp(190px, 24vw, 240px)',
+                width: '180px',
+                height: '180px',
+                flexShrink: 0,
                 position: 'relative',
               }}
             >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={liquidityChartAccounts}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="65%"
+                    outerRadius="90%"
+                    dataKey="balance"
+                    paddingAngle={2}
+                  >
+                    {liquidityChartAccounts.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length]}
+                        stroke="transparent"
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
               <div
                 style={{
-                  width: '100%',
-                  height: 'clamp(190px, 24vw, 240px)',
-                  position: 'relative',
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
                 }}
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={
-                        liquidityChartAccounts.length > 0
-                          ? liquidityChartAccounts
-                          : [{ id: 0, name: 'No liquidity', balance: 1 }]
-                      }
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="58%"
-                      outerRadius="82%"
-                      paddingAngle={liquidityChartAccounts.length > 0 ? 4 : 0}
-                      minAngle={liquidityChartAccounts.length > 0 ? 6 : 0}
-                      dataKey="balance"
-                      animationBegin={0}
-                      animationDuration={1200}
-                      stroke="rgba(7, 16, 24, 0.9)"
-                      strokeWidth={2}
-                    >
-                      {(liquidityChartAccounts.length > 0
-                        ? liquidityChartAccounts
-                        : [{ id: 0 } as const]
-                      ).map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            liquidityChartAccounts.length > 0
-                              ? ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length]
-                              : 'rgba(160, 188, 180, 0.24)'
-                          }
-                          style={{
-                            filter:
-                              liquidityChartAccounts.length > 0
-                                ? `drop-shadow(0 0 10px ${
-                                    ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length]
-                                  }35)`
-                                : 'none',
-                          }}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: 'rgba(8, 16, 20, 0.96)',
-                        border: '1px solid rgba(160, 188, 180, 0.22)',
-                        borderRadius: '14px',
-                        padding: '12px',
-                        boxShadow: '0 16px 32px rgba(0, 0, 0, 0.45)',
-                        fontSize: '0.8rem',
-                      }}
-                      itemStyle={{ color: '#f4f8f7' }}
-                      labelStyle={{ color: '#9aaea9', fontWeight: 700 }}
-                      formatter={(value: number | string | undefined) => [
-                        `₹${Number(value || 0).toLocaleString()}`,
-                        'Balance',
-                      ]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    textAlign: 'center',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <div
-                    style={{
-                      color: '#9aaea9',
-                      fontSize: '0.62rem',
-                      fontWeight: '800',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    {liquidityChartAccounts.length > 0 ? 'Cash Split' : 'No Cash'}
-                  </div>
-                  <div style={{ color: '#f4f8f7', fontSize: '1.1rem', fontWeight: '900' }}>
-                    {liquidityChartAccounts.length}
-                  </div>
+                <div style={{ fontSize: '0.6rem', fontWeight: '800', color: '#64748b' }}>TOTAL</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: '#fff' }}>
+                  {liquidityChartAccounts.length}
                 </div>
-              </div>
-              <div
-                style={{
-                  marginTop: '14px',
-                  display: 'grid',
-                  gap: '8px',
-                }}
-              >
-                {liquidityChartAccounts.length > 0 ? (
-                  liquidityChartAccounts.slice(0, 4).map((account, index) => {
-                    const share =
-                      totalBalanceINR > 0 ? (account.balance / totalBalanceINR) * 100 : 0;
-
-                    return (
-                      <div
-                        key={account.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '12px',
-                          padding: '10px 12px',
-                          borderRadius: '14px',
-                          background: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(160, 188, 180, 0.12)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            minWidth: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '10px',
-                              height: '10px',
-                              borderRadius: '50%',
-                              background:
-                                ACCOUNT_ACCENT_COLORS[index % ACCOUNT_ACCENT_COLORS.length],
-                              flexShrink: 0,
-                            }}
-                          />
-                          <div style={{ minWidth: 0 }}>
-                            <div
-                              style={{
-                                color: '#f4f8f7',
-                                fontSize: '0.82rem',
-                                fontWeight: '800',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {account.name}
-                            </div>
-                            <div style={{ color: '#9aaea9', fontSize: '0.72rem' }}>
-                              {share.toFixed(1)}% of liquid balance
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            color: '#d9f3e9',
-                            fontSize: '0.82rem',
-                            fontWeight: '800',
-                            flexShrink: 0,
-                          }}
-                        >
-                          ₹{account.balance.toLocaleString('en-IN')}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div
-                    style={{
-                      padding: '18px 16px',
-                      borderRadius: '16px',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(160, 188, 180, 0.12)',
-                      color: '#9aaea9',
-                      fontSize: '0.78rem',
-                      textAlign: 'center',
-                    }}
-                  >
-                    Add funds to an INR account to see your liquidity split here.
-                  </div>
-                )}
               </div>
             </div>
           </div>
