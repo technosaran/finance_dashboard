@@ -170,7 +170,7 @@ p {
   backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
   border: 1px solid var(--lg-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow:
     0 4px 6px rgba(0, 0, 0, 0.3),
     0 12px 32px rgba(0, 0, 0, 0.45),
@@ -4159,6 +4159,12 @@ a:focus-visible {
 
 /* Shared UI refresh overrides */
 :root {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
   --background: #071018;
   --foreground: #f4f8f7;
   --text-primary: #f4f8f7;

@@ -301,24 +301,26 @@ export default function AccountsClient() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '40px',
+          marginBottom: '32px',
         }}
       >
         <div>
           <h1
             style={{
-              fontSize: '3.5rem',
+              fontSize: 'clamp(2rem, 5vw, 3rem)',
               fontWeight: '950',
               margin: 0,
               letterSpacing: '-2px',
-              color: '#fff',
+              background: 'linear-gradient(135deg, #fff 0%, #1ea672 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
               fontFamily: 'var(--font-outfit)',
             }}
           >
-            Accounts<span style={{ color: '#1ea672' }}>.</span>
+            Accounts
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px', fontWeight: '800' }}>
-            STRATEGIC MANAGEMENT OF FINANCIAL LIQUIDITY
+          <p style={{ color: '#6f8480', fontSize: '0.85rem', marginTop: '6px', fontWeight: '600' }}>
+            Manage your financial accounts
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -398,39 +400,39 @@ export default function AccountsClient() {
             gap: '40px',
           }}
         >
-          <div style={{ flex: 1, minWidth: '320px' }}>
+          <div style={{ flex: 1, minWidth: '280px' }}>
             <div
               style={{
-                color: '#64748b',
-                fontSize: '1rem',
-                fontWeight: '900',
+                color: '#1ea672',
+                fontSize: '0.75rem',
+                fontWeight: '800',
                 textTransform: 'uppercase',
-                letterSpacing: '2px',
-                marginBottom: '12px',
+                letterSpacing: '1.5px',
+                marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '8px',
               }}
             >
               <div
                 style={{
-                  width: '12px',
-                  height: '12px',
+                  width: '8px',
+                  height: '8px',
                   borderRadius: '50%',
                   background: '#1ea672',
-                  boxShadow: '0 0 15px #1ea672',
+                  boxShadow: '0 0 12px #1ea672',
                 }}
               />
               Total Liquidity
             </div>
             <div
               style={{
-                fontSize: 'clamp(3.5rem, 8vw, 5.5rem)',
+                fontSize: 'clamp(2.5rem, 6vw, 4rem)',
                 fontWeight: '950',
                 color: '#fff',
-                letterSpacing: '-4px',
-                lineHeight: 0.9,
-                marginBottom: '40px',
+                letterSpacing: '-3px',
+                lineHeight: 1,
+                marginBottom: '24px',
               }}
             >
               ₹{totalBalanceINR.toLocaleString()}
@@ -438,13 +440,13 @@ export default function AccountsClient() {
 
             <div
               style={{
-                height: '12px',
+                height: '10px',
                 width: '100%',
                 display: 'flex',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                background: 'rgba(255,255,255,0.05)',
-                marginBottom: '32px',
+                background: 'rgba(30, 166, 114, 0.15)',
+                marginBottom: '24px',
               }}
             >
               {liquidityChartAccounts.map((acc) => (
@@ -453,8 +455,9 @@ export default function AccountsClient() {
                   style={{
                     width: `${(acc.balance / totalBalanceINR) * 100}%`,
                     height: '100%',
-                    background: getBankBranding(acc.bankName).color,
+                    background: '#1ea672',
                     transition: '0.4s',
+                    opacity: 0.7 + (acc.balance / totalBalanceINR) * 0.3,
                   }}
                 />
               ))}
@@ -463,8 +466,8 @@ export default function AccountsClient() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                gap: '16px',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: '12px',
               }}
             >
               {liquidityChartAccounts.slice(0, 6).map((acc) => {
@@ -473,35 +476,36 @@ export default function AccountsClient() {
                   <div
                     key={acc.id}
                     style={{
-                      padding: '16px',
-                      borderRadius: '16px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      padding: '14px 16px',
+                      borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(30, 166, 114, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
+                      transition: 'all 0.2s',
                     }}
                   >
                     <div
                       style={{
-                        width: '4px',
-                        height: '30px',
-                        borderRadius: '4px',
-                        background: branding.color,
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: '#1ea672',
+                        boxShadow: '0 0 8px #1ea672',
                       }}
                     />
                     <div>
                       <div
                         style={{
                           fontSize: '0.7rem',
-                          color: '#64748b',
-                          fontWeight: '900',
-                          textTransform: 'uppercase',
+                          color: '#9aaea9',
+                          fontWeight: '700',
                         }}
                       >
                         {acc.name}
                       </div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: '950', color: '#fff' }}>
+                      <div style={{ fontSize: '1rem', fontWeight: '800', color: '#fff' }}>
                         ₹{acc.balance.toLocaleString()}
                       </div>
                     </div>
@@ -513,7 +517,7 @@ export default function AccountsClient() {
 
           <div
             className="hide-mobile"
-            style={{ width: '240px', height: '240px', position: 'relative' }}
+            style={{ width: '180px', height: '180px', position: 'relative' }}
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -521,13 +525,13 @@ export default function AccountsClient() {
                   data={liquidityChartAccounts}
                   cx="50%"
                   cy="50%"
-                  innerRadius="70%"
-                  outerRadius="95%"
+                  innerRadius="65%"
+                  outerRadius="90%"
                   dataKey="balance"
-                  paddingAngle={2}
+                  paddingAngle={4}
                 >
                   {liquidityChartAccounts.map((acc, i) => (
-                    <Cell key={i} fill={getBankBranding(acc.bankName).color} stroke="transparent" />
+                    <Cell key={i} fill="#1ea672" stroke="transparent" opacity={0.6 + i * 0.07} />
                   ))}
                 </Pie>
               </PieChart>
@@ -543,8 +547,8 @@ export default function AccountsClient() {
                 pointerEvents: 'none',
               }}
             >
-              <div style={{ fontSize: '0.7rem', fontWeight: '900', color: '#64748b' }}>ASSETS</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: '950', color: '#fff' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#1ea672' }}>TOTAL</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: '950', color: '#fff' }}>
                 {liquidityChartAccounts.length}
               </div>
             </div>
@@ -561,17 +565,17 @@ export default function AccountsClient() {
           marginBottom: '32px',
         }}
       >
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 950 }}>Active Accounts</h3>
-        <span className="stat-label" style={{ fontSize: '0.65rem' }}>
-          {accounts.length} ASSETS FOUND
+        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#f4f8f7' }}>Active Accounts</h3>
+        <span style={{ fontSize: '0.7rem', color: '#1ea672', fontWeight: 700 }}>
+          {accounts.length} accounts
         </span>
       </div>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-          gap: '24px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '16px',
         }}
       >
         {displayAccounts.map((account) => {
@@ -581,14 +585,16 @@ export default function AccountsClient() {
               key={account.id}
               className="premium-card"
               style={{
-                padding: '32px',
+                padding: '20px 24px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '28px',
+                gap: '16px',
                 position: 'relative',
                 overflow: 'hidden',
                 background: 'rgba(255,255,255,0.01)',
                 cursor: 'pointer',
+                borderRadius: '20px',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               onClick={() => handleEditClick(account)}
             >
@@ -599,43 +605,35 @@ export default function AccountsClient() {
                   alignItems: 'flex-start',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                   <div
                     style={{
-                      width: '52px',
-                      height: '52px',
-                      borderRadius: '18px',
-                      background: branding.color + '22',
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      background: 'rgba(30, 166, 114, 0.15)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: branding.color,
+                      color: '#1ea672',
                       overflow: 'hidden',
                       padding: '8px',
-                      boxShadow: `0 8px 16px ${branding.color}22`,
+                      boxShadow: '0 4px 12px rgba(30, 166, 114, 0.15)',
                     }}
                   >
-                    <img
-                      src={branding.logo}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      onError={(e) =>
-                        ((e.target as HTMLImageElement).src =
-                          'https://www.svgrepo.com/show/511585/building-6.svg')
-                      }
-                    />
+                    <Wallet size={22} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{account.name}</h3>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f4f8f7' }}>
+                      {account.name}
+                    </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ color: branding.color }}>{getAccountIcon(account.type)}</span>
+                      <span style={{ color: '#1ea672' }}>{getAccountIcon(account.type)}</span>
                       <span
-                        className="stat-label"
                         style={{
                           fontSize: '0.7rem',
-                          color: '#64748b',
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
+                          color: '#6f8480',
+                          fontWeight: 700,
                         }}
                       >
                         {account.type} • {branding.name}
@@ -678,40 +676,22 @@ export default function AccountsClient() {
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    marginBottom: '12px',
+                    marginBottom: '8px',
                   }}
                 >
                   <span
                     style={{
-                      fontSize: '2.5rem',
+                      fontSize: '1.75rem',
                       fontWeight: 950,
-                      letterSpacing: '-2px',
+                      letterSpacing: '-1px',
                       fontFamily: 'var(--font-outfit)',
                     }}
                   >
-                    <span style={{ fontSize: '1.2rem', color: branding.color, marginRight: '4px' }}>
+                    <span style={{ fontSize: '1rem', color: '#1ea672', marginRight: '2px' }}>
                       ₹
                     </span>
                     {account.balance.toLocaleString('en-IN')}
                   </span>
-                </div>
-                <div
-                  style={{
-                    height: '4px',
-                    background: 'rgba(255,255,255,0.05)',
-                    borderRadius: '100px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${(account.balance / totalBalanceINR) * 100}%`,
-                      height: '100%',
-                      background: branding.color,
-                      borderRadius: '100px',
-                      opacity: 0.8,
-                    }}
-                  />
                 </div>
               </div>
 
@@ -733,15 +713,15 @@ export default function AccountsClient() {
                     background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
                     color: '#fff',
                     border: 'none',
-                    padding: '10px 24px',
-                    borderRadius: '14px',
-                    fontWeight: '900',
-                    fontSize: '0.8rem',
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    fontSize: '0.75rem',
                     cursor: 'pointer',
-                    boxShadow: '0 8px 20px rgba(30, 166, 114, 0.2)',
+                    boxShadow: '0 4px 12px rgba(30, 166, 114, 0.25)',
                   }}
                 >
-                  ADD FUNDS
+                  + ADD
                 </button>
               </div>
             </div>
