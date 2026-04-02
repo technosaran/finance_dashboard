@@ -44,7 +44,7 @@ import {
   calculatePositionMetricsFromInvestment,
 } from '@/lib/utils/portfolio';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
+const COLORS = ['#1ea672', '#43c08a', '#f59e0b', '#3ea8a1', '#146d63', '#8fd5b6'];
 
 const inrFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -528,8 +528,8 @@ export default function MutualFundsClient() {
               padding: '12px',
               borderRadius: '14px',
               background: '#050505',
-              color: isRefreshing ? '#64748b' : '#818cf8',
-              border: '1px solid #111111',
+              color: isRefreshing ? '#64748b' : '#1ea672',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               cursor: isRefreshing ? 'wait' : 'pointer',
               transition: '0.2s',
               display: 'flex',
@@ -556,7 +556,7 @@ export default function MutualFundsClient() {
             style={{
               padding: '10px 20px',
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+              background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
               color: 'white',
               border: 'none',
               fontWeight: '800',
@@ -565,7 +565,7 @@ export default function MutualFundsClient() {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
+              boxShadow: '0 8px 16px rgba(30, 166, 114, 0.2)',
               transition: '0.2s',
               flexShrink: 0,
               minHeight: '44px',

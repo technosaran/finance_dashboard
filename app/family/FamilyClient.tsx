@@ -218,7 +218,7 @@ export default function FamilyClient() {
             <h1
               className="page-title"
               style={{
-                background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 50%, #f472b6 100%)',
+                background: 'linear-gradient(135deg, #1ea672 0%, #146d63 50%, #43c08a 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -234,8 +234,8 @@ export default function FamilyClient() {
             }}
             className="header-add-btn"
             style={{
-              background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)',
-              boxShadow: '0 10px 30px rgba(236, 72, 153, 0.3)',
+              background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+              boxShadow: '0 10px 30px rgba(30, 166, 114, 0.3)',
             }}
           >
             <Heart size={18} fill="currentColor" /> Log Transfer
@@ -257,7 +257,7 @@ export default function FamilyClient() {
               label: 'Total sent',
               value: `₹${totalSent.toLocaleString()}`,
               icon: <TrendingDown size={20} />,
-              color: '#ec4899',
+              color: '#1ea672',
               sub: 'Lifetime',
             },
             {
@@ -358,9 +358,9 @@ export default function FamilyClient() {
                 gap: '8px',
                 ...(activeTab === tab.key
                   ? {
-                      borderColor: '#ec4899',
-                      color: '#ec4899',
-                      background: 'rgba(236, 72, 153, 0.1)',
+                      borderColor: '#1ea672',
+                      color: '#1ea672',
+                      background: 'rgba(30, 166, 114, 0.1)',
                     }
                   : {}),
               }}
@@ -635,10 +635,10 @@ export default function FamilyClient() {
                     minHeight: '200px',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#ec4899';
-                    (e.currentTarget as HTMLButtonElement).style.color = '#ec4899';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#1ea672';
+                    (e.currentTarget as HTMLButtonElement).style.color = '#1ea672';
                     (e.currentTarget as HTMLButtonElement).style.background =
-                      'rgba(236, 72, 153, 0.03)';
+                      'rgba(30, 166, 114, 0.03)';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.borderColor = '#111111';
@@ -652,7 +652,7 @@ export default function FamilyClient() {
                       width: '52px',
                       height: '52px',
                       borderRadius: '16px',
-                      background: 'rgba(236, 72, 153, 0.08)',
+                      background: 'rgba(30, 166, 114, 0.08)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -710,7 +710,7 @@ export default function FamilyClient() {
                   style={{
                     padding: 'clamp(12px, 2.5vw, 16px) clamp(24px, 5vw, 32px)',
                     borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)',
+                    background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
                     color: '#fff',
                     border: 'none',
                     fontWeight: '800',
@@ -719,7 +719,7 @@ export default function FamilyClient() {
                     alignItems: 'center',
                     gap: '10px',
                     fontSize: '0.95rem',
-                    boxShadow: '0 10px 25px rgba(236, 72, 153, 0.3)',
+                    boxShadow: '0 10px 25px rgba(30, 166, 114, 0.3)',
                     minHeight: '44px',
                   }}
                 >

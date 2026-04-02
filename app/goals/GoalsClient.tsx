@@ -124,7 +124,7 @@ export default function GoalsClient() {
                 fontFamily: 'var(--font-outfit)',
               }}
             >
-              Goals<span style={{ color: '#8b5cf6' }}>.</span>
+              Goals<span style={{ color: '#1ea672' }}>.</span>
             </h1>
             <p className="stat-label" style={{ fontSize: '0.85rem' }}>
               Track your financial milestones and peak performance
@@ -150,8 +150,8 @@ export default function GoalsClient() {
               style={{
                 padding: '14px 28px',
                 borderRadius: '16px',
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                boxShadow: '0 12px 30px rgba(139, 92, 246, 0.25)',
+                background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+                boxShadow: '0 12px 30px rgba(30, 166, 114, 0.25)',
               }}
             >
               <Plus size={20} /> Create Goal
@@ -172,7 +172,7 @@ export default function GoalsClient() {
           <div
             style={{
               background:
-                'radial-gradient(circle at top right, rgba(139, 92, 246, 0.15), transparent 70%)',
+                'radial-gradient(circle at top right, rgba(30, 166, 114, 0.15), transparent 70%)',
               position: 'absolute',
               inset: 0,
             }}
@@ -250,10 +250,10 @@ export default function GoalsClient() {
               style={{
                 width: `${overallProgress}%`,
                 height: '100%',
-                background: 'linear-gradient(90deg, #8b5cf6 0%, #34d399 100%)',
+                background: 'linear-gradient(90deg, #1ea672 0%, #34d399 100%)',
                 borderRadius: '100px',
                 transition: 'width 2s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 0 30px rgba(139, 92, 246, 0.4)',
+                boxShadow: '0 0 30px rgba(30, 166, 114, 0.4)',
               }}
             />
           </div>
@@ -324,11 +324,11 @@ export default function GoalsClient() {
                               width: '52px',
                               height: '52px',
                               borderRadius: '18px',
-                              background: isCompleted ? '#22c55e22' : '#8b5cf622',
+                              background: isCompleted ? '#22c55e22' : '#1ea67222',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: isCompleted ? '#22c55e' : '#8b5cf6',
+                              color: isCompleted ? '#22c55e' : '#1ea672',
                             }}
                           >
                             {isCompleted ? <CheckCircle2 size={24} /> : <Flame size={24} />}
@@ -339,7 +339,7 @@ export default function GoalsClient() {
                               className="stat-label"
                               style={{
                                 fontSize: '0.7rem',
-                                color: isCompleted ? '#22c55e' : '#a78bfa',
+                                color: isCompleted ? '#22c55e' : '#43c08a',
                                 fontWeight: 800,
                                 textTransform: 'uppercase',
                               }}
@@ -416,7 +416,7 @@ export default function GoalsClient() {
                             style={{
                               width: `${Math.min(progress, 100)}%`,
                               height: '100%',
-                              background: isCompleted ? '#22c55e' : '#8b5cf6',
+                              background: isCompleted ? '#22c55e' : '#1ea672',
                               borderRadius: '100px',
                               transition: 'width 1.5s ease',
                               opacity: 0.8,
@@ -511,10 +511,10 @@ export default function GoalsClient() {
                 className="premium-card"
                 style={{
                   padding: '32px',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+                  background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
                   color: '#fff',
                   border: 'none',
-                  boxShadow: '0 20px 40px rgba(99, 102, 241, 0.2)',
+                  boxShadow: '0 20px 40px rgba(30, 166, 114, 0.2)',
                 }}
               >
                 <div
@@ -620,7 +620,7 @@ export default function GoalsClient() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#8b5cf6',
+                            color: '#1ea672',
                           }}
                         >
                           <Clock size={14} />

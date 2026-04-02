@@ -1566,8 +1566,12 @@ select:focus {
   width: 100%;
   overflow: hidden;
   font-family: var(--font-inter), sans-serif;
-  background: #000;
-  color: #fff;
+  background: #071018;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(30, 166, 114, 0.1), transparent 40%),
+    radial-gradient(circle at 86% 12%, rgba(55, 117, 104, 0.12), transparent 35%),
+    linear-gradient(180deg, #071018 0%, #09151b 100%);
+  color: var(--foreground);
   padding: 24px;
   box-sizing: border-box;
 }
@@ -1586,7 +1590,7 @@ select:focus {
   left: -5%;
   width: 55%;
   height: 55%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(30, 166, 114, 0.15) 0%, transparent 65%);
   animation: lpOrbFloat 22s ease-in-out infinite;
 }
 
@@ -1595,7 +1599,7 @@ select:focus {
   right: -5%;
   width: 50%;
   height: 50%;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.14) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(67, 192, 138, 0.12) 0%, transparent 65%);
   animation: lpOrbFloat 28s ease-in-out infinite reverse;
 }
 
@@ -1618,16 +1622,34 @@ select:focus {
   z-index: 10;
   width: 100%;
   max-width: 420px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  background: rgba(11, 21, 25, 0.85);
+  backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(180%);
+  border: 1px solid rgba(160, 188, 180, 0.15);
+  border-radius: 28px;
   padding: 44px 40px 36px;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
     0 32px 64px rgba(0, 0, 0, 0.6);
   animation: lpCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lp-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    rgba(30, 166, 114, 0.3),
+    transparent
+  );
+  pointer-events: none;
 }
 
 @keyframes lpCardIn {
@@ -1652,14 +1674,14 @@ select:focus {
 .lp-logo {
   width: 44px;
   height: 44px;
-  background: #fff;
+  background: linear-gradient(135deg, #1a8e68 0%, #155b58 100%);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(13, 78, 68, 0.35);
   transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
@@ -1677,7 +1699,8 @@ select:focus {
 }
 
 .lp-brand-accent {
-  opacity: 0.45;
+  color: #1ea672;
+  opacity: 1;
 }
 
 /* ── Heading ── */
@@ -1696,7 +1719,7 @@ select:focus {
 
 .lp-subtitle {
   font-size: 0.9375rem;
-  color: #71717a;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -1741,8 +1764,10 @@ select:focus {
 
 .lp-label {
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: #a1a1aa;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .lp-input-wrap {
@@ -1752,11 +1777,11 @@ select:focus {
 .lp-input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(9, 18, 22, 0.95);
+  border: 1px solid rgba(160, 188, 180, 0.14);
   border-radius: 12px;
   padding: 14px 16px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 0.9375rem;
   font-family: inherit;
   outline: none;
@@ -1767,13 +1792,13 @@ select:focus {
 }
 
 .lp-input::placeholder {
-  color: #3f3f46;
+  color: var(--text-tertiary);
 }
 
 .lp-input:focus {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+  border-color: rgba(67, 192, 138, 0.42);
+  background: rgba(16, 26, 32, 0.98);
+  box-shadow: 0 0 0 3px rgba(30, 166, 114, 0.12);
 }
 
 .lp-input--error {
@@ -1790,7 +1815,7 @@ select:focus {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #52525b;
+  color: var(--text-tertiary);
   background: none;
   border: none;
   cursor: pointer;
@@ -1805,7 +1830,7 @@ select:focus {
 }
 
 .lp-pw-toggle:hover {
-  color: #a1a1aa;
+  color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -1817,11 +1842,11 @@ select:focus {
 /* ── Submit button ── */
 .lp-submit {
   margin-top: 8px;
-  background: #fff;
-  color: #000;
+  background: linear-gradient(135deg, #1a8e68 0%, #146d63 100%);
+  color: #fff;
   padding: 15px 20px;
   border-radius: 12px;
-  border: none;
+  border: 1px solid rgba(67, 192, 138, 0.2);
   font-weight: 700;
   font-size: 0.9375rem;
   font-family: inherit;
@@ -1834,11 +1859,13 @@ select:focus {
     transform 0.25s cubic-bezier(0.19, 1, 0.22, 1),
     box-shadow 0.25s cubic-bezier(0.19, 1, 0.22, 1),
     opacity 0.2s;
+  box-shadow: 0 10px 25px rgba(13, 78, 68, 0.25);
 }
 
 .lp-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 36px rgba(13, 78, 68, 0.35);
+  filter: brightness(1.1);
 }
 
 .lp-submit:active:not(:disabled) {
@@ -1856,8 +1883,8 @@ select:focus {
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-top-color: #000;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
   border-radius: 50%;
   animation: lpSpin 0.7s linear infinite;
 }
@@ -1875,19 +1902,19 @@ select:focus {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  color: #3f3f46;
+  color: var(--text-tertiary);
   font-size: 0.75rem;
 }
 
 .lp-contact {
   margin: 14px 0 0;
-  color: #3f3f46;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   text-align: center;
 }
 
 .lp-contact__link {
-  color: #71717a;
+  color: var(--text-secondary);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;

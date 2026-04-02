@@ -328,7 +328,7 @@ export default function LedgerClient() {
                   marginTop: '4px',
                   background:
                     netBalance >= 0
-                      ? 'linear-gradient(to bottom, #818cf8, #6366f1)'
+                      ? 'linear-gradient(to bottom, #1ea672, #146d63)'
                       : 'linear-gradient(to bottom, #f59e0b, #d97706)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -340,8 +340,8 @@ export default function LedgerClient() {
             </div>
             <div
               style={{
-                background: netBalance >= 0 ? 'rgba(99, 102, 241, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                color: netBalance >= 0 ? '#6366f1' : '#f59e0b',
+                background: netBalance >= 0 ? 'rgba(30, 166, 114, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                color: netBalance >= 0 ? '#1ea672' : '#f59e0b',
                 padding: '12px',
                 borderRadius: '12px',
               }}

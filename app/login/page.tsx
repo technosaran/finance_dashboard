@@ -49,7 +49,7 @@ export default function LoginPage() {
         body {
           overflow: hidden !important;
           height: 100% !important;
-          background: #000 !important;
+          background: #071018 !important;
         }
       `}</style>
 

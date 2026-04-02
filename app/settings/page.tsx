@@ -194,8 +194,8 @@ export default function SettingsPage() {
                 title="Your Profile"
                 description="Customize how you are identified within FINCORE"
                 icon={<Users size={20} />}
-                iconColor="#818cf8"
-                iconBackground="rgba(129, 140, 248, 0.1)"
+                iconColor="#1ea672"
+                iconBackground="rgba(30, 166, 114, 0.1)"
               >
                 <div className="settings-item">
                   <label className="settings-label">Display Name</label>
@@ -248,8 +248,8 @@ export default function SettingsPage() {
                 title="Advanced Charges"
                 description="Brokerage and regulatory charges information"
                 icon={<Info size={20} />}
-                iconColor="#3b82f6"
-                iconBackground="rgba(59, 130, 246, 0.1)"
+                iconColor="#1ea672"
+                iconBackground="rgba(30, 166, 114, 0.1)"
               >
                 <div
                   className="glass-panel"

@@ -1255,9 +1255,9 @@ export default function StocksClient() {
           <Loader2
             size={32}
             className="spin-animation"
-            style={{ color: '#6366f1', marginBottom: '12px' }}
+            style={{ color: '#1ea672', marginBottom: '12px' }}
           />
-          <div style={{ fontSize: '1rem', color: '#64748b' }}>Loading your portfolio...</div>
+          <div style={{ fontSize: '1rem', color: '#94a3b8' }}>Loading your portfolio...</div>
         </div>
       </div>
     );
@@ -1304,9 +1304,9 @@ export default function StocksClient() {
             style={{
               padding: '12px',
               borderRadius: '14px',
-              background: '#050505',
-              color: isRefreshing ? '#64748b' : '#818cf8',
-              border: '1px solid #111111',
+              background: 'rgba(255, 255, 255, 0.03)',
+              color: isRefreshing ? '#64748b' : '#1ea672',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               cursor: isRefreshing ? 'wait' : 'pointer',
               transition: '0.2s',
               display: 'flex',
@@ -1327,7 +1327,7 @@ export default function StocksClient() {
             style={{
               padding: '10px 16px',
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+              background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
               color: 'white',
               border: 'none',
               fontWeight: '800',
@@ -1336,7 +1336,7 @@ export default function StocksClient() {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 8px 16px rgba(99, 102, 241, 0.2)',
+              boxShadow: '0 8px 16px rgba(30, 166, 114, 0.2)',
               transition: '0.2s',
               flexShrink: 0,
             }}
@@ -1350,11 +1350,10 @@ export default function StocksClient() {
       {/* Portfolio Summary Cards */}
       <div className="grid-responsive-4" style={{ marginBottom: '32px' }}>
         <div
+          className="premium-card"
           style={{
-            background: 'linear-gradient(135deg, #050505 0%, #111111 100%)',
             padding: '24px',
             borderRadius: '20px',
-            border: '1px solid #111111',
           }}
         >
           <div
@@ -1363,19 +1362,31 @@ export default function StocksClient() {
               alignItems: 'center',
               gap: '10px',
               marginBottom: '12px',
-              color: '#6366f1',
+              color: '#1ea672',
             }}
           >
             <DollarSign size={18} />
-            <span style={{ fontWeight: '800', fontSize: '0.8rem', textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontWeight: '800',
+                fontSize: '0.8rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
               Inv. Capital
             </span>
           </div>
           <div
             className="stat-value-responsive"
-            style={{ fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: '900', color: '#fff' }}
+            style={{
+              fontSize: 'clamp(1.3rem, 4vw, 1.8rem)',
+              fontWeight: '950',
+              color: '#fff',
+              letterSpacing: '-1px',
+            }}
           >
-            ₹{totalInvestment.toLocaleString()}
+            ₹{totalInvestment.toLocaleString('en-IN')}
           </div>
         </div>
         <div

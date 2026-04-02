@@ -41,6 +41,7 @@ export default function AccountsClient() {
   const [addFundsAmount, setAddFundsAmount] = useState('');
   const [addFundsDescription, setAddFundsDescription] = useState('');
   const [addFundsCategory, setAddFundsCategory] = useState('Income');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [sourceAccountId, setSourceAccountId] = useState<number | ''>('');
@@ -251,6 +252,60 @@ export default function AccountsClient() {
       ),
     [accounts, selectedSourceAccount, sourceAccountId]
   );
+
+  const getBankBranding = (bankName: string) => {
+    const name = bankName.toLowerCase();
+    if (name.includes('hdfc')) return { name: 'HDFC Bank', color: '#1e40af' };
+    if (name.includes('sbi') || name.includes('state bank'))
+      return { name: 'State Bank of India', color: '#2563eb' };
+    if (name.includes('icici')) return { name: 'ICICI Bank', color: '#f97316' };
+    if (name.includes('axis')) return { name: 'Axis Bank', color: '#9d174d' };
+    if (name.includes('kotak')) return { name: 'Kotak Bank', color: '#dc2626' };
+    if (name.includes('idfc')) return { name: 'IDFC First', color: '#991b1b' };
+    if (name.includes('federal')) return { name: 'Federal Bank', color: '#1d4ed8' };
+    if (name.includes('indusind')) return { name: 'IndusInd Bank', color: '#7c2d12' };
+    if (name.includes('canara')) return { name: 'Canara Bank', color: '#0ea5e9' };
+    if (name.includes('union')) return { name: 'Union Bank', color: '#be123c' };
+    if (name.includes('baroda')) return { name: 'Bank of Baroda', color: '#ea580c' };
+    if (name.includes('paytm')) return { name: 'Paytm Payments', color: '#00baf2' };
+    if (name.includes('jupiter')) return { name: 'Jupiter Money', color: '#fbbf24' };
+    if (name.includes('fi ')) return { name: 'Fi Money', color: '#10b981' };
+    if (name.includes('cash')) return { name: 'Physical Cash', color: '#10b981' };
+    return { name: bankName, color: null };
+  };
+
+  const filteredAccounts = useMemo(() => {
+    if (!searchQuery.trim()) return accounts;
+    const q = searchQuery.toLowerCase();
+    return accounts.filter(
+      (acc) =>
+        acc.name.toLowerCase().includes(q) ||
+        acc.bankName.toLowerCase().includes(q) ||
+        acc.type.toLowerCase().includes(q)
+    );
+  }, [accounts, searchQuery]);
+
+  const groupedAccounts = useMemo(() => {
+    const groups: Record<string, Account[]> = {};
+    filteredAccounts.forEach((acc) => {
+      if (!groups[acc.type]) groups[acc.type] = [];
+      groups[acc.type].push(acc);
+    });
+
+    // Sort groups: Savings first, then Checking, then Investment, then others
+    const order = ['Savings', 'Checking', 'Investment', 'Credit Card', 'Cash'];
+    const sortedGroups: Record<string, Account[]> = {};
+
+    order.forEach((type) => {
+      if (groups[type]) sortedGroups[type] = groups[type];
+    });
+
+    Object.keys(groups).forEach((type) => {
+      if (!order.includes(type)) sortedGroups[type] = groups[type];
+    });
+
+    return sortedGroups;
+  }, [filteredAccounts]);
 
   if (loading) {
     return (
@@ -737,212 +792,428 @@ export default function AccountsClient() {
           </div>
         </div>
 
-        {/* Accounts Grid */}
+        {/* Search and Filters Row */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '8px',
           }}
         >
-          {accounts.map((account, idx) => (
-            <div
-              key={account.id}
-              className="premium-card"
+          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+            <input
+              type="text"
+              placeholder="Search entities or institutions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                padding: '24px',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: '180px',
+                width: '100%',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                padding: '12px 16px 12px 40px',
+                borderRadius: '14px',
+                color: '#fff',
+                fontSize: '0.9rem',
+                outline: 'none',
+                transition: 'border-color 0.2s',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.borderColor =
-                  ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length] + '60';
-                e.currentTarget.style.boxShadow = `0 10px 20px -8px ${
-                  ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
-                }30`;
+              onFocus={(e) => (e.currentTarget.style.borderColor = '#1ea672')}
+              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#64748b',
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = '';
-                e.currentTarget.style.boxShadow = '';
-              }}
-              onClick={() => handleEditClick(account)}
             >
-              {/* Enhanced card decoration with gradient overlay */}
-              <div
+              <Building2 size={18} />
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '120px',
-                  height: '120px',
-                  background: `radial-gradient(circle, ${
-                    ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
-                  }10 0%, transparent 70%)`,
-                  filter: 'blur(30px)',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  padding: '4px',
                 }}
-              />
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
 
+          <div
+            style={{
+              color: '#94a3b8',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+            }}
+          >
+            {filteredAccounts.length} {filteredAccounts.length === 1 ? 'Entity' : 'Entities'}
+            {searchQuery ? ' found' : ''}
+          </div>
+        </div>
+
+        {/* Grouped Accounts Grid */}
+        {Object.entries(groupedAccounts).length > 0 ? (
+          (Object.entries(groupedAccounts) as [string, Account[]][]).map(([type, typeAccounts]) => (
+            <div key={type} style={{ marginBottom: '32px' }}>
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '12px',
-                  position: 'relative',
-                  zIndex: 1,
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '16px',
+                  padding: '0 4px',
                 }}
               >
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <div
-                    style={{
-                      background: `${ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]}15`,
-                      padding: '8px',
-                      borderRadius: '10px',
-                      color: ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length],
-                      border: `1px solid ${
-                        ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
-                      }20`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {getAccountIcon(account.type)}
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: '0.95rem',
-                        fontWeight: '700',
-                        color: '#fff',
-                        marginBottom: '2px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '180px',
-                      }}
-                    >
-                      {account.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.75rem',
-                        color: '#64748b',
-                        fontWeight: '600',
-                      }}
-                    >
-                      {account.bankName}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                  {account.name.toLowerCase() !== 'physical cash' && (
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        const isConfirmed = await customConfirm({
-                          title: 'Delete Account',
-                          message: `Are you sure you want to delete ${account.name}?`,
-                          confirmLabel: 'Delete',
-                          type: 'error',
-                        });
-
-                        if (isConfirmed) {
-                          await deleteAccount(account.id);
-                          showNotification('success', 'Account deleted');
-                        }
-                      }}
-                      style={{
-                        background: 'rgba(244, 63, 94, 0.1)',
-                        border: 'none',
-                        color: '#f43f5e',
-                        padding: '6px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-end',
-                  paddingTop: '12px',
-                  borderTop: '1px solid rgba(255,255,255,0.06)',
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      color: '#64748b',
-                      fontSize: '0.65rem',
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      marginBottom: '2px',
-                    }}
-                  >
-                    Available Balance
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '1.5rem',
-                      fontWeight: '800',
-                      color: '#fff',
-                      letterSpacing: '-0.5px',
-                    }}
-                  >
-                    {account.currency === 'INR' ? '₹' : '$'}
-                    {account.balance.toLocaleString()}
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedAccountId(account.id);
-                    setIsAddFundsModalOpen(true);
-                  }}
+                <div style={{ color: '#1ea672', display: 'flex' }}>{getAccountIcon(type)}</div>
+                <h2
                   style={{
-                    background: `linear-gradient(135deg, ${
-                      ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
-                    } 0%, ${ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]}dd 100%)`,
+                    fontSize: '1rem',
+                    fontWeight: '800',
                     color: '#fff',
-                    border: 'none',
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: `0 4px 8px ${
-                      ACCOUNT_ACCENT_COLORS[idx % ACCOUNT_ACCENT_COLORS.length]
-                    }30`,
+                    margin: 0,
+                    textTransform: 'capitalize',
                   }}
                 >
-                  <Plus size={16} strokeWidth={3} />
-                </button>
+                  {type === 'Cash' ? 'Physical Liquidity' : `${type} Entities`}
+                </h2>
+                <div
+                  style={{
+                    flex: 1,
+                    height: '1px',
+                    background: 'linear-gradient(to right, rgba(30, 166, 114, 0.2), transparent)',
+                  }}
+                />
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700' }}>
+                  {typeAccounts.length} {typeAccounts.length === 1 ? 'Item' : 'Items'}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+                  gap: '20px',
+                }}
+              >
+                {typeAccounts.map((account) => {
+                  const branding = getBankBranding(account.bankName);
+                  const baseColor = branding.color || '#1ea672';
+
+                  return (
+                    <div
+                      key={account.id}
+                      className="premium-card"
+                      style={{
+                        padding: '24px',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        minHeight: '190px',
+                        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-6px)';
+                        e.currentTarget.style.borderColor = `${baseColor}40`;
+                        e.currentTarget.style.boxShadow = `0 12px 24px -10px ${baseColor}25`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.borderColor = '';
+                        e.currentTarget.style.boxShadow = '';
+                      }}
+                      onClick={() => handleEditClick(account)}
+                    >
+                      {/* Decorative background logo */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '-10px',
+                          right: '-10px',
+                          opacity: 0.05,
+                          transform: 'rotate(-15deg)',
+                          transition: 'opacity 0.3s',
+                        }}
+                      >
+                        {getAccountIcon(account.type)}
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: '20px',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                          <div
+                            style={{
+                              background: `${baseColor}15`,
+                              padding: '10px',
+                              borderRadius: '12px',
+                              color: baseColor,
+                              border: `1px solid ${baseColor}25`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: `0 0 15px ${baseColor}10`,
+                            }}
+                          >
+                            {getAccountIcon(account.type)}
+                          </div>
+                          <div>
+                            <div
+                              style={{
+                                fontSize: '1.05rem',
+                                fontWeight: '800',
+                                color: '#fff',
+                                marginBottom: '2px',
+                                letterSpacing: '-0.3px',
+                              }}
+                            >
+                              {account.name}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#94a3b8',
+                                fontWeight: '700',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              {branding.name}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const isConfirmed = await customConfirm({
+                                title: 'Decommission Entity?',
+                                message: `Are you sure you want to remove ${account.name}? All linked liquidity data will be preserved in ledger but the entity will be inactive.`,
+                                confirmLabel: 'Decommission',
+                                type: 'error',
+                              });
+
+                              if (isConfirmed) {
+                                await deleteAccount(account.id);
+                                showNotification('success', 'Entity decommissioned');
+                              }
+                            }}
+                            style={{
+                              background: 'rgba(244, 63, 94, 0.08)',
+                              border: '1px solid rgba(244, 63, 94, 0.15)',
+                              color: '#fb7185',
+                              padding: '8px',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.15)')
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.background = 'rgba(244, 63, 94, 0.08)')
+                            }
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-end',
+                          paddingTop: '16px',
+                          borderTop: '1px solid rgba(255,255,255,0.06)',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div
+                            style={{
+                              color: '#64748b',
+                              fontSize: '0.65rem',
+                              fontWeight: '800',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            Current Liquidity
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.65rem',
+                              fontWeight: '950',
+                              color: '#fff',
+                              letterSpacing: '-1px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '1rem',
+                                color: baseColor,
+                                fontWeight: '800',
+                                opacity: 0.8,
+                              }}
+                            >
+                              {account.currency === 'INR' ? '₹' : '$'}
+                            </span>
+                            {account.balance.toLocaleString('en-IN', {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })}
+                            <span
+                              style={{ fontSize: '0.9rem', color: '#475569', fontWeight: '800' }}
+                            >
+                              .{(account.balance % 1).toFixed(2).split('.')[1]}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAccountId(account.id);
+                              setIsAddFundsModalOpen(true);
+                            }}
+                            style={{
+                              background: `linear-gradient(135deg, ${baseColor} 0%, ${baseColor}dd 100%)`,
+                              color: '#fff',
+                              border: 'none',
+                              padding: '10px 14px',
+                              borderRadius: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: '800',
+                              boxShadow: `0 8px 16px ${baseColor}20`,
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                          >
+                            <Plus size={14} strokeWidth={3} />
+                            <span>Add</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        ) : (
+          <div
+            style={{
+              padding: '80px 40px',
+              borderRadius: '24px',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px dashed rgba(255,255,255,0.1)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px',
+            }}
+          >
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '20px',
+                background: 'rgba(30, 166, 114, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#1ea672',
+              }}
+            >
+              <Building2 size={32} />
+            </div>
+            <div>
+              <h3
+                style={{
+                  color: '#fff',
+                  fontSize: '1.25rem',
+                  fontWeight: '800',
+                  margin: '0 0 8px 0',
+                }}
+              >
+                {searchQuery ? 'No matching entities found' : 'No financial entities yet'}
+              </h3>
+              <p
+                style={{
+                  color: '#64748b',
+                  fontSize: '0.95rem',
+                  maxWidth: '380px',
+                  margin: 0,
+                  lineHeight: 1.6,
+                }}
+              >
+                {searchQuery
+                  ? `We couldn't find any accounts matching "${searchQuery}". Try a different search term.`
+                  : 'Start by establishing your first bank account, wallet, or investment entity to track your liquidity.'}
+              </p>
+            </div>
+            {!searchQuery && (
+              <button
+                onClick={() => {
+                  resetAccountForm();
+                  setIsModalOpen(true);
+                }}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '14px',
+                  background: '#fff',
+                  color: '#000',
+                  border: 'none',
+                  fontWeight: '800',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  marginTop: '10px',
+                }}
+              >
+                Create First Entity
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modals - Standard Premium Design */}
