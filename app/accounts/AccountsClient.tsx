@@ -22,6 +22,183 @@ import {
 
 const ACCOUNT_ACCENT_COLORS = ['#1ea672', '#43c08a', '#f2a93b', '#3ea8a1', '#2f7f78', '#8fd5b6'];
 
+const BANK_BRANDING = {
+  hdfc: {
+    name: 'HDFC Bank',
+    color: '#1e438a',
+    keywords: ['hdfc'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4H20V20H4V4Z" fill={color} fillOpacity="0.1" />
+        <path
+          d="M6 8V16M18 8V16M12 6V11M12 13V18"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+        <rect x="4" y="4" width="16" height="16" rx="2" stroke={color} strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  icici: {
+    name: 'ICICI Bank',
+    color: '#f97316',
+    keywords: ['icici'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+        <path
+          d="M8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path d="M12 12V16" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  sbi: {
+    name: 'State Bank of India',
+    color: '#0066bb',
+    keywords: ['sbi', 'state bank'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2.5" />
+        <circle cx="12" cy="12" r="3" fill={color} />
+        <path d="M12 15V21" stroke={color} strokeWidth="2.5" />
+      </svg>
+    ),
+  },
+  axis: {
+    name: 'Axis Bank',
+    color: '#9d174d',
+    keywords: ['axis'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 4L4 20H20L12 4Z"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+        <path d="M12 8L9 14H15L12 8Z" fill={color} />
+      </svg>
+    ),
+  },
+  kotak: {
+    name: 'Kotak Bank',
+    color: '#dc2626',
+    keywords: ['kotak'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M4 6H12C14.2091 6 16 7.79086 16 10V10C16 12.2091 14.2091 14 12 14H4V6Z"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+        <path d="M4 6V18" stroke={color} strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 14L18 20" stroke={color} strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 10L18 4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  idfc: {
+    name: 'IDFC First Bank',
+    color: '#991b1b',
+    keywords: ['idfc'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4H20V8H4V4Z" fill={color} />
+        <path d="M4 10H14V14H4V10Z" fill={color} opacity="0.7" />
+        <path d="M4 16H10V20H4V16Z" fill={color} opacity="0.4" />
+      </svg>
+    ),
+  },
+  paytm: {
+    name: 'Paytm Payments Bank',
+    color: '#00baf2',
+    keywords: ['paytm'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect
+          x="3"
+          y="6"
+          width="18"
+          height="12"
+          rx="2"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+        <path d="M7 12H17" stroke={color} strokeWidth="2" strokeLinecap="round" />
+        <path d="M10 9L7 12L10 15" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  jupiter: {
+    name: 'Jupiter Money',
+    color: '#fbbf24',
+    keywords: ['jupiter'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+        <circle cx="12" cy="11" r="3" fill={color} />
+      </svg>
+    ),
+  },
+  fi: {
+    name: 'Fi Money',
+    color: '#10b981',
+    keywords: ['fi '],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect
+          x="4"
+          y="4"
+          width="16"
+          height="16"
+          rx="4"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+        <path d="M8 8H16V11H11V16H8V8Z" fill={color} />
+      </svg>
+    ),
+  },
+  cash: {
+    name: 'Physical Cash',
+    color: '#10b981',
+    keywords: ['cash'],
+    logo: (color: string) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="1.5" />
+        <circle cx="12" cy="12" r="3" stroke={color} strokeWidth="1.5" />
+        <path d="M6 9V15M18 9V15" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+};
+
 export default function AccountsClient() {
   const { accounts, addAccount, updateAccount, deleteAccount, addFunds, loading } = useLedger();
   const { showNotification, confirm: customConfirm } = useNotifications();
@@ -92,9 +269,22 @@ export default function AccountsClient() {
     setEditId(null);
     setAccountName('');
     setBankName('');
-    setAccountType('Checking');
+    setAccountType('Savings');
     setBalance('');
     setCurrency('INR');
+  };
+
+  const handleBankNameChange = (val: string) => {
+    setBankName(val);
+    const lowerVal = val.toLowerCase();
+    for (const branding of Object.values(BANK_BRANDING)) {
+      if (branding.keywords.some((kw) => lowerVal.includes(kw)) && val.length > 2) {
+        if (branding.name !== val) {
+          setBankName(branding.name);
+        }
+        break;
+      }
+    }
   };
 
   const handleEditClick = (account: Account) => {
@@ -255,35 +445,19 @@ export default function AccountsClient() {
 
   const getBankBranding = (bankName: string) => {
     const name = bankName.toLowerCase();
-    if (name.includes('hdfc')) return { name: 'HDFC Bank', color: '#1e40af' };
-    if (name.includes('sbi') || name.includes('state bank'))
-      return { name: 'State Bank of India', color: '#2563eb' };
-    if (name.includes('icici')) return { name: 'ICICI Bank', color: '#f97316' };
-    if (name.includes('axis')) return { name: 'Axis Bank', color: '#9d174d' };
-    if (name.includes('kotak')) return { name: 'Kotak Bank', color: '#dc2626' };
-    if (name.includes('idfc')) return { name: 'IDFC First', color: '#991b1b' };
-    if (name.includes('federal')) return { name: 'Federal Bank', color: '#1d4ed8' };
-    if (name.includes('indusind')) return { name: 'IndusInd Bank', color: '#7c2d12' };
-    if (name.includes('canara')) return { name: 'Canara Bank', color: '#0ea5e9' };
-    if (name.includes('union')) return { name: 'Union Bank', color: '#be123c' };
-    if (name.includes('baroda')) return { name: 'Bank of Baroda', color: '#ea580c' };
-    if (name.includes('paytm')) return { name: 'Paytm Payments', color: '#00baf2' };
-    if (name.includes('jupiter')) return { name: 'Jupiter Money', color: '#fbbf24' };
-    if (name.includes('fi ')) return { name: 'Fi Money', color: '#10b981' };
-    if (name.includes('cash')) return { name: 'Physical Cash', color: '#10b981' };
-    return { name: bankName, color: null };
+    const found = Object.values(BANK_BRANDING).find((b) =>
+      b.keywords.some((kw) => name.includes(kw))
+    );
+
+    if (found) return found;
+    return {
+      name: bankName,
+      color: '#1ea672',
+      logo: (color: string) => <Building2 size={24} color={color} />,
+    };
   };
 
-  const filteredAccounts = useMemo(() => {
-    if (!searchQuery.trim()) return accounts;
-    const q = searchQuery.toLowerCase();
-    return accounts.filter(
-      (acc) =>
-        acc.name.toLowerCase().includes(q) ||
-        acc.bankName.toLowerCase().includes(q) ||
-        acc.type.toLowerCase().includes(q)
-    );
-  }, [accounts, searchQuery]);
+  const filteredAccounts = accounts;
 
   const groupedAccounts = useMemo(() => {
     const groups: Record<string, Account[]> = {};
@@ -526,7 +700,7 @@ export default function AccountsClient() {
                   Total Liquidity
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '700' }}>
-                  {liquidityChartAccounts.length} INR Entities
+                  {liquidityChartAccounts.length} Active Accounts
                 </div>
               </div>
 
@@ -691,96 +865,27 @@ export default function AccountsClient() {
           </div>
         </div>
 
-        {/* Entity Count */}
+        {/* Status Bar */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: '16px',
+            marginBottom: '12px',
           }}
         >
-          <div
-            style={{
-              color: '#94a3b8',
-              fontSize: 'clamp(0.8rem, 1.5vw, 0.9rem)',
-              fontWeight: '600',
-            }}
-          >
-            {accounts.length} Active Entities
-          </div>
-        </div>
-
-        {/* Search and Filters Row */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '16px',
-            marginBottom: '8px',
-          }}
-        >
-          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-            <input
-              type="text"
-              placeholder="Search entities or institutions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                padding: '12px 16px 12px 40px',
-                borderRadius: '14px',
-                color: '#fff',
-                fontSize: '0.9rem',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#1ea672')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#64748b',
-              }}
-            >
-              <Building2 size={18} />
-            </div>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: '4px',
-                }}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
           <div
             style={{
               color: '#94a3b8',
               fontSize: '0.85rem',
-              fontWeight: '600',
+              fontWeight: '700',
+              background: 'rgba(255,255,255,0.03)',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.05)',
             }}
           >
-            {filteredAccounts.length} {filteredAccounts.length === 1 ? 'Entity' : 'Entities'}
-            {searchQuery ? ' found' : ''}
+            {accounts.length} Active Accounts
           </div>
         </div>
 
@@ -807,7 +912,7 @@ export default function AccountsClient() {
                     textTransform: 'capitalize',
                   }}
                 >
-                  {type === 'Cash' ? 'Physical Liquidity' : `${type} Entities`}
+                  {type === 'Cash' ? 'Cash' : `${type} Accounts`}
                 </h2>
                 <div
                   style={{
@@ -817,7 +922,7 @@ export default function AccountsClient() {
                   }}
                 />
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700' }}>
-                  {typeAccounts.length} {typeAccounts.length === 1 ? 'Item' : 'Items'}
+                  {typeAccounts.length} {typeAccounts.length === 1 ? 'Account' : 'Accounts'}
                 </span>
               </div>
 
@@ -886,24 +991,26 @@ export default function AccountsClient() {
                         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                           <div
                             style={{
-                              background: `${baseColor}15`,
-                              padding: '10px',
-                              borderRadius: '12px',
+                              background: '#fff',
+                              padding: '12px',
+                              borderRadius: '16px',
                               color: baseColor,
-                              border: `1px solid ${baseColor}25`,
+                              border: `1px solid rgba(255,255,255,0.1)`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              boxShadow: `0 0 15px ${baseColor}10`,
+                              boxShadow: `0 8px 24px rgba(0,0,0,0.25)`,
+                              width: '48px',
+                              height: '48px',
                             }}
                           >
-                            {getAccountIcon(account.type)}
+                            {branding.logo(baseColor)}
                           </div>
                           <div>
                             <div
                               style={{
-                                fontSize: '1.05rem',
-                                fontWeight: '800',
+                                fontSize: '1.1rem',
+                                fontWeight: '900',
                                 color: '#fff',
                                 marginBottom: '2px',
                                 letterSpacing: '-0.3px',
@@ -915,10 +1022,12 @@ export default function AccountsClient() {
                               style={{
                                 fontSize: '0.75rem',
                                 color: '#94a3b8',
-                                fontWeight: '700',
+                                fontWeight: '800',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '4px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
                               }}
                             >
                               {branding.name}
@@ -931,15 +1040,15 @@ export default function AccountsClient() {
                             onClick={async (e) => {
                               e.stopPropagation();
                               const isConfirmed = await customConfirm({
-                                title: 'Decommission Entity?',
-                                message: `Are you sure you want to remove ${account.name}? All linked liquidity data will be preserved in ledger but the entity will be inactive.`,
-                                confirmLabel: 'Decommission',
+                                title: 'Remove Account?',
+                                message: `Are you sure you want to remove ${account.name}? All linked historical data will be preserved but the account will be closed.`,
+                                confirmLabel: 'Remove',
                                 type: 'error',
                               });
 
                               if (isConfirmed) {
                                 await deleteAccount(account.id);
-                                showNotification('success', 'Entity decommissioned');
+                                showNotification('success', 'Account removed');
                               }
                             }}
                             style={{
@@ -986,7 +1095,7 @@ export default function AccountsClient() {
                               marginBottom: '6px',
                             }}
                           >
-                            Current Liquidity
+                            Balance
                           </div>
                           <div
                             style={{
@@ -1094,7 +1203,7 @@ export default function AccountsClient() {
                   margin: '0 0 8px 0',
                 }}
               >
-                {searchQuery ? 'No matching entities found' : 'No financial entities yet'}
+                {searchQuery ? 'No matching accounts found' : 'No accounts yet'}
               </h3>
               <p
                 style={{
@@ -1106,8 +1215,8 @@ export default function AccountsClient() {
                 }}
               >
                 {searchQuery
-                  ? `We couldn't find any accounts matching "${searchQuery}". Try a different search term.`
-                  : 'Start by establishing your first bank account, wallet, or investment entity to track your liquidity.'}
+                  ? `We couldn't find any accounts matching "${searchQuery}".`
+                  : 'Start by establishing your first bank account or wallet.'}
               </p>
             </div>
             {!searchQuery && (
@@ -1128,7 +1237,7 @@ export default function AccountsClient() {
                   marginTop: '10px',
                 }}
               >
-                Create First Entity
+                Create First Account
               </button>
             )}
           </div>
@@ -1165,7 +1274,7 @@ export default function AccountsClient() {
                 id="modal-title"
                 style={{ fontSize: 'clamp(1.4rem, 3.5vw, 1.8rem)', fontWeight: '900', margin: 0 }}
               >
-                {editId ? 'Modify Entity' : 'New Entity'}
+                {editId ? 'Modify Account' : 'New Account'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -1202,7 +1311,7 @@ export default function AccountsClient() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Entity Name
+                  Account Name
                 </label>
                 <input
                   id="entity-name"
@@ -1239,7 +1348,7 @@ export default function AccountsClient() {
                 <input
                   id="bank-name"
                   value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
+                  onChange={(e) => handleBankNameChange(e.target.value)}
                   disabled={accountName.toLowerCase() === 'physical cash'}
                   placeholder="e.g. HDFC Bank"
                   style={{
@@ -1341,7 +1450,7 @@ export default function AccountsClient() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Initial Liquidity
+                  Initial Balance
                 </label>
                 <input
                   id="balance-input"
@@ -1379,7 +1488,7 @@ export default function AccountsClient() {
                 }}
                 aria-label={editId ? 'Update account' : 'Create account'}
               >
-                {editId ? 'Update Entity' : 'Establish Entity'}
+                {editId ? 'Update Account' : 'Establish Account'}
               </button>
             </form>
           </div>
@@ -1651,7 +1760,7 @@ export default function AccountsClient() {
                 id="add-funds-modal-title"
                 style={{ fontSize: 'clamp(1.4rem, 3.5vw, 1.8rem)', fontWeight: '900', margin: 0 }}
               >
-                Add Liquidity
+                Add Funds
               </h2>
               <button
                 onClick={() => setIsAddFundsModalOpen(false)}
@@ -1790,7 +1899,7 @@ export default function AccountsClient() {
                 }}
                 aria-label="Confirm add funds"
               >
-                Confirm Liquidity
+                Confirm Add
               </button>
             </form>
           </div>
