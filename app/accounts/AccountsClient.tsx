@@ -133,15 +133,6 @@ export default function AccountsClient() {
 
   const handleBankNameChange = (val: string) => {
     setBankName(val);
-    const lowerVal = val.toLowerCase();
-    for (const branding of Object.values(BANK_BRANDING)) {
-      if (branding.keywords.some((kw) => lowerVal.includes(kw)) && val.length > 2) {
-        if (branding.name !== val) {
-          setBankName(branding.name);
-        }
-        break;
-      }
-    }
   };
 
   const resetAccountForm = () => {
@@ -262,21 +253,8 @@ export default function AccountsClient() {
 
   const totalBalanceINR = liquidityChartAccounts.reduce((sum, acc) => sum + acc.balance, 0);
 
-  const groupedAccounts = useMemo(() => {
-    const order = ['Savings', 'Checking', 'Investment', 'Credit Card', 'Cash'];
-    const groups: Record<string, Account[]> = {};
-    accounts.forEach((acc) => {
-      if (!groups[acc.type]) groups[acc.type] = [];
-      groups[acc.type].push(acc);
-    });
-    const sorted: Record<string, Account[]> = {};
-    order.forEach((type) => {
-      if (groups[type]) sorted[type] = groups[type];
-    });
-    Object.keys(groups).forEach((type) => {
-      if (!order.includes(type)) sorted[type] = groups[type];
-    });
-    return sorted;
+  const displayAccounts = useMemo(() => {
+    return [...accounts].sort((a, b) => b.balance - a.balance);
   }, [accounts]);
 
   if (loading)
@@ -302,17 +280,18 @@ export default function AccountsClient() {
         <div>
           <h1
             style={{
-              fontSize: '3rem',
+              fontSize: '3.5rem',
               fontWeight: '950',
               margin: 0,
               letterSpacing: '-2px',
               color: '#fff',
+              fontFamily: 'var(--font-outfit)',
             }}
           >
-            Accounts
+            Accounts<span style={{ color: '#1ea672' }}>.</span>
           </h1>
-          <p style={{ color: '#64748b', fontSize: '1rem', marginTop: '4px' }}>
-            Strategic management of your financial liquidity
+          <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px', fontWeight: '800' }}>
+            STRATEGIC MANAGEMENT OF FINANCIAL LIQUIDITY
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -332,6 +311,7 @@ export default function AccountsClient() {
               cursor: 'pointer',
             }}
           >
+            <Download size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
             Export CSV
           </button>
           <button
@@ -347,6 +327,7 @@ export default function AccountsClient() {
               cursor: 'pointer',
             }}
           >
+            <ArrowRightLeft size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
             Transfer
           </button>
           <button
@@ -355,16 +336,20 @@ export default function AccountsClient() {
               setIsModalOpen(true);
             }}
             style={{
-              padding: '12px 24px',
+              padding: '14px 28px',
               borderRadius: '16px',
-              background: 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)',
+              background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
               color: '#fff',
               border: 'none',
               fontWeight: '900',
               cursor: 'pointer',
-              boxShadow: '0 10px 20px rgba(30, 166, 114, 0.2)',
+              boxShadow: '0 12px 30px rgba(30, 166, 114, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}
           >
+            <Plus size={20} />
             New Account
           </button>
         </div>
@@ -540,203 +525,201 @@ export default function AccountsClient() {
         </div>
       </div>
 
-      {/* Categories Grid - Horizontal layout */}
+      {/* Portfolio Grid - Single Flat List */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '32px',
+        }}
+      >
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 950 }}>Active Accounts</h3>
+        <span className="stat-label" style={{ fontSize: '0.65rem' }}>
+          {accounts.length} ASSETS FOUND
+        </span>
+      </div>
+
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
-          gap: '32px',
-          alignItems: 'start',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+          gap: '24px',
         }}
       >
-        {Object.entries(groupedAccounts).map(([type, typeAccounts]) => (
-          <div
-            key={type}
-            className="liquid-glass-group"
-            style={{
-              background: 'rgba(255,255,255,0.015)',
-              borderRadius: '32px',
-              padding: '24px',
-              border: '1px solid rgba(255,255,255,0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '24px',
-            }}
-          >
+        {displayAccounts.map((account) => {
+          const branding = getBankBranding(account.bankName);
+          return (
             <div
+              key={account.id}
+              className="premium-card"
               style={{
+                padding: '32px',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0 8px',
+                flexDirection: 'column',
+                gap: '28px',
+                position: 'relative',
+                overflow: 'hidden',
+                background: 'rgba(255,255,255,0.01)',
+                cursor: 'pointer',
               }}
+              onClick={() => handleEditClick(account)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ color: '#1ea672' }}>{getAccountIcon(type)}</div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: '950', color: '#fff', margin: 0 }}>
-                  {type === 'Cash' ? 'Cash' : type}
-                </h2>
-              </div>
               <div
                 style={{
-                  background: 'rgba(30, 166, 114, 0.1)',
-                  color: '#1ea672',
-                  fontSize: '0.8rem',
-                  fontWeight: '900',
-                  padding: '4px 12px',
-                  borderRadius: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
                 }}
               >
-                {typeAccounts.length}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {typeAccounts.map((account) => {
-                const branding = getBankBranding(account.bankName);
-                return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div
-                    key={account.id}
-                    className="premium-card"
                     style={{
-                      padding: '20px',
-                      borderLeft: `4px solid ${branding.color}`,
-                      background: 'rgba(0,0,0,0.2)',
-                      cursor: 'pointer',
-                      transition: '0.3s',
+                      width: '52px',
+                      height: '52px',
+                      borderRadius: '18px',
+                      background: branding.color + '22',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: branding.color,
+                      overflow: 'hidden',
+                      padding: '8px',
+                      boxShadow: `0 8px 16px ${branding.color}22`,
                     }}
-                    onClick={() => handleEditClick(account)}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <div
-                          style={{
-                            background: '#fff',
-                            padding: '6px',
-                            borderRadius: '12px',
-                            width: '48px',
-                            height: '48px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-                          }}
-                        >
-                          <img
-                            src={branding.logo}
-                            alt=""
-                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                            onError={(e) =>
-                              ((e.target as HTMLImageElement).src =
-                                'https://www.svgrepo.com/show/511585/building-6.svg')
-                            }
-                          />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                            {account.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '0.7rem',
-                              color: '#64748b',
-                              fontWeight: '800',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {branding.name}
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div
-                          style={{
-                            fontSize: '1.6rem',
-                            fontWeight: '950',
-                            color: '#fff',
-                            letterSpacing: '-1px',
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: '0.9rem',
-                              color: branding.color,
-                              marginRight: '4px',
-                            }}
-                          >
-                            ₹
-                          </span>
-                          {account.balance.toLocaleString('en-IN')}
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '8px',
-                        marginTop: '16px',
-                        paddingTop: '16px',
-                        borderTop: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const ok = await customConfirm({
-                            title: 'Delete Account?',
-                            message: `Remove ${account.name}?`,
-                            confirmLabel: 'Delete',
-                            type: 'error',
-                          });
-                          if (ok) {
-                            await deleteAccount(account.id);
-                            showNotification('success', 'Removed');
-                          }
-                        }}
+                    <img
+                      src={branding.logo}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onError={(e) =>
+                        ((e.target as HTMLImageElement).src =
+                          'https://www.svgrepo.com/show/511585/building-6.svg')
+                      }
+                    />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{account.name}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: branding.color }}>{getAccountIcon(account.type)}</span>
+                      <span
+                        className="stat-label"
                         style={{
-                          background: 'rgba(244, 63, 94, 0.1)',
-                          border: 'none',
-                          color: '#fb7185',
-                          padding: '8px',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
+                          fontSize: '0.7rem',
+                          color: '#64748b',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
                         }}
                       >
-                        <Trash2 size={16} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAccountId(account.id);
-                          setIsAddFundsModalOpen(true);
-                        }}
-                        style={{
-                          background: branding.color,
-                          color: '#fff',
-                          border: 'none',
-                          padding: '8px 16px',
-                          borderRadius: '12px',
-                          fontWeight: '950',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ADD FUNDS
-                      </button>
+                        {account.type} • {branding.name}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const ok = await customConfirm({
+                        title: 'Delete Account?',
+                        message: `Remove ${account.name}?`,
+                        confirmLabel: 'Delete',
+                        type: 'error',
+                      });
+                      if (ok) {
+                        await deleteAccount(account.id);
+                        showNotification('success', 'Removed');
+                      }
+                    }}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#64748b',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: '12px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '2.5rem',
+                      fontWeight: 950,
+                      letterSpacing: '-2px',
+                      fontFamily: 'var(--font-outfit)',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem', color: branding.color, marginRight: '4px' }}>
+                      ₹
+                    </span>
+                    {account.balance.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: '4px',
+                    background: 'rgba(255,255,255,0.05)',
+                    borderRadius: '100px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${(account.balance / totalBalanceINR) * 100}%`,
+                      height: '100%',
+                      background: branding.color,
+                      borderRadius: '100px',
+                      opacity: 0.8,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  paddingTop: '20px',
+                  borderTop: '1px solid rgba(255,255,255,0.05)',
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedAccountId(account.id);
+                    setIsAddFundsModalOpen(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 24px',
+                    borderRadius: '14px',
+                    fontWeight: '900',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 20px rgba(30, 166, 114, 0.2)',
+                  }}
+                >
+                  ADD FUNDS
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Modals */}
@@ -809,6 +792,7 @@ export default function AccountsClient() {
                   value={bankName}
                   onChange={(e) => handleBankNameChange(e.target.value)}
                   placeholder="e.g. HDFC Bank"
+                  list="bank-list"
                   style={{
                     background: '#000',
                     border: '1px solid #1a1a1a',
@@ -819,6 +803,11 @@ export default function AccountsClient() {
                   }}
                   required
                 />
+                <datalist id="bank-list">
+                  {Object.values(BANK_BRANDING).map((b) => (
+                    <option key={b.name} value={b.name} />
+                  ))}
+                </datalist>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -968,13 +957,14 @@ export default function AccountsClient() {
               <button
                 type="submit"
                 style={{
-                  background: '#1ea672',
+                  background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
                   color: '#fff',
                   padding: '16px',
                   borderRadius: '16px',
                   border: 'none',
                   fontWeight: '950',
                   cursor: 'pointer',
+                  boxShadow: '0 8px 20px rgba(30, 166, 114, 0.2)',
                 }}
               >
                 Confirm Deposit
@@ -1050,13 +1040,14 @@ export default function AccountsClient() {
               <button
                 type="submit"
                 style={{
-                  background: '#43c08a',
+                  background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
                   color: '#fff',
                   padding: '20px',
                   borderRadius: '18px',
                   border: 'none',
                   fontWeight: '950',
                   cursor: 'pointer',
+                  boxShadow: '0 8px 20px rgba(30, 166, 114, 0.2)',
                 }}
               >
                 Initialize Transfer
