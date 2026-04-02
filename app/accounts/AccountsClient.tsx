@@ -33,157 +33,157 @@ const BANK_BRANDING: Record<string, BankBranding> = {
     name: 'HDFC Bank',
     color: '#d32f2f',
     keywords: ['hdfc'],
-    logo: 'https://w7.pngwing.com/pngs/340/856/png-transparent-hdfc-bank-logo-hdfc-bank-india-mumbai-financial-service-text-logo-angle-brand-thumbnail.png',
+    logo: 'https://logo.clearbit.com/hdfcbank.com',
   },
   icici: {
     name: 'ICICI Bank',
     color: '#e65100',
     keywords: ['icici'],
-    logo: 'https://w7.pngwing.com/pngs/269/32/png-transparent-icici-bank-logo-icici-bank-logo-bank-financial-service-angle-text-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/icicibank.com',
   },
   sbi: {
     name: 'State Bank of India',
     color: '#00695c',
     keywords: ['sbi', 'state bank'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003319/png-transparent-state-bank-of-india-sbi-logo-business-finance-logo-bank-thumbnail.png',
+    logo: 'https://logo.clearbit.com/sbi.co.in',
   },
   axis: {
     name: 'Axis Bank',
     color: '#1a237e',
     keywords: ['axis'],
-    logo: 'https://w7.pngwing.com/pngs/350/398/png-transparent-axis-bank-logo-axis-bank-business-bank-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/axisbank.com',
   },
   kotak: {
     name: 'Kotak Mahindra Bank',
     color: '#c62828',
     keywords: ['kotak'],
-    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+    logo: 'https://logo.clearbit.com/kotak.com',
   },
   idfc: {
     name: 'IDFC First Bank',
     color: '#1565c0',
     keywords: ['idfc'],
-    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+    logo: 'https://logo.clearbit.com/idfcfirstbank.com',
   },
   yes: {
     name: 'Yes Bank',
     color: '#d50000',
-    keywords: ['yes'],
-    logo: 'https://w7.pngwing.com/pngs/339/498/png-transparent-yes-bank-logo-business-bank-finance-logo-thumbnail.png',
+    keywords: ['yes bank', 'yes'],
+    logo: 'https://logo.clearbit.com/yesbank.in',
   },
   indusind: {
     name: 'IndusInd Bank',
     color: '#ff6f00',
     keywords: ['indusind'],
-    logo: 'https://w7.pngwing.com/pngs/826/248/png-transparent-indusind-bank-logo-business-bank-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/indusind.com',
   },
   pnb: {
     name: 'Punjab National Bank',
     color: '#1565c0',
-    keywords: ['pnb'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003326/png-transparent-punjab-national-bank-pnb-logo-business-finance-bank-thumbnail.png',
+    keywords: ['pnb', 'punjab national'],
+    logo: 'https://logo.clearbit.com/pnbindia.in',
   },
   canara: {
     name: 'Canara Bank',
     color: '#004d40',
     keywords: ['canara'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003311/png-transparent-canara-bank-logo-canara-bank-business-finance-bank-thumbnail.png',
+    logo: 'https://logo.clearbit.com/canarabank.com',
   },
   bob: {
     name: 'Bank of Baroda',
     color: '#1e3a8a',
     keywords: ['bank of baroda', 'bob'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003310/png-transparent-bank-of-baroda-logo-business-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/bankofbaroda.in',
   },
   union: {
     name: 'Union Bank of India',
     color: '#0d47a1',
-    keywords: ['union'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003329/png-transparent-union-bank-of-india-logo-business-finance-bank-thumbnail.png',
+    keywords: ['union bank', 'union'],
+    logo: 'https://logo.clearbit.com/unionbankofindia.co.in',
   },
   uco: {
     name: 'UCO Bank',
     color: '#b71c1c',
     keywords: ['uco'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003328/png-transparent-uco-bank-logo-business-finance-bank-thumbnail.png',
+    logo: 'https://logo.clearbit.com/ucobank.com',
   },
   boi: {
     name: 'Bank of India',
     color: '#1e3a8a',
     keywords: ['bank of india', 'boi'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003314/png-transparent-bank-of-india-boi-logo-business-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/bankofindia.co.in',
   },
   federal: {
     name: 'Federal Bank',
     color: '#d84315',
     keywords: ['federal'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003318/png-transparent-federal-bank-logo-business-finance-bank-thumbnail.png',
+    logo: 'https://logo.clearbit.com/federalbank.co.in',
   },
   southindian: {
     name: 'South Indian Bank',
     color: '#f57f17',
     keywords: ['south indian', 'sib'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003325/png-transparent-south-indian-bank-logo-business-finance-bank-thumbnail.png',
+    logo: 'https://logo.clearbit.com/southindianbank.com',
   },
   karnataka: {
     name: 'Karnataka Bank',
     color: '#1565c0',
-    keywords: ['karnataka'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003322/png-transparent-karnataka-bank-logo-business-finance-bank-thumbnail.png',
+    keywords: ['karnataka bank', 'karnataka'],
+    logo: 'https://logo.clearbit.com/karnatakabank.com',
   },
   dbs: {
     name: 'DBS Bank',
     color: '#0d47a1',
     keywords: ['dbs'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003317/png-transparent-dbs-bank-logo-business-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/dbs.com',
   },
   citibank: {
     name: 'Citibank',
     color: '#003b70',
     keywords: ['citi'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003315/png-transparent-citibank-logo-business-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/citibank.com',
   },
   hsbc: {
     name: 'HSBC India',
     color: '#db0011',
     keywords: ['hsbc'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003319/png-transparent-hsbc-logo-business-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/hsbc.com',
   },
   scb: {
     name: 'Standard Chartered',
     color: '#003d71',
     keywords: ['standard chartered', 'scb'],
-    logo: 'https://w7.pngwing.com/pngs/1003/1003326/png-transparent-standard-chartered-bank-logo-business-finance-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/sc.com',
   },
   paytm: {
     name: 'Paytm Payments Bank',
     color: '#00baf2',
     keywords: ['paytm'],
-    logo: 'https://w7.pngwing.com/pngs/124/397/png-transparent-paytm-logo-business-payment-fintech-logo-thumbnail.png',
+    logo: 'https://logo.clearbit.com/paytm.com',
   },
   jupiter: {
     name: 'Jupiter Money',
     color: '#6c5ce7',
     keywords: ['jupiter'],
-    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+    logo: 'https://logo.clearbit.com/jupiter.money',
   },
   fi: {
     name: 'Fi Money',
     color: '#10b981',
-    keywords: ['fi'],
-    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+    keywords: [' fi ', 'fi money'],
+    logo: 'https://logo.clearbit.com/fi.money',
   },
   airtel: {
     name: 'Airtel Payments Bank',
-    color: '#00baf2',
+    color: '#e40000',
     keywords: ['airtel'],
-    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+    logo: 'https://logo.clearbit.com/airtel.in',
   },
   cash: {
     name: 'Physical Cash',
     color: '#10b981',
-    keywords: ['cash'],
-    logo: 'https://w7.pngwing.com/pngs/532/397/png-transparent-cash-money-money-paper-bill-logo-cartoon-money-thumbnail.png',
+    keywords: ['cash', 'physical cash'],
+    logo: '',
   },
 };
 
@@ -250,7 +250,7 @@ export default function AccountsClient() {
       found || {
         name,
         color: '#1ea672',
-        logo: 'https://w7.pngwing.com/pngs/532/397/png-transparent-cash-money-money-paper-bill-logo-cartoon-money-thumbnail.png',
+        logo: '',
       }
     );
   };
@@ -743,6 +743,7 @@ export default function AccountsClient() {
       >
         {displayAccounts.map((account) => {
           const branding = getBankBranding(account.bankName);
+          const isCash = account.type === 'Cash';
           return (
             <div
               key={account.id}
@@ -751,7 +752,7 @@ export default function AccountsClient() {
                 padding: '20px 24px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
+                gap: '14px',
                 position: 'relative',
                 overflow: 'hidden',
                 background: 'rgba(255,255,255,0.01)',
@@ -761,6 +762,7 @@ export default function AccountsClient() {
               }}
               onClick={() => handleEditClick(account)}
             >
+              {/* Card Header: Logo + Account Info + Delete */}
               <div
                 style={{
                   display: 'flex',
@@ -768,50 +770,86 @@ export default function AccountsClient() {
                   alignItems: 'flex-start',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {/* Logo / Cash Icon */}
                   <div
                     style={{
-                      width: '44px',
-                      height: '44px',
+                      width: '48px',
+                      height: '48px',
+                      flexShrink: 0,
                       borderRadius: '14px',
-                      background: '#fff',
+                      background: isCash ? 'rgba(16,185,129,0.12)' : '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       overflow: 'hidden',
-                      padding: '6px',
+                      padding: isCash ? '0' : '6px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                      border: isCash ? '1px solid rgba(16,185,129,0.25)' : 'none',
                     }}
                   >
-                    <img
-                      src={branding.logo}
-                      alt={branding.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                    {isCash ? (
+                      <Coins size={26} color="#10b981" />
+                    ) : (
+                      <img
+                        src={branding.logo}
+                        alt={branding.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.style.background = `${branding.color}22`;
+                            parent.style.border = `1px solid ${branding.color}44`;
+                            parent.innerHTML = `<span style="font-size:1.1rem;font-weight:900;color:${branding.color}">${branding.name.charAt(0)}</span>`;
+                          }
+                        }}
+                      />
+                    )}
                   </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f4f8f7' }}>
+
+                  {/* Account Name + Bank Name */}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h3
+                      style={{
+                        fontSize: '0.95rem',
+                        fontWeight: 800,
+                        color: '#f4f8f7',
+                        margin: 0,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
                       {account.name}
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ color: '#1ea672' }}>{getAccountIcon(account.type)}</span>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          color: '#6f8480',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {account.type} • {branding.name}
-                      </span>
+                    <div
+                      style={{
+                        fontSize: '0.72rem',
+                        color: '#9aaea9',
+                        fontWeight: 600,
+                        marginTop: '3px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {branding.name}
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                {/* Delete button — hidden for Cash accounts */}
+                {!isCash && (
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -827,48 +865,64 @@ export default function AccountsClient() {
                       }
                     }}
                     style={{
-                      padding: '10px',
-                      borderRadius: '12px',
+                      padding: '8px',
+                      borderRadius: '10px',
                       border: 'none',
                       background: 'transparent',
                       color: '#64748b',
                       cursor: 'pointer',
+                      flexShrink: 0,
                     }}
                   >
                     <Trash2 size={16} />
                   </button>
-                </div>
+                )}
               </div>
 
-              <div>
-                <div
+              {/* Account Type Badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: branding.color || '#1ea672' }}>
+                  {getAccountIcon(account.type)}
+                </span>
+                <span
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    color: branding.color || '#1ea672',
+                    background: `${branding.color}18` || 'rgba(30,166,114,0.1)',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '1.75rem',
-                      fontWeight: 950,
-                      letterSpacing: '-1px',
-                      fontFamily: 'var(--font-outfit)',
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem', color: '#1ea672', marginRight: '2px' }}>
-                      ₹
-                    </span>
-                    {account.balance.toLocaleString('en-IN')}
-                  </span>
-                </div>
+                  {account.type}
+                </span>
               </div>
 
+              {/* Balance */}
+              <div>
+                <span
+                  style={{
+                    fontSize: '1.75rem',
+                    fontWeight: 950,
+                    letterSpacing: '-1px',
+                    fontFamily: 'var(--font-outfit)',
+                  }}
+                >
+                  <span style={{ fontSize: '1rem', color: '#1ea672', marginRight: '2px' }}>
+                    {account.currency === 'USD' ? '$' : '₹'}
+                  </span>
+                  {account.balance.toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Add Funds Footer */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
-                  paddingTop: '20px',
+                  paddingTop: '16px',
                   borderTop: '1px solid rgba(255,255,255,0.05)',
                 }}
               >
