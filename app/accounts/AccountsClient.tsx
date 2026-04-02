@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useLedger } from '../components/FinanceContext';
@@ -18,73 +18,197 @@ import {
   X,
   Trash2,
   Download,
+  Search,
 } from 'lucide-react';
 
-const BANK_BRANDING: Record<
-  string,
-  { name: string; color: string; keywords: string[]; logo: string }
-> = {
+interface BankBranding {
+  name: string;
+  color: string;
+  keywords: string[];
+  logo: string;
+}
+
+const BANK_BRANDING: Record<string, BankBranding> = {
   hdfc: {
     name: 'HDFC Bank',
-    color: '#1e438a',
+    color: '#d32f2f',
     keywords: ['hdfc'],
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/7/72/HDFC_Bank_Logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/340/856/png-transparent-hdfc-bank-logo-hdfc-bank-india-mumbai-financial-service-text-logo-angle-brand-thumbnail.png',
   },
   icici: {
     name: 'ICICI Bank',
-    color: '#f97316',
+    color: '#e65100',
     keywords: ['icici'],
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/12/ICICI_Bank_Logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/269/32/png-transparent-icici-bank-logo-icici-bank-logo-bank-financial-service-angle-text-logo-thumbnail.png',
   },
   sbi: {
     name: 'State Bank of India',
-    color: '#0066bb',
+    color: '#00695c',
     keywords: ['sbi', 'state bank'],
-    logo: 'https://upload.wikimedia.org/wikipedia/en/5/58/State_Bank_of_India_logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/1003/1003319/png-transparent-state-bank-of-india-sbi-logo-business-finance-logo-bank-thumbnail.png',
   },
   axis: {
     name: 'Axis Bank',
-    color: '#9d174d',
+    color: '#1a237e',
     keywords: ['axis'],
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Axis_Bank_logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/350/398/png-transparent-axis-bank-logo-axis-bank-business-bank-finance-logo-thumbnail.png',
   },
   kotak: {
-    name: 'Kotak Bank',
-    color: '#dc2626',
+    name: 'Kotak Mahindra Bank',
+    color: '#c62828',
     keywords: ['kotak'],
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Kotak_Mahindra_Bank_logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
   },
   idfc: {
     name: 'IDFC First Bank',
-    color: '#991b1b',
+    color: '#1565c0',
     keywords: ['idfc'],
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b3/IDFC_First_Bank_logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+  },
+  yes: {
+    name: 'Yes Bank',
+    color: '#d50000',
+    keywords: ['yes'],
+    logo: 'https://w7.pngwing.com/pngs/339/498/png-transparent-yes-bank-logo-business-bank-finance-logo-thumbnail.png',
+  },
+  indusind: {
+    name: 'IndusInd Bank',
+    color: '#ff6f00',
+    keywords: ['indusind'],
+    logo: 'https://w7.pngwing.com/pngs/826/248/png-transparent-indusind-bank-logo-business-bank-finance-logo-thumbnail.png',
+  },
+  pnb: {
+    name: 'Punjab National Bank',
+    color: '#1565c0',
+    keywords: ['pnb'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003326/png-transparent-punjab-national-bank-pnb-logo-business-finance-bank-thumbnail.png',
+  },
+  canara: {
+    name: 'Canara Bank',
+    color: '#004d40',
+    keywords: ['canara'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003311/png-transparent-canara-bank-logo-canara-bank-business-finance-bank-thumbnail.png',
+  },
+  bob: {
+    name: 'Bank of Baroda',
+    color: '#1e3a8a',
+    keywords: ['bank of baroda', 'bob'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003310/png-transparent-bank-of-baroda-logo-business-finance-logo-thumbnail.png',
+  },
+  union: {
+    name: 'Union Bank of India',
+    color: '#0d47a1',
+    keywords: ['union'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003329/png-transparent-union-bank-of-india-logo-business-finance-bank-thumbnail.png',
+  },
+  uco: {
+    name: 'UCO Bank',
+    color: '#b71c1c',
+    keywords: ['uco'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003328/png-transparent-uco-bank-logo-business-finance-bank-thumbnail.png',
+  },
+  boi: {
+    name: 'Bank of India',
+    color: '#1e3a8a',
+    keywords: ['bank of india', 'boi'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003314/png-transparent-bank-of-india-boi-logo-business-finance-logo-thumbnail.png',
+  },
+  federal: {
+    name: 'Federal Bank',
+    color: '#d84315',
+    keywords: ['federal'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003318/png-transparent-federal-bank-logo-business-finance-bank-thumbnail.png',
+  },
+  southindian: {
+    name: 'South Indian Bank',
+    color: '#f57f17',
+    keywords: ['south indian', 'sib'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003325/png-transparent-south-indian-bank-logo-business-finance-bank-thumbnail.png',
+  },
+  karnataka: {
+    name: 'Karnataka Bank',
+    color: '#1565c0',
+    keywords: ['karnataka'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003322/png-transparent-karnataka-bank-logo-business-finance-bank-thumbnail.png',
+  },
+  dbs: {
+    name: 'DBS Bank',
+    color: '#0d47a1',
+    keywords: ['dbs'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003317/png-transparent-dbs-bank-logo-business-finance-logo-thumbnail.png',
+  },
+  citibank: {
+    name: 'Citibank',
+    color: '#003b70',
+    keywords: ['citi'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003315/png-transparent-citibank-logo-business-finance-logo-thumbnail.png',
+  },
+  hsbc: {
+    name: 'HSBC India',
+    color: '#db0011',
+    keywords: ['hsbc'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003319/png-transparent-hsbc-logo-business-finance-logo-thumbnail.png',
+  },
+  scb: {
+    name: 'Standard Chartered',
+    color: '#003d71',
+    keywords: ['standard chartered', 'scb'],
+    logo: 'https://w7.pngwing.com/pngs/1003/1003326/png-transparent-standard-chartered-bank-logo-business-finance-logo-thumbnail.png',
   },
   paytm: {
     name: 'Paytm Payments Bank',
     color: '#00baf2',
     keywords: ['paytm'],
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg',
+    logo: 'https://w7.pngwing.com/pngs/124/397/png-transparent-paytm-logo-business-payment-fintech-logo-thumbnail.png',
   },
   jupiter: {
     name: 'Jupiter Money',
-    color: '#fbbf24',
+    color: '#6c5ce7',
     keywords: ['jupiter'],
-    logo: 'https://jupiter.money/images/Jupiter-Logo.svg',
+    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
   },
   fi: {
     name: 'Fi Money',
     color: '#10b981',
-    keywords: ['fi '],
-    logo: 'https://fi.money/images/fi-logo.svg',
+    keywords: ['fi'],
+    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
+  },
+  airtel: {
+    name: 'Airtel Payments Bank',
+    color: '#00baf2',
+    keywords: ['airtel'],
+    logo: 'https://w7.pngwing.com/pngs/202/221/png-transparent-kotak-mahindra-bank-logo-kotak-mahindra-bank-business-bank-finance-fintech-thumbnail.png',
   },
   cash: {
     name: 'Physical Cash',
     color: '#10b981',
     keywords: ['cash'],
-    logo: 'https://www.svgrepo.com/show/532397/money-bill-transfer.svg',
+    logo: 'https://w7.pngwing.com/pngs/532/397/png-transparent-cash-money-money-paper-bill-logo-cartoon-money-thumbnail.png',
   },
 };
+
+const CHART_COLORS = [
+  '#d32f2f',
+  '#1976d2',
+  '#388e3c',
+  '#f57c00',
+  '#7b1fa2',
+  '#c2185b',
+  '#0097a7',
+  '#455a64',
+  '#e65100',
+  '#5d4037',
+  '#1a237e',
+  '#00695c',
+  '#304ffe',
+  '#00bfa5',
+  '#ff6f00',
+  '#827717',
+  '#e91e63',
+  '#00acc1',
+  '#8e24aa',
+  '#ff8f00',
+];
 
 export default function AccountsClient() {
   const { accounts, addAccount, updateAccount, deleteAccount, addFunds, loading } = useLedger();
@@ -126,13 +250,48 @@ export default function AccountsClient() {
       found || {
         name,
         color: '#1ea672',
-        logo: 'https://www.svgrepo.com/show/511585/building-6.svg',
+        logo: 'https://w7.pngwing.com/pngs/532/397/png-transparent-cash-money-money-paper-bill-logo-cartoon-money-thumbnail.png',
       }
     );
   };
 
+  const getChartColor = (index: number) => CHART_COLORS[index % CHART_COLORS.length];
+
+  const [bankSearchQuery, setBankSearchQuery] = useState('');
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const bankDropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredBanks = useMemo(() => {
+    if (!bankSearchQuery.trim()) return Object.values(BANK_BRANDING).slice(0, 10);
+    const query = bankSearchQuery.toLowerCase();
+    return Object.values(BANK_BRANDING)
+      .filter(
+        (bank) =>
+          bank.name.toLowerCase().includes(query) || bank.keywords.some((k) => k.includes(query))
+      )
+      .slice(0, 10);
+  }, [bankSearchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bankDropdownRef.current && !bankDropdownRef.current.contains(event.target as Node)) {
+        setShowBankDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectBank = (bank: BankBranding) => {
+    setBankName(bank.name);
+    setBankSearchQuery(bank.name);
+    setShowBankDropdown(false);
+  };
+
   const handleBankNameChange = (val: string) => {
     setBankName(val);
+    setBankSearchQuery(val);
+    setShowBankDropdown(true);
   };
 
   const resetAccountForm = () => {
@@ -445,19 +604,18 @@ export default function AccountsClient() {
                 display: 'flex',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                background: 'rgba(30, 166, 114, 0.15)',
+                background: 'rgba(255,255,255,0.05)',
                 marginBottom: '24px',
               }}
             >
-              {liquidityChartAccounts.map((acc) => (
+              {liquidityChartAccounts.map((acc, i) => (
                 <div
                   key={acc.id}
                   style={{
                     width: `${(acc.balance / totalBalanceINR) * 100}%`,
                     height: '100%',
-                    background: '#1ea672',
+                    background: getChartColor(i),
                     transition: '0.4s',
-                    opacity: 0.7 + (acc.balance / totalBalanceINR) * 0.3,
                   }}
                 />
               ))}
@@ -479,20 +637,25 @@ export default function AccountsClient() {
                       padding: '14px 16px',
                       borderRadius: '14px',
                       background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(30, 166, 114, 0.1)',
+                      border: '1px solid rgba(255,255,255,0.06)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
                       transition: 'all 0.2s',
                     }}
                   >
-                    <div
+                    <img
+                      src={branding.logo}
+                      alt={branding.name}
                       style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        background: '#1ea672',
-                        boxShadow: '0 0 8px #1ea672',
+                        width: 24,
+                        height: 24,
+                        borderRadius: 6,
+                        objectFit: 'contain',
+                        background: '#fff',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
                     <div>
@@ -531,7 +694,7 @@ export default function AccountsClient() {
                   paddingAngle={4}
                 >
                   {liquidityChartAccounts.map((acc, i) => (
-                    <Cell key={i} fill="#1ea672" stroke="transparent" opacity={0.6 + i * 0.07} />
+                    <Cell key={i} fill={getChartColor(i)} stroke="transparent" />
                   ))}
                 </Pie>
               </PieChart>
@@ -611,17 +774,23 @@ export default function AccountsClient() {
                       width: '44px',
                       height: '44px',
                       borderRadius: '14px',
-                      background: 'rgba(30, 166, 114, 0.15)',
+                      background: '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#1ea672',
                       overflow: 'hidden',
-                      padding: '8px',
-                      boxShadow: '0 4px 12px rgba(30, 166, 114, 0.15)',
+                      padding: '6px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                     }}
                   >
-                    <Wallet size={22} />
+                    <img
+                      src={branding.logo}
+                      alt={branding.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
                   </div>
                   <div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f4f8f7' }}>
@@ -784,7 +953,10 @@ export default function AccountsClient() {
                   required
                 />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+                ref={bankDropdownRef}
+              >
                 <label
                   style={{
                     fontSize: '0.75rem',
@@ -795,26 +967,79 @@ export default function AccountsClient() {
                 >
                   Financial Institution
                 </label>
-                <input
-                  value={bankName}
-                  onChange={(e) => handleBankNameChange(e.target.value)}
-                  placeholder="e.g. HDFC Bank"
-                  list="bank-list"
-                  style={{
-                    background: '#000',
-                    border: '1px solid #1a1a1a',
-                    padding: '16px',
-                    borderRadius: '16px',
-                    color: '#fff',
-                    fontSize: '1rem',
-                  }}
-                  required
-                />
-                <datalist id="bank-list">
-                  {Object.values(BANK_BRANDING).map((b) => (
-                    <option key={b.name} value={b.name} />
-                  ))}
-                </datalist>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    value={bankName}
+                    onChange={(e) => handleBankNameChange(e.target.value)}
+                    onFocus={() => setShowBankDropdown(true)}
+                    placeholder="Search bank..."
+                    style={{
+                      background: '#000',
+                      border: '1px solid #1a1a1a',
+                      padding: '16px',
+                      borderRadius: '16px',
+                      color: '#fff',
+                      fontSize: '1rem',
+                      width: '100%',
+                    }}
+                    required
+                  />
+                  {showBankDropdown && filteredBanks.length > 0 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        background: '#0a0a0a',
+                        border: '1px solid #1a1a1a',
+                        borderRadius: '12px',
+                        marginTop: '4px',
+                        maxHeight: '240px',
+                        overflowY: 'auto',
+                        zIndex: 1000,
+                      }}
+                    >
+                      {filteredBanks.map((bank) => (
+                        <button
+                          key={bank.name}
+                          type="button"
+                          onClick={() => selectBank(bank)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            width: '100%',
+                            padding: '12px 16px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#1a1a1a')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <img
+                            src={bank.logo}
+                            alt={bank.name}
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              objectFit: 'contain',
+                              background: '#fff',
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          <span style={{ fontSize: '0.9rem' }}>{bank.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
