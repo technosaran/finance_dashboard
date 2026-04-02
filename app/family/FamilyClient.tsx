@@ -181,21 +181,37 @@ export default function FamilyClient() {
 
   if (loading) {
     return (
-      <div
-        className="main-content"
-        style={{
-          backgroundColor: '#000000',
-          minHeight: '100vh',
-          color: '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: '#94a3b8' }}>
-            Loading family transfers...
+      <div className="page-container">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            color: '#94a3b8',
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid rgba(30, 166, 114, 0.1)',
+                borderTopColor: '#1ea672',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px',
+              }}
+            />
+            <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>Loading family transfers...</div>
           </div>
+          <style jsx>{`
+            @keyframes spin {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+          `}</style>
         </div>
       </div>
     );

@@ -266,7 +266,6 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="page-container">
-        <div className="bg-mesh" />
         <div style={{ marginBottom: '32px' }}>
           <div
             className="skeleton"
@@ -284,7 +283,6 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="page-container">
-        <div className="bg-mesh" />
         <div
           style={{
             display: 'flex',

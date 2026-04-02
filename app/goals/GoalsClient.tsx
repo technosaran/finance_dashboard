@@ -76,28 +76,39 @@ export default function GoalsClient() {
 
   if (loading) {
     return (
-      <div
-        className="main-content fade-in"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '80vh',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div
-            className="spin-animation"
-            style={{
-              width: '48px',
-              height: '48px',
-              border: '4px solid var(--accent-light)',
-              borderTopColor: 'var(--accent)',
-              borderRadius: '50%',
-              margin: '0 auto 20px',
-            }}
-          />
-          <div className="stat-label">Preparing your milestones...</div>
+      <div className="page-container">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            color: '#94a3b8',
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid rgba(30, 166, 114, 0.1)',
+                borderTopColor: '#1ea672',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px',
+              }}
+            />
+            <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+              Preparing your milestones...
+            </div>
+          </div>
+          <style jsx>{`
+            @keyframes spin {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+          `}</style>
         </div>
       </div>
     );
