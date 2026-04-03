@@ -515,15 +515,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        className="modal-card"
-        style={{
-          background: '#050505',
-          border: '1px solid #1a1a1a',
-          width: '100%',
-          maxWidth: '560px',
-        }}
-      >
+      <div className="modal-card entry-sheet">
         <div
           style={{
             display: 'flex',
@@ -637,17 +629,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
         >
           {/* Search Field */}
           <div style={{ position: 'relative' }}>
-            <label
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: '800',
-                color: '#64748b',
-                textTransform: 'uppercase',
-                display: 'block',
-                marginBottom: '8px',
-                letterSpacing: '0.5px',
-              }}
-            >
+            <label className="form-label">
               {type === 'FNO'
                 ? 'Instrument Name'
                 : `Search ${type === 'STOCK' ? 'Ticker' : 'Scheme'}`}
@@ -786,29 +768,11 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
             }}
           >
             <div>
-              <label
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#64748b',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: '6px',
-                }}
-              >
-                Transaction Type
-              </label>
+              <label className="form-label">Transaction Type</label>
               <select
                 value={subType}
                 onChange={(e) => setSubType(e.target.value as 'BUY' | 'SELL' | 'SIP')}
-                style={{
-                  width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
-                  padding: '12px',
-                  borderRadius: '14px',
-                  color: '#fff',
-                }}
+                className="form-input"
               >
                 <option value="BUY">BUY</option>
                 <option value="SELL">SELL</option>
@@ -816,30 +780,12 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
               </select>
             </div>
             <div>
-              <label
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#64748b',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: '6px',
-                }}
-              >
-                Date
-              </label>
+              <label className="form-label">Date</label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
-                  padding: '12px',
-                  borderRadius: '14px',
-                  color: '#fff',
-                }}
+                className="form-input"
               />
             </div>
           </div>
@@ -852,61 +798,25 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
             }}
           >
             <div>
-              <label
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#64748b',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: '6px',
-                }}
-              >
-                {type === 'MUTUAL_FUND' ? 'Units' : 'Quantity'}
-              </label>
+              <label className="form-label">{type === 'MUTUAL_FUND' ? 'Units' : 'Quantity'}</label>
               <input
                 type="number"
                 step={type === 'MUTUAL_FUND' ? '0.001' : '1'}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="0"
-                style={{
-                  width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
-                  padding: '12px',
-                  borderRadius: '14px',
-                  color: '#fff',
-                }}
+                className="form-input"
               />
             </div>
             <div>
-              <label
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '800',
-                  color: '#64748b',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: '6px',
-                }}
-              >
-                {type === 'MUTUAL_FUND' ? 'NAV' : 'Avg. Price'}
-              </label>
+              <label className="form-label">{type === 'MUTUAL_FUND' ? 'NAV' : 'Avg. Price'}</label>
               <input
                 type="number"
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
-                style={{
-                  width: '100%',
-                  background: '#000000',
-                  border: '1px solid #111111',
-                  padding: '12px',
-                  borderRadius: '14px',
-                  color: '#fff',
-                }}
+                className="form-input"
               />
             </div>
           </div>
@@ -921,58 +831,22 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 }}
               >
                 <div>
-                  <label
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: '800',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      display: 'block',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Product
-                  </label>
+                  <label className="form-label">Product</label>
                   <select
                     value={fnoProduct}
                     onChange={(e) => setFnoProduct(e.target.value as 'NRML' | 'MIS')}
-                    style={{
-                      width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
-                      padding: '14px',
-                      borderRadius: '14px',
-                      color: '#fff',
-                    }}
+                    className="form-input"
                   >
                     <option value="NRML">NRML</option>
                     <option value="MIS">MIS</option>
                   </select>
                 </div>
                 <div>
-                  <label
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: '800',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      display: 'block',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    Status
-                  </label>
+                  <label className="form-label">Status</label>
                   <select
                     value={fnoStatus}
                     onChange={(e) => setFnoStatus(e.target.value as 'OPEN' | 'CLOSED')}
-                    style={{
-                      width: '100%',
-                      background: '#000000',
-                      border: '1px solid #111111',
-                      padding: '14px',
-                      borderRadius: '14px',
-                      color: '#fff',
-                    }}
+                    className="form-input"
                   >
                     <option value="OPEN">OPEN POSITION</option>
                     <option value="CLOSED">CLOSED TRADE</option>
@@ -988,59 +862,23 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                   }}
                 >
                   <div>
-                    <label
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: '800',
-                        color: '#64748b',
-                        textTransform: 'uppercase',
-                        display: 'block',
-                        marginBottom: '8px',
-                      }}
-                    >
-                      Exit Price
-                    </label>
+                    <label className="form-label">Exit Price</label>
                     <input
                       type="number"
                       step="0.01"
                       value={exitPrice}
                       onChange={(e) => setExitPrice(e.target.value)}
                       placeholder="0.00"
-                      style={{
-                        width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
-                        padding: '14px',
-                        borderRadius: '14px',
-                        color: '#fff',
-                      }}
+                      className="form-input"
                     />
                   </div>
                   <div>
-                    <label
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: '800',
-                        color: '#64748b',
-                        textTransform: 'uppercase',
-                        display: 'block',
-                        marginBottom: '8px',
-                      }}
-                    >
-                      Exit Date
-                    </label>
+                    <label className="form-label">Exit Date</label>
                     <input
                       type="date"
                       value={exitDate}
                       onChange={(e) => setExitDate(e.target.value)}
-                      style={{
-                        width: '100%',
-                        background: '#000000',
-                        border: '1px solid #111111',
-                        padding: '14px',
-                        borderRadius: '14px',
-                        color: '#fff',
-                      }}
+                      className="form-input"
                     />
                   </div>
                 </div>
@@ -1219,30 +1057,14 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
           )}
 
           <div>
-            <label
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: '800',
-                color: '#64748b',
-                textTransform: 'uppercase',
-                display: 'block',
-                marginBottom: '6px',
-              }}
-            >
+            <label className="form-label">
               {type === 'STOCK' ? 'Funding Account (INR)' : 'Operating Bank Account'}
             </label>
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value ? Number(e.target.value) : '')}
               required={type === 'STOCK'}
-              style={{
-                width: '100%',
-                background: '#000000',
-                border: '1px solid #111111',
-                padding: '12px',
-                borderRadius: '14px',
-                color: '#fff',
-              }}
+              className="form-input"
             >
               <option value="">
                 {type === 'STOCK'
@@ -1348,23 +1170,15 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
           <button
             type="submit"
             disabled={isFetchingQuote || (!selectedItem && type !== 'FNO')}
+            className="btn-primary"
             style={{
               marginTop: '8px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              color: '#fff',
-              padding: '14px',
-              borderRadius: '16px',
-              border: 'none',
-              fontWeight: '800',
-              fontSize: '1rem',
-              cursor:
-                isFetchingQuote || (!selectedItem && type !== 'FNO') ? 'not-allowed' : 'pointer',
-              transition: '0.3s',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)',
+              cursor:
+                isFetchingQuote || (!selectedItem && type !== 'FNO') ? 'not-allowed' : 'pointer',
             }}
           >
             {isFetchingQuote ? (
@@ -1393,20 +1207,6 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
           )}
         </form>
       </div>
-
-      <style jsx>{`
-        .spin-animation {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </div>
   );
 }
