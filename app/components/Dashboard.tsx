@@ -342,49 +342,15 @@ export default function Dashboard() {
     <div className="page-container">
       <div className="bg-mesh" />
 
-      <header className="dashboard-header" style={{ marginBottom: '40px' }}>
-        <div
-          className="fade-in"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: '24px',
-            width: '100%',
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <h1
-              style={{
-                color: 'var(--foreground)',
-                fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                fontWeight: '800',
-                letterSpacing: '-0.02em',
-                margin: 0,
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '10px',
-                flexWrap: 'wrap',
-              }}
-            >
+      <header className="dashboard-header">
+        <div className="fade-in" style={{ width: '100%' }}>
+          <div>
+            <h1 className="dashboard-title">
               <span role="img" aria-label={greeting.emojiLabel}>
                 {greeting.emoji}
               </span>{' '}
               {greeting.text}, <span className="gradient-text">{displayName}.</span>
             </h1>
-            <p
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: '1.05rem',
-                fontWeight: '500',
-                marginTop: '10px',
-                maxWidth: '620px',
-                lineHeight: 1.6,
-              }}
-            >
-              {greeting.subtext}
-            </p>
           </div>
         </div>
       </header>

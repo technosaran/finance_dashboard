@@ -659,32 +659,9 @@ export default function AccountsClient() {
 
   return (
     <div className="page-container">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px',
-        }}
-      >
+      <div className="dashboard-header">
         <div>
-          <h1
-            style={{
-              fontSize: 'clamp(2rem, 5vw, 3rem)',
-              fontWeight: '950',
-              margin: 0,
-              letterSpacing: '-2px',
-              background: 'linear-gradient(135deg, #fff 0%, #10b981 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontFamily: 'var(--font-outfit)',
-            }}
-          >
-            Accounts
-          </h1>
-          <p style={{ color: '#6f8480', fontSize: '0.85rem', marginTop: '6px', fontWeight: '600' }}>
-            Manage your financial accounts
-          </p>
+          <h1 className="dashboard-title">Accounts</h1>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
@@ -748,10 +725,7 @@ export default function AccountsClient() {
       </div>
 
       {/* Summary Card */}
-      <div
-        className="premium-card"
-        style={{ padding: '48px', marginBottom: '48px', position: 'relative', overflow: 'hidden' }}
-      >
+      <div className="premium-card mb-xl" style={{ position: 'relative', overflow: 'hidden' }}>
         <div
           style={{
             position: 'relative',
@@ -940,7 +914,6 @@ export default function AccountsClient() {
               key={account.id}
               className="premium-card"
               style={{
-                padding: '20px 24px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '14px',
@@ -948,8 +921,6 @@ export default function AccountsClient() {
                 overflow: 'hidden',
                 background: 'rgba(255,255,255,0.01)',
                 cursor: 'pointer',
-                borderRadius: '20px',
-                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               onClick={() => handleEditClick(account)}
             >

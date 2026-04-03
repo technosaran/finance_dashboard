@@ -488,39 +488,11 @@ export default function MutualFundsClient() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div
-        className="mobile-page-header"
-        style={{
-          marginBottom: '32px',
-          gap: '24px',
-          width: '100%',
-        }}
-      >
-        <div style={{ flexShrink: 0 }}>
-          <h1
-            style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Mutual Funds
-          </h1>
+      <div className="dashboard-header">
+        <div>
+          <h1 className="dashboard-title">Mutual Funds</h1>
         </div>
-        <div
-          className="mobile-page-header__actions"
-          style={{
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-          }}
-        >
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}

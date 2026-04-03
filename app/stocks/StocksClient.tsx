@@ -1266,38 +1266,11 @@ export default function StocksClient() {
   return (
     <div className="page-container">
       {/* Header Section */}
-      <div
-        className="mobile-page-header"
-        style={{
-          marginBottom: '24px',
-          gap: '16px',
-          width: '100%',
-        }}
-      >
-        <div style={{ flexShrink: 0 }}>
-          <h1
-            style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Stock Portfolio
-          </h1>
+      <div className="dashboard-header">
+        <div>
+          <h1 className="dashboard-title">Stock Portfolio</h1>
         </div>
-        <div
-          className="mobile-page-header__actions"
-          style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-          }}
-        >
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}

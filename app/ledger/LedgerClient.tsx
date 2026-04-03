@@ -215,12 +215,9 @@ export default function LedgerClient() {
 
   return (
     <div className="main-content fade-in">
-      <div className="page-header" style={{ marginBottom: '32px' }}>
+      <div className="dashboard-header">
         <div>
-          <h1 className="page-title gradient-text">Ledger</h1>
-          <p className="page-subtitle">
-            {sortedTransactions.length.toLocaleString()} entries across all accounts
-          </p>
+          <h1 className="dashboard-title">Ledger</h1>
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -414,7 +411,7 @@ export default function LedgerClient() {
             </div>
           </div>
 
-          <div style={{ maxHeight: '600px', overflowY: 'auto', position: 'relative' }}>
+          <div style={{ position: 'relative' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr

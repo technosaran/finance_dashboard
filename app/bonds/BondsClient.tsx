@@ -530,36 +530,11 @@ export default function BondsClient() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div
-        className="mobile-page-header"
-        style={{
-          marginBottom: '24px',
-          gap: '16px',
-          width: '100%',
-        }}
-      >
-        <div style={{ flexShrink: 0 }}>
-          <h1
-            style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-              fontWeight: '900',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Bonds Terminal
-          </h1>
-          <p style={{ color: '#64748b', marginTop: '8px', fontSize: '0.9rem' }}>
-            Fixed-income securities across {stats.activeCount} active positions.
-          </p>
+      <div className="dashboard-header">
+        <div>
+          <h1 className="dashboard-title">Bonds Terminal</h1>
         </div>
-        <div
-          className="mobile-page-header__actions"
-          style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}
-        >
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             onClick={openCreateModal}
             style={{
