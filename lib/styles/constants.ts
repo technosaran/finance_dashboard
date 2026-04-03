@@ -3,6 +3,10 @@
  * Used across inline styles to avoid duplication.
  */
 
+// Note: these hex values are the source of truth for inline styles.
+// They intentionally mirror the CSS variables defined in globals.css :root
+// (e.g. --text-primary, --accent, --danger) but must remain as literals here
+// because CSS variables are not available in JS inline style objects.
 export const colors = {
   bgPage: '#071018',
   bgCard: '#0b1519',
@@ -28,7 +32,7 @@ export const cardStyle: React.CSSProperties = {
 
 export const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '10px 12px',
+  padding: '8px 12px',
   background: colors.bgInput,
   border: `1px solid ${colors.border}`,
   borderRadius: '8px',
@@ -42,7 +46,7 @@ export const selectStyle: React.CSSProperties = {
 };
 
 export const buttonPrimaryStyle: React.CSSProperties = {
-  padding: '10px 24px',
+  padding: '12px 24px',
   background: colors.accent,
   color: 'white',
   border: 'none',
@@ -53,7 +57,7 @@ export const buttonPrimaryStyle: React.CSSProperties = {
 };
 
 export const buttonDangerStyle: React.CSSProperties = {
-  padding: '10px 24px',
+  padding: '12px 24px',
   background: colors.danger,
   color: 'white',
   border: 'none',
@@ -71,12 +75,12 @@ export const modalOverlayStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   zIndex: 1000,
-  padding: '20px',
+  padding: '16px',
 };
 
 export const labelStyle: React.CSSProperties = {
   display: 'block',
   color: colors.textMuted,
-  marginBottom: '6px',
+  marginBottom: '8px',
   fontSize: '0.9rem',
 };
