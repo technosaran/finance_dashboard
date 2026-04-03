@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -15,7 +16,6 @@ import {
   Zap,
   Settings,
   LogOut,
-  Command,
   ShoppingBag,
 } from 'lucide-react';
 
@@ -261,7 +261,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               WebkitBackdropFilter: 'blur(16px) saturate(180%)',
             }}
           >
-            <Command size={20} />
+            <Image
+              src="/logo.png"
+              alt="FINCORE"
+              width={22}
+              height={22}
+              style={{ objectFit: 'contain' }}
+            />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <span

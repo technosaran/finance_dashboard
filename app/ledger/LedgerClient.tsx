@@ -91,6 +91,7 @@ export default function LedgerClient() {
   const [calendarDate, setCalendarDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
 
   const accountNameById = useMemo(
     () => new Map(accounts.map((account) => [account.id, account.name])),
@@ -98,11 +99,15 @@ export default function LedgerClient() {
   );
 
   const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((left, right) => {
+    let result = transactions;
+    if (selectedCalendarDate) {
+      result = result.filter((t) => t.date === selectedCalendarDate);
+    }
+    return result.sort((left, right) => {
       const dateCompare = right.date.localeCompare(left.date);
       return dateCompare !== 0 ? dateCompare : right.id - left.id;
     });
-  }, [transactions]);
+  }, [transactions, selectedCalendarDate]);
 
   const totalIncome = useMemo(
     () => transactions.filter((t) => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0),
@@ -352,7 +357,15 @@ export default function LedgerClient() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '24px', flexDirection: 'column' }}>
+      <div
+        className="dashboard-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 340px',
+          gap: '24px',
+          alignItems: 'start',
+        }}
+      >
         <div className="premium-card" style={{ padding: 0, overflow: 'visible' }}>
           <div
             style={{
@@ -364,7 +377,7 @@ export default function LedgerClient() {
             }}
           >
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Transactions</h3>
-            <div className="hide-sm" style={{ display: 'flex', gap: '8px' }}>
+            <div className="hide-sm" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <div
                 style={{
                   display: 'flex',
@@ -374,12 +387,31 @@ export default function LedgerClient() {
                   padding: '6px 12px',
                   borderRadius: '100px',
                   fontSize: '0.75rem',
-                  color: 'var(--text-secondary)',
+                  color: selectedCalendarDate ? 'var(--accent)' : 'var(--text-secondary)',
                   border: '1px solid var(--surface-border)',
+                  fontWeight: selectedCalendarDate ? 700 : 400,
                 }}
               >
-                <Activity size={14} /> Active Period
+                <Activity size={14} />{' '}
+                {selectedCalendarDate ? formatDate(selectedCalendarDate) : 'All Time'}
               </div>
+              {selectedCalendarDate && (
+                <button
+                  onClick={() => setSelectedCalendarDate(null)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px',
+                  }}
+                  className="action-btn--hover"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -575,13 +607,7 @@ export default function LedgerClient() {
         </div>
 
         {/* Calendar & Mini Stats */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px',
-          }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="premium-card" style={{ padding: '24px' }}>
             <h3
               style={{
@@ -655,10 +681,14 @@ export default function LedgerClient() {
                       const dateStr = toCalendarDateStr(calYear, calMonth, day);
                       const isToday = dateStr === today.toISOString().split('T')[0];
                       const hasTx = transactionDates.has(dateStr);
+                      const isSelected = selectedCalendarDate === dateStr;
 
                       return (
                         <div
                           key={dateStr}
+                          onClick={() => {
+                            setSelectedCalendarDate(isSelected ? null : dateStr);
+                          }}
                           style={{
                             aspectRatio: '1',
                             display: 'flex',
@@ -666,30 +696,40 @@ export default function LedgerClient() {
                             justifyContent: 'center',
                             fontSize: '0.8rem',
                             borderRadius: '8px',
-                            background: isToday
+                            background: isSelected
                               ? 'var(--accent)'
-                              : hasTx
-                                ? 'var(--accent-light)'
-                                : 'transparent',
-                            color: isToday
+                              : isToday
+                                ? 'var(--surface-hover)'
+                                : hasTx
+                                  ? 'var(--accent-light)'
+                                  : 'transparent',
+                            color: isSelected
                               ? '#fff'
-                              : hasTx
-                                ? 'var(--accent-hover)'
-                                : 'var(--text-secondary)',
-                            fontWeight: isToday || hasTx ? 700 : 400,
+                              : isToday
+                                ? '#fff'
+                                : hasTx
+                                  ? 'var(--accent-hover)'
+                                  : 'var(--text-secondary)',
+                            fontWeight: isToday || hasTx || isSelected ? 700 : 400,
                             position: 'relative',
-                            cursor: 'default',
-                            border: isToday ? 'none' : '1px solid transparent',
+                            cursor: 'pointer',
+                            border: isSelected
+                              ? 'none'
+                              : isToday
+                                ? '1px solid var(--surface-border)'
+                                : '1px solid transparent',
+                            transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'all 0.2s',
                           }}
                         >
                           {day}
-                          {hasTx && !isToday && (
+                          {hasTx && !isSelected && (
                             <div
                               style={{
                                 width: '4px',
                                 height: '4px',
                                 borderRadius: '50%',
-                                background: 'var(--accent)',
+                                background: isToday ? '#fff' : 'var(--accent)',
                                 position: 'absolute',
                                 bottom: '4px',
                               }}

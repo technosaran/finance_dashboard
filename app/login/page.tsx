@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../components/AuthContext';
-import { Command, Eye, EyeOff, ArrowRight, Shield, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Shield, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { signIn, user, loading } = useAuth();
@@ -62,7 +63,13 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="lp-brand">
           <div className="lp-logo">
-            <Command size={28} />
+            <Image
+              src="/logo.png"
+              alt="FINCORE Logo"
+              width={28}
+              height={28}
+              style={{ objectFit: 'contain' }}
+            />
           </div>
           <span className="lp-brand-name">
             FIN<span className="lp-brand-accent">CORE</span>

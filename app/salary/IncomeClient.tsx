@@ -686,6 +686,120 @@ export default function IncomeClient() {
           </div>
         </div>
       </div>
+
+      {/* Modern Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay fade-in">
+          <div className="modal-card slide-up" style={{ maxWidth: '500px', width: '100%' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '24px',
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+                  {editId ? 'Edit Income' : 'New Income'}
+                </h2>
+                <p className="stat-label">Log your salary or other earnings</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="modal-close">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className="form-label">Source Name</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. Acme Corp Salary, Upwork..."
+                  value={sourceName}
+                  onChange={(e) => setSourceName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Amount (₹)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Date</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Category</label>
+                  <select
+                    className="form-input"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as TransactionCategory)}
+                    required
+                  >
+                    {Object.keys(categoryConfig).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label className="form-label">Credit to Account</label>
+                  <select
+                    className="form-input"
+                    value={selectedAccountId}
+                    onChange={(e) =>
+                      setSelectedAccountId(e.target.value ? Number(e.target.value) : '')
+                    }
+                  >
+                    <option value="">No Account Link</option>
+                    {accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{
+                  marginTop: '12px',
+                  padding: '14px',
+                  fontSize: '1rem',
+                  background: '#10b981',
+                }}
+              >
+                {editId ? 'Update Income' : 'Log Income'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

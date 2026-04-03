@@ -39,7 +39,7 @@ import {
   Undo2,
 } from 'lucide-react';
 
-type SettingsTab = 'profile' | 'accounts' | 'modules' | 'appearance' | 'security';
+type SettingsTab = 'profile' | 'accounts' | 'modules' | 'security';
 
 const DEFAULT_SETTINGS: AppSettings = {
   brokerageType: 'flat',
@@ -214,12 +214,6 @@ export default function SettingsPage() {
       description: 'Feature visibility',
     },
     {
-      id: 'appearance',
-      label: 'Appearance',
-      icon: <Palette size={20} />,
-      description: 'Theme & display',
-    },
-    {
       id: 'security',
       label: 'Security',
       icon: <Shield size={20} />,
@@ -313,7 +307,6 @@ export default function SettingsPage() {
               enabledCount={enabledModulesCount}
             />
           )}
-          {activeTab === 'appearance' && <AppearanceSection />}
           {activeTab === 'security' && (
             <SecuritySection onReset={resetToDefaults} isSaving={isSaving} />
           )}
@@ -805,123 +798,6 @@ function ModulesSection({
               </button>
             );
           })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AppearanceSection() {
-  return (
-    <div style={{ display: 'grid', gap: '24px' }}>
-      <div
-        style={{
-          background: 'rgba(11, 21, 25, 0.78)',
-          borderRadius: '24px',
-          border: '1px solid rgba(160, 188, 180, 0.14)',
-          padding: '32px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-          <div
-            style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(245, 158, 11, 0.25)',
-            }}
-          >
-            <Palette size={28} color="#fff" />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#f4f8f7', margin: 0 }}>
-              Appearance
-            </h3>
-            <p style={{ fontSize: '0.875rem', color: '#6f8480', margin: '4px 0 0' }}>
-              Customize the look and feel of your dashboard
-            </p>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gap: '20px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '20px 24px',
-              background: 'rgba(30, 166, 114, 0.08)',
-              borderRadius: '16px',
-              border: '1px solid rgba(30, 166, 114, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <Moon size={20} color="#43c08a" />
-              <div>
-                <div style={{ fontWeight: '700', color: '#f4f8f7', marginBottom: '2px' }}>
-                  Dark Mode
-                </div>
-                <div style={{ fontSize: '0.8125rem', color: '#6f8480' }}>Currently active</div>
-              </div>
-            </div>
-            <div
-              style={{
-                background: '#1ea672',
-                borderRadius: '20px',
-                padding: '6px 12px',
-                color: '#fff',
-                fontSize: '0.75rem',
-                fontWeight: '700',
-              }}
-            >
-              Active
-            </div>
-          </div>
-
-          <div
-            style={{
-              padding: '20px 24px',
-              background: 'rgba(255, 255, 255, 0.02)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-            }}
-          >
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}
-            >
-              <Monitor size={20} color="#6f8480" />
-              <div style={{ fontWeight: '700', color: '#f4f8f7' }}>Theme Presets</div>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {['Ocean', 'Forest', 'Sunset', 'Midnight'].map((theme) => (
-                <button
-                  key={theme}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    border:
-                      theme === 'Ocean'
-                        ? '2px solid #1ea672'
-                        : '1px solid rgba(255, 255, 255, 0.08)',
-                    background:
-                      theme === 'Ocean' ? 'rgba(30, 166, 114, 0.1)' : 'rgba(255, 255, 255, 0.03)',
-                    color: theme === 'Ocean' ? '#43c08a' : '#9aaea9',
-                    fontWeight: '600',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {theme}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
