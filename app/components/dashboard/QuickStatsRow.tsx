@@ -79,14 +79,7 @@ export function QuickStatsRow({
   const animationDelays = ['0s', '0.07s', '0.14s', '0.21s'];
 
   return (
-    <section
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
-        gap: '14px',
-        marginBottom: '24px',
-      }}
-    >
+    <section className="qs-grid">
       {stats.map((stat, idx) => (
         <div
           key={stat.label}
@@ -97,32 +90,14 @@ export function QuickStatsRow({
             borderRadius: '18px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <div className="qs-card-header">
             <div
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '11px',
-                background: `${stat.color}18`,
-                color: stat.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="qs-icon-container"
+              style={{ background: `${stat.color}18`, color: stat.color }}
             >
               {stat.icon}
             </div>
-            <span
-              style={{
-                fontSize: '0.73rem',
-                fontWeight: '800',
-                color: '#9aaea9',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {stat.label}
-            </span>
+            <span className="qs-stat-label">{stat.label}</span>
           </div>
 
           <div
@@ -141,12 +116,8 @@ export function QuickStatsRow({
 
           {stat.subValue && (
             <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: '700',
-                color: stat.trend !== 'neutral' ? stat.color : '#6f8480',
-                marginTop: '6px',
-              }}
+              className="qs-sub-value"
+              style={{ color: stat.trend !== 'neutral' ? stat.color : '#6f8480' }}
             >
               {stat.subValue}
             </div>

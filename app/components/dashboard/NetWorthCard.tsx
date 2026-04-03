@@ -61,39 +61,12 @@ export function NetWorthCard({
   return (
     <section className="wealth-card fade-in" style={{ marginBottom: '24px' }}>
       <div className="premium-card" style={{ padding: '28px 32px' }}>
-        <div
-          className="wealth-card-inner"
-          style={{ display: 'flex', flexWrap: 'wrap', gap: '32px' }}
-        >
+        <div className="wealth-card-inner" style={{ gap: '32px' }}>
           <div className="wealth-section" style={{ flex: '1 1 320px', minWidth: 0 }}>
             <div className="badge-wrapper" style={{ marginBottom: '20px' }}>
-              <span
-                className="stat-label"
-                style={{
-                  fontSize: '0.9rem',
-                  fontWeight: '800',
-                  color: '#8aa19c',
-                  letterSpacing: '0.12em',
-                }}
-              >
-                TOTAL NET WORTH
-              </span>
+              <span className="stat-label nw-section-label">TOTAL NET WORTH</span>
               {investmentsTotal > 0 && (
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    background: 'rgba(242, 169, 59, 0.12)',
-                    border: '1px solid rgba(242, 169, 59, 0.2)',
-                    color: '#f2a93b',
-                    fontSize: '0.7rem',
-                    fontWeight: '800',
-                  }}
-                >
+                <div className="nw-lifetime-badge">
                   {lifetimePct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                   {lifetimePct >= 0 ? '+' : ''}
                   {lifetimePct.toFixed(1)}% lifetime
@@ -102,31 +75,11 @@ export function NetWorthCard({
             </div>
 
             <div style={{ marginBottom: '24px' }}>
-              <div
-                className="stat-value"
-                style={{
-                  fontSize: 'clamp(2.2rem, 6vw, 3.75rem)',
-                  lineHeight: 1.05,
-                  marginBottom: '14px',
-                  letterSpacing: '-0.03em',
-                }}
-              >
-                {formatAmount(totalNetWorth)}
-              </div>
+              <div className="stat-value nw-worth-value">{formatAmount(totalNetWorth)}</div>
 
               <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  padding: '6px 14px',
-                  borderRadius: '10px',
-                  background: pnlBg,
-                  border: `1px solid ${pnlBorder}`,
-                  color: pnlColor,
-                  fontSize: '0.82rem',
-                  fontWeight: '800',
-                }}
+                className="nw-pnl-badge"
+                style={{ background: pnlBg, border: `1px solid ${pnlBorder}`, color: pnlColor }}
               >
                 {isPositive ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
                 {isPositive ? '+' : ''}
@@ -134,77 +87,27 @@ export function NetWorthCard({
               </div>
             </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-                gap: '12px',
-                borderTop: '1px solid rgba(160, 188, 180, 0.12)',
-                paddingTop: '20px',
-              }}
-            >
-              <div
-                style={{
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.16)',
-                  borderRadius: '12px',
-                  padding: '14px 16px',
-                }}
-              >
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}
-                >
+            <div className="nw-metrics-grid">
+              <div className="nw-cash-card">
+                <div className="nw-icon-row">
                   <Wallet size={13} color="#10b981" />
-                  <span
-                    style={{
-                      fontSize: '0.68rem',
-                      fontWeight: '800',
-                      color: '#10b981',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    Cash
-                  </span>
+                  <span className="nw-cash-label">Cash</span>
                 </div>
-                <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                  {formatAmount(liquidityINR)}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#6f8480', marginTop: '3px' }}>
+                <div className="nw-metric-value">{formatAmount(liquidityINR)}</div>
+                <div className="nw-metric-sub">
                   {totalNetWorth > 0
                     ? `${((liquidityINR / totalNetWorth) * 100).toFixed(1)}% of net worth`
                     : 'Available balance'}
                 </div>
               </div>
 
-              <div
-                style={{
-                  background: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.16)',
-                  borderRadius: '12px',
-                  padding: '14px 16px',
-                }}
-              >
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}
-                >
+              <div className="nw-invest-card">
+                <div className="nw-icon-row">
                   <BarChart3 size={13} color="#3b82f6" />
-                  <span
-                    style={{
-                      fontSize: '0.68rem',
-                      fontWeight: '800',
-                      color: '#3b82f6',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    Investments
-                  </span>
+                  <span className="nw-invest-label">Investments</span>
                 </div>
-                <div style={{ fontSize: '1.1rem', fontWeight: '900', color: '#fff' }}>
-                  {formatAmount(investmentsTotal)}
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#6f8480', marginTop: '3px' }}>
+                <div className="nw-metric-value">{formatAmount(investmentsTotal)}</div>
+                <div className="nw-metric-sub">
                   {totalNetWorth > 0
                     ? `${((investmentsTotal / totalNetWorth) * 100).toFixed(1)}% of net worth`
                     : 'Total deployed'}
@@ -213,47 +116,15 @@ export function NetWorthCard({
             </div>
           </div>
 
-          <div
-            style={{
-              flex: '1 1 280px',
-              minWidth: '0',
-              maxWidth: '400px',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '16px',
-              }}
-            >
+          <div className="nw-chart-section">
+            <div className="nw-chart-header">
               <PieChartIcon size={14} color="#6f8480" />
-              <span
-                style={{
-                  fontSize: '0.72rem',
-                  fontWeight: '800',
-                  color: '#6f8480',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                }}
-              >
-                Asset allocation
-              </span>
+              <span className="nw-chart-label">Asset allocation</span>
             </div>
 
             {allocationData.length > 0 ? (
               <>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '200px',
-                    position: 'relative',
-                    marginBottom: '20px',
-                  }}
-                >
+                <div className="nw-chart-container">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -292,49 +163,20 @@ export function NetWorthCard({
                     </PieChart>
                   </ResponsiveContainer>
 
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: 'center',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: '0.6rem',
-                        fontWeight: '800',
-                        color: '#6f8480',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        marginBottom: '4px',
-                      }}
-                    >
-                      Total
-                    </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#fff' }}>
-                      {formatAmount(totalNetWorth)}
-                    </div>
+                  <div className="nw-chart-center">
+                    <div className="nw-center-title">Total</div>
+                    <div className="nw-center-value">{formatAmount(totalNetWorth)}</div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="nw-alloc-list">
                   {allocationData.map((item, idx) => {
                     const pct = totalNetWorth > 0 ? (item.value / totalNetWorth) * 100 : 0;
 
                     return (
                       <div key={idx}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '5px',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="nw-alloc-row-header">
+                          <div className="nw-alloc-name-cell">
                             <div
                               style={{
                                 width: '8px',
@@ -345,39 +187,16 @@ export function NetWorthCard({
                                 boxShadow: `0 0 6px ${item.color}88`,
                               }}
                             />
-                            <span
-                              style={{ fontSize: '0.78rem', fontWeight: '700', color: '#9aaea9' }}
-                            >
-                              {item.name}
-                            </span>
+                            <span className="nw-alloc-name">{item.name}</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span
-                              style={{ fontSize: '0.78rem', fontWeight: '700', color: '#6f8480' }}
-                            >
-                              {formatAmount(item.value)}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                fontWeight: '900',
-                                color: item.color,
-                                minWidth: '36px',
-                                textAlign: 'right',
-                              }}
-                            >
+                          <div className="nw-alloc-values-cell">
+                            <span className="nw-alloc-amount">{formatAmount(item.value)}</span>
+                            <span className="nw-alloc-pct" style={{ color: item.color }}>
                               {pct.toFixed(1)}%
                             </span>
                           </div>
                         </div>
-                        <div
-                          style={{
-                            height: '3px',
-                            borderRadius: '99px',
-                            background: 'rgba(255,255,255,0.05)',
-                            overflow: 'hidden',
-                          }}
-                        >
+                        <div className="nw-alloc-bar-track">
                           <div
                             style={{
                               height: '100%',
@@ -394,19 +213,7 @@ export function NetWorthCard({
                 </div>
               </>
             ) : (
-              <div
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  padding: '32px 0',
-                  color: '#566a66',
-                  textAlign: 'center',
-                }}
-              >
+              <div className="nw-empty-state">
                 <PieChartIcon size={36} color="#35514e" />
                 <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>
                   No allocation data yet
