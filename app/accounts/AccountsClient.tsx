@@ -267,7 +267,53 @@ const BankLogo = ({
   isCash?: boolean;
 }) => {
   const [error, setError] = useState(false);
+  const [dynamicLogo, setDynamicLogo] = useState<string | null>(null);
   const color = branding.color || DEFAULT_BRAND_COLOR;
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!branding.logo || error) {
+      if (branding.name && !isCash && branding.name.toLowerCase() !== 'physical cash') {
+        const fetchDynamicLogo = async () => {
+          try {
+            // First try Clearbit autocomplete to get the domain
+            const res = await fetch(
+              `https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(branding.name)}`
+            );
+            const data = await res.json();
+            if (!isMounted) return;
+            if (data && data.length > 0 && data[0].domain) {
+              setDynamicLogo(`https://www.google.com/s2/favicons?domain=${data[0].domain}&sz=128`);
+              setError(false);
+              return;
+            }
+
+            // Fallback to Wikipedia API if Clearbit fails to find a domain
+            const wikiRes = await fetch(
+              `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(branding.name + ' bank')}&gsrlimit=1&prop=pageimages&piprop=original&format=json&origin=*`
+            );
+            const wikiData = await wikiRes.json();
+            if (!isMounted) return;
+            const pages = wikiData?.query?.pages;
+            if (pages) {
+              const pageId = Object.keys(pages)[0];
+              const source = pages[pageId]?.original?.source;
+              if (source) {
+                setDynamicLogo(source);
+                setError(false);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to fetch dynamic logo', e);
+          }
+        };
+        fetchDynamicLogo();
+      }
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [branding.logo, error, branding.name, isCash]);
 
   if (isCash) {
     return (
@@ -290,7 +336,9 @@ const BankLogo = ({
     );
   }
 
-  if (error || !branding.logo) {
+  const finalLogo = dynamicLogo || branding.logo;
+
+  if (error || !finalLogo) {
     return (
       <div
         style={{
@@ -309,7 +357,7 @@ const BankLogo = ({
           boxShadow: padding > 0 ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
         }}
       >
-        {branding.name ? branding.name.charAt(0) : 'B'}
+        {branding.name ? branding.name.charAt(0).toUpperCase() : 'B'}
       </div>
     );
   }
@@ -331,7 +379,7 @@ const BankLogo = ({
       }}
     >
       <img
-        src={branding.logo}
+        src={finalLogo}
         alt={branding.name}
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         onError={() => setError(true)}
@@ -340,29 +388,19 @@ const BankLogo = ({
   );
 };
 
-const DEFAULT_BRAND_COLOR = '#1ea672';
+const DEFAULT_BRAND_COLOR = '#10b981';
 
 const CHART_COLORS = [
-  '#d32f2f',
-  '#1976d2',
-  '#388e3c',
-  '#f57c00',
-  '#7b1fa2',
-  '#c2185b',
-  '#0097a7',
-  '#455a64',
-  '#e65100',
-  '#5d4037',
-  '#1a237e',
-  '#00695c',
-  '#304ffe',
-  '#00bfa5',
-  '#ff6f00',
-  '#827717',
-  '#e91e63',
-  '#00acc1',
-  '#8e24aa',
-  '#ff8f00',
+  '#10b981',
+  '#3b82f6',
+  '#8b5cf6',
+  '#f59e0b',
+  '#ec4899',
+  '#06b6d4',
+  '#f43f5e',
+  '#14b8a6',
+  '#8b5cf6',
+  '#eab308',
 ];
 
 export default function AccountsClient() {
@@ -599,8 +637,8 @@ export default function AccountsClient() {
               style={{
                 width: '40px',
                 height: '40px',
-                border: '3px solid rgba(30, 166, 114, 0.1)',
-                borderTopColor: '#1ea672',
+                border: '3px solid rgba(16, 185, 129, 0.1)',
+                borderTopColor: '#10b981',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
                 margin: '0 auto 16px',
@@ -636,7 +674,7 @@ export default function AccountsClient() {
               fontWeight: '950',
               margin: 0,
               letterSpacing: '-2px',
-              background: 'linear-gradient(135deg, #fff 0%, #1ea672 100%)',
+              background: 'linear-gradient(135deg, #fff 0%, #10b981 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontFamily: 'var(--font-outfit)',
@@ -692,12 +730,12 @@ export default function AccountsClient() {
             style={{
               padding: '14px 28px',
               borderRadius: '16px',
-              background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: '#fff',
               border: 'none',
               fontWeight: '900',
               cursor: 'pointer',
-              boxShadow: '0 12px 30px rgba(30, 166, 114, 0.25)',
+              boxShadow: '0 12px 30px rgba(16, 185, 129, 0.25)',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -728,7 +766,7 @@ export default function AccountsClient() {
           <div style={{ flex: 1, minWidth: '280px' }}>
             <div
               style={{
-                color: '#1ea672',
+                color: '#10b981',
                 fontSize: '0.75rem',
                 fontWeight: '800',
                 textTransform: 'uppercase',
@@ -744,8 +782,8 @@ export default function AccountsClient() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: '#1ea672',
-                  boxShadow: '0 0 12px #1ea672',
+                  background: '#10b981',
+                  boxShadow: '0 0 12px #10b981',
                 }}
               />
               Total Liquidity
@@ -863,7 +901,7 @@ export default function AccountsClient() {
                 pointerEvents: 'none',
               }}
             >
-              <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#1ea672' }}>TOTAL</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: '800', color: '#10b981' }}>TOTAL</div>
               <div style={{ fontSize: '1.25rem', fontWeight: '950', color: '#fff' }}>
                 {liquidityChartAccounts.length}
               </div>
@@ -882,7 +920,7 @@ export default function AccountsClient() {
         }}
       >
         <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#f4f8f7' }}>Active Accounts</h3>
-        <span style={{ fontSize: '0.7rem', color: '#1ea672', fontWeight: 700 }}>
+        <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700 }}>
           {accounts.length} accounts
         </span>
       </div>
@@ -1013,7 +1051,7 @@ export default function AccountsClient() {
                     fontSize: '0.65rem',
                     fontWeight: 700,
                     color: branding.color || DEFAULT_BRAND_COLOR,
-                    background: branding.color ? `${branding.color}18` : 'rgba(30,166,114,0.1)',
+                    background: branding.color ? `${branding.color}18` : 'rgba(16,185,129,0.1)',
                     padding: '3px 8px',
                     borderRadius: '6px',
                     textTransform: 'uppercase',
@@ -1034,7 +1072,7 @@ export default function AccountsClient() {
                     fontFamily: 'var(--font-outfit)',
                   }}
                 >
-                  <span style={{ fontSize: '1rem', color: '#1ea672', marginRight: '2px' }}>
+                  <span style={{ fontSize: '1rem', color: '#10b981', marginRight: '2px' }}>
                     {account.currency === 'USD' ? '$' : '₹'}
                   </span>
                   {account.balance.toLocaleString('en-IN')}
@@ -1057,7 +1095,7 @@ export default function AccountsClient() {
                     setIsAddFundsModalOpen(true);
                   }}
                   style={{
-                    background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                     color: '#fff',
                     border: 'none',
                     padding: '8px 16px',
@@ -1065,7 +1103,7 @@ export default function AccountsClient() {
                     fontWeight: '700',
                     fontSize: '0.75rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(30, 166, 114, 0.25)',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
                   }}
                 >
                   + ADD
@@ -1295,7 +1333,7 @@ export default function AccountsClient() {
               <button
                 type="submit"
                 style={{
-                  background: 'linear-gradient(135deg, #1ea672 0%, #16875a 100%)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
                   padding: '20px',
                   borderRadius: '18px',
@@ -1354,14 +1392,14 @@ export default function AccountsClient() {
               <button
                 type="submit"
                 style={{
-                  background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
                   padding: '16px',
                   borderRadius: '16px',
                   border: 'none',
                   fontWeight: '950',
                   cursor: 'pointer',
-                  boxShadow: '0 8px 20px rgba(30, 166, 114, 0.2)',
+                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.2)',
                 }}
               >
                 Confirm Deposit
@@ -1437,14 +1475,14 @@ export default function AccountsClient() {
               <button
                 type="submit"
                 style={{
-                  background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
                   padding: '20px',
                   borderRadius: '18px',
                   border: 'none',
                   fontWeight: '950',
                   cursor: 'pointer',
-                  boxShadow: '0 8px 20px rgba(30, 166, 114, 0.2)',
+                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.2)',
                 }}
               >
                 Initialize Transfer

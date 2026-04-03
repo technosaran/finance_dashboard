@@ -20,6 +20,7 @@ interface NetWorthCardProps {
   totalNetWorth: number;
   globalLifetimeWealth: number;
   liquidityINR: number;
+  totalInvestment: number;
   investmentsTotal: number;
   allocationData: AllocationEntry[];
 }
@@ -47,10 +48,11 @@ export function NetWorthCard({
   totalNetWorth,
   globalLifetimeWealth,
   liquidityINR,
+  totalInvestment,
   investmentsTotal,
   allocationData,
 }: NetWorthCardProps) {
-  const lifetimePct = investmentsTotal > 0 ? (globalLifetimeWealth / investmentsTotal) * 100 : 0;
+  const lifetimePct = totalInvestment > 0 ? (globalLifetimeWealth / totalInvestment) * 100 : 0;
   const isPositive = globalLifetimeWealth >= 0;
   const pnlColor = isPositive ? '#20b072' : '#ef5d5d';
   const pnlBg = isPositive ? 'rgba(32, 176, 114, 0.12)' : 'rgba(239, 93, 93, 0.12)';
@@ -59,23 +61,20 @@ export function NetWorthCard({
   return (
     <section className="wealth-card fade-in" style={{ marginBottom: '24px' }}>
       <div className="premium-card" style={{ padding: '28px 32px' }}>
-        <div className="wealth-card-inner">
-          <div className="wealth-section">
+        <div
+          className="wealth-card-inner"
+          style={{ display: 'flex', flexWrap: 'wrap', gap: '32px' }}
+        >
+          <div className="wealth-section" style={{ flex: '1 1 320px', minWidth: 0 }}>
             <div className="badge-wrapper" style={{ marginBottom: '20px' }}>
-              <div
-                className="icon-badge"
-                style={{
-                  background: 'rgba(30, 166, 114, 0.14)',
-                  color: '#43c08a',
-                  border: '1px solid rgba(67, 192, 138, 0.22)',
-                  boxShadow: 'none',
-                }}
-              >
-                <Zap size={18} />
-              </div>
               <span
                 className="stat-label"
-                style={{ fontSize: '0.75rem', color: '#6f8480', letterSpacing: '0.12em' }}
+                style={{
+                  fontSize: '0.9rem',
+                  fontWeight: '800',
+                  color: '#8aa19c',
+                  letterSpacing: '0.12em',
+                }}
               >
                 TOTAL NET WORTH
               </span>
@@ -146,8 +145,8 @@ export function NetWorthCard({
             >
               <div
                 style={{
-                  background: 'rgba(107, 185, 157, 0.08)',
-                  border: '1px solid rgba(107, 185, 157, 0.16)',
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.16)',
                   borderRadius: '12px',
                   padding: '14px 16px',
                 }}
@@ -155,12 +154,12 @@ export function NetWorthCard({
                 <div
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}
                 >
-                  <Wallet size={13} color="#6bb99d" />
+                  <Wallet size={13} color="#10b981" />
                   <span
                     style={{
                       fontSize: '0.68rem',
                       fontWeight: '800',
-                      color: '#6bb99d',
+                      color: '#10b981',
                       textTransform: 'uppercase',
                       letterSpacing: '0.08em',
                     }}
@@ -180,8 +179,8 @@ export function NetWorthCard({
 
               <div
                 style={{
-                  background: 'rgba(32, 176, 114, 0.08)',
-                  border: '1px solid rgba(32, 176, 114, 0.16)',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.16)',
                   borderRadius: '12px',
                   padding: '14px 16px',
                 }}
@@ -189,12 +188,12 @@ export function NetWorthCard({
                 <div
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}
                 >
-                  <BarChart3 size={13} color="#20b072" />
+                  <BarChart3 size={13} color="#3b82f6" />
                   <span
                     style={{
                       fontSize: '0.68rem',
                       fontWeight: '800',
-                      color: '#20b072',
+                      color: '#3b82f6',
                       textTransform: 'uppercase',
                       letterSpacing: '0.08em',
                     }}

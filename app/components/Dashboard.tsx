@@ -220,10 +220,10 @@ export default function Dashboard() {
   const allocationData = useMemo(
     () =>
       [
-        { name: 'Cash', value: financialMetrics.liquidityINR, color: '#6bb99d' },
-        { name: 'Stocks', value: financialMetrics.stocksValue, color: '#20b072' },
-        { name: 'Mutual Funds', value: financialMetrics.mutualFundsValue, color: '#f2a93b' },
-        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#2f7b74' },
+        { name: 'Cash', value: financialMetrics.liquidityINR, color: '#10b981' },
+        { name: 'Stocks', value: financialMetrics.stocksValue, color: '#3b82f6' },
+        { name: 'Mutual Funds', value: financialMetrics.mutualFundsValue, color: '#8b5cf6' },
+        { name: 'Bonds', value: financialMetrics.bondsValue, color: '#f59e0b' },
       ].filter((entry) => entry.value > 0),
     [financialMetrics]
   );
@@ -405,6 +405,7 @@ export default function Dashboard() {
         totalNetWorth={financialMetrics.totalNetWorth}
         globalLifetimeWealth={financialMetrics.globalLifetimeWealth}
         liquidityINR={financialMetrics.liquidityINR}
+        totalInvestment={financialMetrics.totalInvestment}
         investmentsTotal={
           financialMetrics.stocksValue +
           financialMetrics.mutualFundsValue +

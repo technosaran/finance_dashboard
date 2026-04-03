@@ -47,7 +47,7 @@ export function QuickStatsRow({
       value: formatAmount(liquidityINR),
       subValue: 'Current balance',
       icon: <Wallet size={18} />,
-      color: '#6bb99d',
+      color: '#10b981',
       trend: 'neutral',
     },
     {
@@ -55,7 +55,7 @@ export function QuickStatsRow({
       value: formatAmount(totalInvestment),
       subValue: 'Active capital',
       icon: <BarChart3 size={18} />,
-      color: '#20b072',
+      color: '#3b82f6',
       trend: 'neutral',
     },
     {
