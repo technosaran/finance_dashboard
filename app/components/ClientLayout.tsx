@@ -53,37 +53,11 @@ function AuthConsumer({
 
   if ((authLoading || !user) && !isAuthPage) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#000000',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#64748b',
-        }}
-      >
+      <div className="loading-overlay">
         <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid rgba(99, 102, 241, 0.1)',
-              borderTopColor: '#6366f1',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px',
-            }}
-          />
+          <div className="loading-spinner" />
           <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>Loading your dashboard...</div>
         </div>
-        <style jsx>{`
-          @keyframes spin {
-            to {
-              transform: rotate(360deg);
-            }
-          }
-        `}</style>
       </div>
     );
   }
@@ -94,28 +68,7 @@ function AuthConsumer({
       {/* Global ambient background for liquid glass depth */}
       <div className="bg-mesh" aria-hidden="true" />
       {/* Skip to main content link for accessibility */}
-      <a
-        href="#main-content"
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          zIndex: 999,
-          padding: '12px 24px',
-          background: '#1a8e68',
-          color: '#fff',
-          textDecoration: 'none',
-          borderRadius: '8px',
-          fontWeight: '700',
-          fontSize: '0.9rem',
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.left = '20px';
-          e.currentTarget.style.top = '20px';
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.left = '-9999px';
-        }}
-      >
+      <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
       <div
