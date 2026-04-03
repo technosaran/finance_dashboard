@@ -909,6 +909,7 @@ export default function AccountsClient() {
         {displayAccounts.map((account) => {
           const branding = getBankBranding(account.bankName);
           const isCash = account.type === 'Cash';
+          const isPhysicalCash = account.name.toLowerCase() === 'physical cash';
           return (
             <div
               key={account.id}
@@ -982,7 +983,7 @@ export default function AccountsClient() {
                 </div>
 
                 {/* Delete button — hidden for Cash accounts */}
-                {!isCash && (
+                {!isPhysicalCash && (
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();

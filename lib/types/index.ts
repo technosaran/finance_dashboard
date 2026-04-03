@@ -158,17 +158,6 @@ export interface StockTransaction {
   updatedAt?: string;
 }
 
-export interface Watchlist {
-  id: number;
-  symbol: string;
-  companyName: string;
-  targetPrice?: number;
-  notes?: string;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 // ============================================================================
 // Mutual Fund Types
 // ============================================================================
@@ -387,7 +376,6 @@ export interface FinanceContextState {
   stockTransactions: StockTransaction[];
   addStockTransaction: (tx: Omit<StockTransaction, 'id'>) => Promise<void>;
   deleteStockTransaction: (id: number) => Promise<void>;
-  watchlist: Watchlist[];
 
   // Mutual Funds
   mutualFunds: MutualFund[];
@@ -424,8 +412,8 @@ export interface FinanceContextState {
   updateSettings: (settings: Partial<AppSettings>) => void;
 
   // Refresh
-  refreshPortfolio: () => Promise<void>;
-  refreshLivePrices: () => Promise<void>;
+  refreshPortfolio: (silent?: boolean) => Promise<void>;
+  refreshLivePrices: (silent?: boolean) => Promise<void>;
 
   // Combined Modal State
   isTransactionModalOpen: boolean;

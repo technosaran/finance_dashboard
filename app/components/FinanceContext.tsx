@@ -18,7 +18,6 @@ import {
   Goal,
   Stock,
   StockTransaction,
-  Watchlist,
   MutualFund,
   MutualFundTransaction,
   FnoTrade,
@@ -85,7 +84,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [familyTransfers, setFamilyTransfers] = useState<FamilyTransfer[]>([]);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
-  const [watchlist, _setWatchlist] = useState<Watchlist[]>([]);
+
   const [mutualFunds, setMutualFunds] = useState<MutualFund[]>([]);
   const [mutualFundTransactions, setMutualFundTransactions] = useState<MutualFundTransaction[]>([]);
   const [fnoTrades, setFnoTrades] = useState<FnoTrade[]>([]);
@@ -160,8 +159,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     else setTransactions(data.map(dbTransactionToTransaction));
   }, []);
 
-  const refreshPortfolio = useCallback(async () => {
-    setLoading(true);
+  const refreshPortfolio = useCallback(async (silent: boolean = false) => {
+    if (!silent) setLoading(true);
     try {
       const [stockResult, mfResult, fnoResult, bondResult] = await Promise.allSettled([
         supabase.from('stocks').select('*'),
@@ -193,7 +192,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (err) {
       logError('Error refreshing portfolio:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -511,7 +510,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // DB trigger creates ledger entry + updates account balance + updates stock holdings
       refreshAccounts();
       refreshTransactions();
-      refreshPortfolio();
+      refreshPortfolio(true);
     },
     [user, refreshAccounts, refreshTransactions, refreshPortfolio]
   );
@@ -626,7 +625,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // DB trigger creates ledger entry + updates account balance + updates mf holdings
       refreshAccounts();
       refreshTransactions();
-      refreshPortfolio();
+      refreshPortfolio(true);
     },
     [user, refreshAccounts, refreshTransactions, refreshPortfolio]
   );
@@ -676,7 +675,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // DB trigger creates ledger entry + updates account balance
       refreshAccounts();
       refreshTransactions();
-      refreshPortfolio();
+      refreshPortfolio(true);
     },
     [user, refreshAccounts, refreshTransactions, refreshPortfolio]
   );
@@ -711,7 +710,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (trade.status === 'CLOSED') {
         refreshAccounts();
         refreshTransactions();
-        refreshPortfolio();
+        refreshPortfolio(true);
       }
     },
     [refreshAccounts, refreshTransactions, refreshPortfolio]
@@ -951,7 +950,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setBondTransactions((prev) => [dbBondTransactionToBondTransaction(data), ...prev]);
       refreshAccounts();
       refreshTransactions();
-      refreshPortfolio();
+      refreshPortfolio(true);
     },
     [user, refreshAccounts, refreshTransactions, refreshPortfolio]
   );
@@ -1211,7 +1210,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     loadInitialData();
-  }, [user, authLoading, loading]);
+  }, [user, authLoading]);
 
   // â”€â”€â”€ MEMOISED CONTEXT VALUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -1237,7 +1236,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       stockTransactions,
       addStockTransaction,
       deleteStockTransaction,
-      watchlist,
+
       mutualFunds,
       addMutualFund,
       updateMutualFund,
@@ -1290,7 +1289,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       stockTransactions,
       addStockTransaction,
       deleteStockTransaction,
-      watchlist,
+
       mutualFunds,
       addMutualFund,
       updateMutualFund,
@@ -1336,6 +1335,82 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return () => clearTimeout(timeout);
     }
   }, [dataLoaded, stocks.length, mutualFunds.length]);
+
+  // --- REAL-TIME SUBSCRIPTION ---
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('schema-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () =>
+        refreshAccounts()
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () =>
+        refreshTransactions()
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stocks' }, () =>
+        refreshPortfolio(true)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mutual_funds' }, () =>
+        refreshPortfolio(true)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fno_trades' }, () =>
+        refreshPortfolio(true)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bonds' }, () =>
+        refreshPortfolio(true)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_transactions' }, () => {
+        refreshPortfolio(true);
+        refreshTransactions();
+        refreshAccounts();
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'mutual_fund_transactions' },
+        () => {
+          refreshPortfolio(true);
+          refreshTransactions();
+          refreshAccounts();
+        }
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bond_transactions' }, () => {
+        refreshPortfolio(true);
+        refreshTransactions();
+        refreshAccounts();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () => {
+        supabase
+          .from('goals')
+          .select('*')
+          .then(({ data }) => {
+            if (data) setGoals(data.map(dbGoalToGoal));
+          });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_transfers' }, () => {
+        supabase
+          .from('family_transfers')
+          .select('*')
+          .then(({ data }) => {
+            if (data) setFamilyTransfers(data.map(dbFamilyTransferToFamilyTransfer));
+          });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => {
+        supabase
+          .from('app_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) setSettings(dbSettingsToSettings(data as AppSettingsRow));
+          });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, refreshAccounts, refreshTransactions, refreshPortfolio]);
 
   // Periodic refresh: uses ref so the interval is NOT reset on every price update.
   // Also detects new trading days: if the calendar date has changed since the last
@@ -1440,7 +1515,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       stockTransactions,
       addStockTransaction,
       deleteStockTransaction,
-      watchlist,
+
       mutualFunds,
       addMutualFund,
       updateMutualFund,
@@ -1472,7 +1547,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       stockTransactions,
       addStockTransaction,
       deleteStockTransaction,
-      watchlist,
+
       mutualFunds,
       addMutualFund,
       updateMutualFund,

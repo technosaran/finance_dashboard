@@ -247,7 +247,7 @@ export default function BondsClient() {
 
   useEffect(() => {
     if (bonds.length === 0 && !loading) {
-      refreshPortfolio();
+      refreshPortfolio(true);
     }
   }, [bonds.length, loading, refreshPortfolio]);
 

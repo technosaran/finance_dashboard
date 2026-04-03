@@ -6,7 +6,6 @@ import {
   FamilyTransfer,
   Stock,
   StockTransaction,
-  Watchlist,
   MutualFund,
   MutualFundTransaction,
   FnoTrade,
@@ -86,15 +85,7 @@ export type StockTransactionRow = {
   account_id?: number | null;
   [key: string]: unknown;
 };
-export type WatchlistRow = {
-  id: number;
-  symbol: string;
-  company_name: string;
-  target_price?: number | null;
-  current_price?: number | null;
-  notes?: string | null;
-  [key: string]: unknown;
-};
+
 export type MutualFundRow = {
   id: number;
   name: string;
@@ -305,14 +296,6 @@ export const dbStockTransactionToStockTransaction = (
   transactionDate: dbTransaction.transaction_date,
   notes: dbTransaction.notes || undefined,
   accountId: dbTransaction.account_id ? Number(dbTransaction.account_id) : undefined,
-});
-
-export const dbWatchlistToWatchlistItem = (dbWatchlist: WatchlistRow): Watchlist => ({
-  id: Number(dbWatchlist.id),
-  symbol: dbWatchlist.symbol,
-  companyName: dbWatchlist.company_name,
-  targetPrice: dbWatchlist.target_price != null ? Number(dbWatchlist.target_price) : undefined,
-  notes: dbWatchlist.notes || undefined,
 });
 
 export const dbMutualFundToMutualFund = (dbMF: MutualFundRow): MutualFund => ({
