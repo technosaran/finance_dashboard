@@ -26,7 +26,6 @@ const currencySymbol = '\u20B9';
 const tableHeaders: Array<{ label: string; align?: CSSProperties['textAlign'] }> = [
   { label: 'Entry' },
   { label: 'Category' },
-  { label: 'Type' },
   { label: 'Account' },
   { label: 'Date' },
   { label: 'Amount', align: 'right' },
@@ -428,7 +427,7 @@ export default function LedgerClient() {
                     <th
                       key={header.label}
                       style={{
-                        padding: '16px 24px',
+                        padding: '12px 16px',
                         textAlign: header.align || 'left',
                         fontSize: '0.75rem',
                         fontWeight: 700,
@@ -461,7 +460,7 @@ export default function LedgerClient() {
                         }}
                         className="ledger-row-hover"
                       >
-                        <td style={{ padding: '16px 24px' }}>
+                        <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <div
                               style={{
@@ -484,7 +483,7 @@ export default function LedgerClient() {
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '16px 24px' }}>
+                        <td style={{ padding: '12px 16px' }}>
                           <span
                             style={{
                               padding: '4px 10px',
@@ -498,21 +497,8 @@ export default function LedgerClient() {
                             {transaction.category}
                           </span>
                         </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '0.85rem',
-                              color: isIncome ? '#22c55e' : '#ef4444',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {isIncome ? 'Income' : 'Expense'}
-                          </div>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
+
+                        <td style={{ padding: '12px 16px' }}>
                           <div
                             style={{
                               display: 'flex',
@@ -527,7 +513,7 @@ export default function LedgerClient() {
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: '12px 16px',
                             fontSize: '0.85rem',
                             color: 'var(--text-secondary)',
                           }}
@@ -536,7 +522,7 @@ export default function LedgerClient() {
                         </td>
                         <td
                           style={{
-                            padding: '16px 24px',
+                            padding: '12px 16px',
                             textAlign: 'right',
                             fontWeight: 700,
                             color: isIncome ? '#22c55e' : '#ef4444',
@@ -545,7 +531,7 @@ export default function LedgerClient() {
                         >
                           {isIncome ? '+' : '-'} {formatCurrency(transaction.amount)}
                         </td>
-                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                             <button
                               onClick={(e) => {
@@ -593,7 +579,7 @@ export default function LedgerClient() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} style={{ padding: '80px 24px', textAlign: 'center' }}>
+                    <td colSpan={6} style={{ padding: '80px 24px', textAlign: 'center' }}>
                       <EmptyTransactionsVisual />
                       <div className="stat-label" style={{ marginTop: '16px' }}>
                         No transactions found
@@ -742,46 +728,6 @@ export default function LedgerClient() {
                 </div>
               );
             })()}
-          </div>
-
-          <div
-            className="premium-card"
-            style={{
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--accent)',
-                  margin: '0 auto 20px',
-                }}
-              >
-                <Activity size={32} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>Insight</h3>
-              <p
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.9rem',
-                  maxWidth: '240px',
-                  margin: '0 auto',
-                }}
-              >
-                You have {sortedTransactions.length} entries. Keep tracking to build a clear
-                financial picture.
-              </p>
-            </div>
           </div>
         </div>
       </div>

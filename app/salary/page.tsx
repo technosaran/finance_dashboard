@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import IncomeClient from './IncomeClient';
+import SalaryClient from './SalaryClient';
 
 export const metadata: Metadata = {
-  title: 'Income | FINCORE',
-  description: 'Track salary, freelance income, and other credits over time.',
+  title: 'Salary | FINCORE',
+  description: 'Track your dedicated salary payouts and bonuses over time.',
 };
 
 export default function SalaryPage() {
-  return <IncomeClient />;
+  return <SalaryClient />;
 }

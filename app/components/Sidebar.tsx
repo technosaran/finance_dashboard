@@ -115,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           settingsKey: 'ledgerVisible',
         },
         {
-          label: 'Income',
+          label: 'Salary',
           href: '/salary',
           icon: <Banknote size={18} />,
           color: '#34d399',
