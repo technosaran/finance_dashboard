@@ -283,50 +283,16 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="page-container">
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '48px 24px',
-            textAlign: 'center',
-            gap: '16px',
-          }}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+        <div className="error-container">
+          <div className="error-icon">
             <AlertTriangle size={32} color="#ef5d5d" />
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff', margin: 0 }}>
-            Unable to load your dashboard
-          </h2>
-          <p style={{ fontSize: '0.9rem', color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6' }}>
-            {error}
-          </p>
+          <h2 className="error-title">Unable to load your dashboard</h2>
+          <p className="error-message">{error}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 24px',
-              background: '#1a8e68',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '0.875rem',
-              fontWeight: '700',
-              cursor: 'pointer',
-              marginTop: '8px',
-            }}
+            className="error-reload-btn"
           >
             Reload
           </button>
@@ -380,49 +346,16 @@ export default function Dashboard() {
         allocationData={allocationData}
       />
 
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-          gap: '20px',
-        }}
-      >
+      <section className="dashboard-bottom-grid">
         <TopHoldings holdings={topHoldings} />
         <RecentActivity transactions={recentTransactions} />
         <GoalsProgress goals={goalsProgress} />
 
         {!hasAnyData && (
-          <div
-            className="fade-in"
-            style={{
-              background: 'rgba(11, 21, 25, 0.82)',
-              borderRadius: '16px',
-              border: '1px dashed rgba(160, 188, 180, 0.18)',
-              padding: '64px 32px',
-              textAlign: 'center',
-              gridColumn: '1 / -1',
-            }}
-          >
+          <div className="fade-in empty-state-card">
             <EmptyPortfolioVisual />
-            <div
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: '800',
-                color: '#fff',
-                marginTop: '32px',
-                marginBottom: '12px',
-              }}
-            >
-              Your dashboard is ready
-            </div>
-            <div
-              style={{
-                fontSize: '0.95rem',
-                color: '#64748b',
-                maxWidth: '420px',
-                margin: '0 auto',
-              }}
-            >
+            <div className="empty-state-card__title">Your dashboard is ready</div>
+            <div className="empty-state-card__body">
               Add an account, investment, or goal to start seeing balances, performance, and recent
               activity here.
             </div>
