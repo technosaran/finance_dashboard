@@ -33,7 +33,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
   if (transactions.length === 0) return null;
 
   return (
-    <div className="fade-in glass-panel" style={{ padding: '24px' }}>
+    <div className="fade-in glass-panel panel-padded">
       {/* No decorative radial glow for ultra-dark look */}
 
       {/* Header */}
