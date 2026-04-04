@@ -63,7 +63,6 @@ p {
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  padding-top: 64px;
 }
 
 .main-content {
@@ -1036,7 +1035,7 @@ select:focus {
 
 /* Dashboard Header Utilities */
 .dashboard-header {
-  margin-top: 2rem;
+  margin-top: 0;
   margin-bottom: var(--spacing-lg);
   display: flex;
   justify-content: space-between;
@@ -3012,7 +3011,7 @@ select:focus {
 
 /* Page header with gradient title */
 .page-header {
-  margin-top: 2rem;
+  margin-top: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -5302,6 +5301,46 @@ body {
 
 .page-surface {
   color: #f8fafc;
+}
+
+.page-shell {
+  display: grid;
+  align-content: start;
+  gap: clamp(24px, 3vw, 36px);
+}
+
+.page-shell > * {
+  min-width: 0;
+}
+
+.page-shell__inner {
+  display: grid;
+  align-content: start;
+  gap: clamp(24px, 3vw, 40px);
+}
+
+.page-shell__inner > * {
+  min-width: 0;
+}
+
+.page-shell__header,
+.page-shell__hero,
+.page-shell__section {
+  margin-bottom: 0 !important;
+}
+
+.page-shell__summary-grid {
+  gap: clamp(16px, 2vw, 24px);
+  margin-bottom: 0 !important;
+}
+
+.page-shell__summary-grid > * {
+  height: 100%;
+}
+
+.page-shell__tabs {
+  justify-self: start;
+  margin-bottom: 0 !important;
 }
 
 .page-toolbar {

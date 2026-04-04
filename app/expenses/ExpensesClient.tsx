@@ -194,10 +194,10 @@ export default function ExpensesClient() {
   }
 
   return (
-    <div className="page-container page-surface">
+    <div className="page-container page-surface page-shell">
       {/* Header Section: Ultra-minimalist */}
       <div
-        className="page-header"
+        className="page-header page-shell__header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -272,6 +272,7 @@ export default function ExpensesClient() {
 
       {/* Hero Analytics Section */}
       <div
+        className="page-shell__hero"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',

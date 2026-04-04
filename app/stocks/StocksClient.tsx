@@ -1264,9 +1264,9 @@ export default function StocksClient() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container page-surface page-shell">
       {/* Header Section */}
-      <div className="dashboard-header">
+      <div className="dashboard-header page-shell__header">
         <div>
           <h1 className="dashboard-title">Stock Portfolio</h1>
         </div>
@@ -1321,7 +1321,7 @@ export default function StocksClient() {
       </div>
 
       {/* Portfolio Summary Cards */}
-      <div className="grid-responsive-4" style={{ marginBottom: '32px' }}>
+      <div className="grid-responsive-4 page-shell__summary-grid">
         <div
           className="premium-card"
           style={{
@@ -1474,7 +1474,7 @@ export default function StocksClient() {
 
       {/* Tab Navigation */}
       <div
-        className="mobile-tab-scroll page-tab-bar"
+        className="mobile-tab-scroll page-tab-bar page-shell__tabs"
         style={{
           display: 'flex',
           width: 'fit-content',
@@ -1482,7 +1482,6 @@ export default function StocksClient() {
           padding: '6px',
           borderRadius: '16px',
           border: '1px solid #111111',
-          marginBottom: '24px',
           maxWidth: '100%',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',

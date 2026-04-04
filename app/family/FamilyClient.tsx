@@ -219,9 +219,12 @@ export default function FamilyClient() {
 
   return (
     <div className="page-container page-surface">
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="page-shell__inner" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Section */}
-        <div className="page-header" style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}>
+        <div
+          className="page-header page-shell__header"
+          style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}
+        >
           <div>
             <h1
               className="page-title"
@@ -252,7 +255,7 @@ export default function FamilyClient() {
 
         {/* Stats Row */}
         <div
-          className="section-fade-in"
+          className="section-fade-in page-shell__summary-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
@@ -344,7 +347,7 @@ export default function FamilyClient() {
 
         {/* Tab Switcher */}
         <div
-          className="mobile-tab-scroll page-tab-bar"
+          className="mobile-tab-scroll page-tab-bar page-shell__tabs"
           style={{
             display: 'flex',
             width: 'fit-content',

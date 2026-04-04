@@ -189,10 +189,10 @@ export default function FnOClient() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container page-shell">
       {/* Header */}
       <div
-        className="flex-col-mobile"
+        className="flex-col-mobile page-shell__header"
         style={{
           justifyContent: 'space-between',
           alignItems: 'flex-start',
@@ -240,7 +240,7 @@ export default function FnOClient() {
 
       {/* Quick Stats Banner */}
       <div
-        className="grid-responsive-4"
+        className="grid-responsive-4 page-shell__summary-grid"
         style={{
           gap: '16px',
           marginBottom: '32px',
@@ -358,7 +358,7 @@ export default function FnOClient() {
 
       {/* Tabs */}
       <div
-        className="page-tab-bar"
+        className="page-tab-bar page-shell__tabs"
         style={{
           display: 'flex',
           gap: '12px',

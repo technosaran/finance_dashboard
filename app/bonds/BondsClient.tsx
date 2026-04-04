@@ -528,9 +528,9 @@ export default function BondsClient() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container page-shell">
       {/* Header */}
-      <div className="dashboard-header">
+      <div className="dashboard-header page-shell__header">
         <div>
           <h1 className="dashboard-title">Bonds Terminal</h1>
         </div>
@@ -560,7 +560,10 @@ export default function BondsClient() {
       </div>
 
       {/* Stats */}
-      <div className="grid-responsive-4" style={{ gap: '16px', marginBottom: '32px' }}>
+      <div
+        className="grid-responsive-4 page-shell__summary-grid"
+        style={{ gap: '16px', marginBottom: '32px' }}
+      >
         <StatCard label="Total Invested" value={`₹${stats.totalInvested.toLocaleString()}`} />
         <StatCard label="Current Value" value={`₹${stats.totalCurrent.toLocaleString()}`} />
         <StatCard
@@ -573,7 +576,7 @@ export default function BondsClient() {
 
       {/* Tab Navigation */}
       <div
-        className="mobile-tab-scroll page-tab-bar"
+        className="mobile-tab-scroll page-tab-bar page-shell__tabs"
         style={{
           display: 'flex',
           width: 'fit-content',

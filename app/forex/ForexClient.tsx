@@ -236,8 +236,8 @@ export default function ForexClient() {
   }
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ marginBottom: '28px' }}>
+    <div className="page-container page-shell">
+      <div className="page-header page-shell__header" style={{ marginBottom: '28px' }}>
         <div>
           <h1
             className="page-title"
@@ -266,6 +266,7 @@ export default function ForexClient() {
       </div>
 
       <div
+        className="page-shell__summary-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))',
@@ -341,7 +342,7 @@ export default function ForexClient() {
       </div>
 
       <div
-        className="mobile-tab-scroll page-tab-bar"
+        className="mobile-tab-scroll page-tab-bar page-shell__tabs"
         style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '20px' }}
       >
         {(['overview', 'history', 'lifetime'] as const).map((tab) => (

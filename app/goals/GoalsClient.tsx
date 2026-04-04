@@ -116,10 +116,10 @@ export default function GoalsClient() {
 
   return (
     <div className="page-container page-surface fade-in">
-      <div style={{ margin: '0 auto' }}>
+      <div className="page-shell__inner" style={{ margin: '0 auto' }}>
         {/* Header - Ultra Minimalist Iris */}
         <div
-          className="page-header"
+          className="page-header page-shell__header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -176,7 +176,7 @@ export default function GoalsClient() {
 
         {/* Hero Section - Oversized Progress */}
         <div
-          className="premium-card"
+          className="premium-card page-shell__hero"
           style={{
             padding: '48px',
             marginBottom: '64px',

@@ -305,10 +305,10 @@ export default function Dashboard() {
     topHoldings.length > 0 || recentTransactions.length > 0 || goalsProgress.length > 0;
 
   return (
-    <div className="page-container">
+    <div className="page-container page-shell">
       <div className="bg-mesh" />
 
-      <header className="dashboard-header">
+      <header className="dashboard-header page-shell__header">
         <div className="fade-in" style={{ width: '100%' }}>
           <div>
             <h1 className="dashboard-title">

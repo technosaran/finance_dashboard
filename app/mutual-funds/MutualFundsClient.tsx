@@ -486,9 +486,9 @@ export default function MutualFundsClient() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container page-shell">
       {/* Header */}
-      <div className="dashboard-header">
+      <div className="dashboard-header page-shell__header">
         <div>
           <h1 className="dashboard-title">Mutual Funds</h1>
         </div>
@@ -553,7 +553,7 @@ export default function MutualFundsClient() {
       </div>
 
       {/* Performance Cards */}
-      <div className="grid-responsive-4" style={{ marginBottom: '32px' }}>
+      <div className="grid-responsive-4 page-shell__summary-grid" style={{ marginBottom: '32px' }}>
         <div
           className="premium-card"
           style={{
@@ -689,7 +689,7 @@ export default function MutualFundsClient() {
 
       {/* Tabs */}
       <div
-        className="mobile-tab-scroll page-tab-bar"
+        className="mobile-tab-scroll page-tab-bar page-shell__tabs"
         style={{
           display: 'flex',
           width: 'fit-content',

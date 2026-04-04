@@ -158,10 +158,10 @@ export default function SalaryClient() {
 
   return (
     <div className="page-container page-surface fade-in">
-      <div style={{ margin: '0 auto', paddingTop: '32px' }}>
+      <div className="page-shell__inner" style={{ margin: '0 auto' }}>
         {/* Header - Ultra Minimalist Iris/Emerald Mix */}
         <div
-          className="page-header"
+          className="page-header page-shell__header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -219,6 +219,7 @@ export default function SalaryClient() {
 
         {/* Hero Section - High-Impact Stat Cards */}
         <div
+          className="page-shell__hero"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',

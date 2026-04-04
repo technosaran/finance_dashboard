@@ -658,8 +658,8 @@ export default function AccountsClient() {
     );
 
   return (
-    <div className="page-container">
-      <div className="dashboard-header">
+    <div className="page-container page-shell">
+      <div className="dashboard-header page-shell__header">
         <div>
           <h1 className="dashboard-title">Accounts</h1>
         </div>
@@ -725,7 +725,10 @@ export default function AccountsClient() {
       </div>
 
       {/* Summary Card */}
-      <div className="premium-card mb-xl" style={{ position: 'relative', overflow: 'hidden' }}>
+      <div
+        className="premium-card page-shell__hero"
+        style={{ position: 'relative', overflow: 'hidden' }}
+      >
         <div
           style={{
             position: 'relative',

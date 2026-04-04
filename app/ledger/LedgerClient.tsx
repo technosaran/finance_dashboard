@@ -214,8 +214,8 @@ export default function LedgerClient() {
   }
 
   return (
-    <div className="page-container page-surface fade-in">
-      <div className="dashboard-header">
+    <div className="page-container page-surface fade-in page-shell">
+      <div className="dashboard-header page-shell__header">
         <div>
           <h1 className="dashboard-title">Ledger</h1>
         </div>
@@ -246,7 +246,7 @@ export default function LedgerClient() {
 
       {/* Summary Cards */}
       <div
-        className="dashboard-grid"
+        className="dashboard-grid page-shell__summary-grid"
         style={{
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           marginBottom: '32px',
