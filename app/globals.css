@@ -63,6 +63,7 @@ p {
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
+  padding-top: 64px;
 }
 
 .main-content {
@@ -1035,6 +1036,7 @@ select:focus {
 
 /* Dashboard Header Utilities */
 .dashboard-header {
+  margin-top: 2rem;
   margin-bottom: var(--spacing-lg);
   display: flex;
   justify-content: space-between;
@@ -3010,6 +3012,7 @@ select:focus {
 
 /* Page header with gradient title */
 .page-header {
+  margin-top: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -5359,7 +5362,7 @@ body {
 @media (max-width: 767px) {
   .main-content {
     padding: 16px;
-    padding-top: 12px;
+    padding-top: 24px;
     padding-bottom: calc(var(--mobile-bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
   }
 

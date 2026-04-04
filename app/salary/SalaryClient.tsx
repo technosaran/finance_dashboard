@@ -158,7 +158,7 @@ export default function SalaryClient() {
 
   return (
     <div className="page-container page-surface fade-in">
-      <div style={{ margin: '0 auto' }}>
+      <div style={{ margin: '0 auto', paddingTop: '32px' }}>
         {/* Header - Ultra Minimalist Iris/Emerald Mix */}
         <div
           className="page-header"
@@ -520,52 +520,6 @@ export default function SalaryClient() {
           </div>
 
           {/* Sidebar Area */}
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
-            className="hide-md"
-          >
-            <div
-              className="premium-card"
-              style={{
-                padding: '32px',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent)',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 950,
-                  marginBottom: '32px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1.5px',
-                  color: '#10b981',
-                }}
-              >
-                Compensation Integrity
-              </h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                This isolated module strictly tracks direct compensation payouts from your employers
-                or core businesses.
-                <br />
-                <br />
-                Dividends, real estate returns, and capital gains are filtered out to provide an
-                undiluted view of your <b>direct earning power</b>.
-              </p>
-              <div
-                style={{
-                  marginTop: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  color: '#34d399',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                }}
-              >
-                <CheckCircle2 size={18} /> Verified Salary Sandbox
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

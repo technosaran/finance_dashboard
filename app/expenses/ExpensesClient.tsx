@@ -194,7 +194,7 @@ export default function ExpensesClient() {
   }
 
   return (
-    <div className="page-container page-surface" style={{ padding: 'clamp(16px, 4vw, 40px)' }}>
+    <div className="page-container page-surface">
       {/* Header Section: Ultra-minimalist */}
       <div
         className="page-header"
