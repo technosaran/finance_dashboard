@@ -517,6 +517,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     >
       <div className="modal-card entry-sheet">
         <div
+          className="page-toolbar page-toolbar--spread"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -731,6 +732,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
 
           {selectedItem && (
             <div
+              className="page-toolbar page-toolbar--spread"
               style={{
                 background: 'rgba(99, 102, 241, 0.05)',
                 padding: '16px',
@@ -739,6 +741,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                gap: '12px',
               }}
             >
               <div>

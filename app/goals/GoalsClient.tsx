@@ -115,10 +115,11 @@ export default function GoalsClient() {
   }
 
   return (
-    <div className="main-content fade-in" style={{ padding: '40px' }}>
+    <div className="page-container page-surface fade-in">
       <div style={{ margin: '0 auto' }}>
         {/* Header - Ultra Minimalist Iris */}
         <div
+          className="page-header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -141,7 +142,10 @@ export default function GoalsClient() {
               Track your financial milestones and peak performance
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div
+            className="page-toolbar"
+            style={{ display: 'flex', gap: '16px', alignItems: 'center' }}
+          >
             <button
               onClick={() => {
                 exportGoalsToCSV(goals);
@@ -272,7 +276,7 @@ export default function GoalsClient() {
 
         {/* Dashboard Grid */}
         <div
-          className="dashboard-grid"
+          className="dashboard-grid page-split-layout page-split-layout--aside-340"
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 1fr) 340px',
@@ -283,6 +287,7 @@ export default function GoalsClient() {
           {/* Main Content: Goals Grid */}
           <div>
             <div
+              className="page-toolbar page-toolbar--spread"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -299,7 +304,7 @@ export default function GoalsClient() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))',
                 gap: '24px',
               }}
             >
@@ -636,7 +641,10 @@ export default function GoalsClient() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Target (₹)</label>
                   <input
@@ -660,7 +668,10 @@ export default function GoalsClient() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Category</label>
                   <select

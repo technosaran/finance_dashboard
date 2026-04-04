@@ -187,7 +187,7 @@ export default function LedgerClient() {
   if (loading) {
     return (
       <div
-        className="main-content"
+        className="page-container page-surface"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -214,13 +214,13 @@ export default function LedgerClient() {
   }
 
   return (
-    <div className="main-content fade-in">
+    <div className="page-container page-surface fade-in">
       <div className="dashboard-header">
         <div>
           <h1 className="dashboard-title">Ledger</h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="page-toolbar" style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={() => {
               exportTransactionsToCSV(transactions);
@@ -354,7 +354,7 @@ export default function LedgerClient() {
       </div>
 
       <div
-        className="dashboard-grid"
+        className="dashboard-grid page-split-layout page-split-layout--aside-340"
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 340px',
@@ -734,6 +734,7 @@ export default function LedgerClient() {
         <div className="modal-overlay fade-in">
           <div className="modal-card slide-up" style={{ maxWidth: '500px', width: '100%' }}>
             <div
+              className="page-toolbar page-toolbar--spread"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -812,7 +813,10 @@ export default function LedgerClient() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Amount ({currencySymbol})</label>
                   <input
@@ -836,7 +840,10 @@ export default function LedgerClient() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Category</label>
                   <input

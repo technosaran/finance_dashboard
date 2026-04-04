@@ -1240,7 +1240,7 @@ export default function StocksClient() {
   if (loading) {
     return (
       <div
-        className="main-content"
+        className="page-container page-surface"
         style={{
           padding: 'clamp(20px, 4vw, 60px)',
           backgroundColor: '#000000',
@@ -1270,7 +1270,7 @@ export default function StocksClient() {
         <div>
           <h1 className="dashboard-title">Stock Portfolio</h1>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="page-toolbar" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
@@ -1474,7 +1474,7 @@ export default function StocksClient() {
 
       {/* Tab Navigation */}
       <div
-        className="mobile-tab-scroll"
+        className="mobile-tab-scroll page-tab-bar"
         style={{
           display: 'flex',
           width: 'fit-content',

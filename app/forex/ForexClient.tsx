@@ -341,7 +341,7 @@ export default function ForexClient() {
       </div>
 
       <div
-        className="mobile-tab-scroll"
+        className="mobile-tab-scroll page-tab-bar"
         style={{ display: 'flex', width: 'fit-content', gap: '8px', marginBottom: '20px' }}
       >
         {(['overview', 'history', 'lifetime'] as const).map((tab) => (

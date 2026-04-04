@@ -218,15 +218,7 @@ export default function FamilyClient() {
   }
 
   return (
-    <div
-      className="main-content"
-      style={{
-        backgroundColor: '#000000',
-        minHeight: '100vh',
-        color: '#f8fafc',
-        padding: 'clamp(12px, 4vw, 24px)',
-      }}
-    >
+    <div className="page-container page-surface">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Section */}
         <div className="page-header" style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}>
@@ -352,7 +344,7 @@ export default function FamilyClient() {
 
         {/* Tab Switcher */}
         <div
-          className="mobile-tab-scroll"
+          className="mobile-tab-scroll page-tab-bar"
           style={{
             display: 'flex',
             width: 'fit-content',

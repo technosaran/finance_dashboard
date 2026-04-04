@@ -222,7 +222,10 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="page-container" style={{ paddingTop: '24px', paddingBottom: '80px' }}>
+    <div
+      className="page-container page-surface"
+      style={{ paddingTop: 'clamp(12px, 3vw, 24px)', paddingBottom: '80px' }}
+    >
       {/* Header */}
       <header className="fade-in" style={{ marginBottom: '40px' }}>
         <h1
@@ -247,6 +250,7 @@ export default function SettingsPage() {
         {/* Tab Navigation - Horizontal Scrollable */}
         <div className="fade-in" style={{ animationDelay: '0.05s' }}>
           <div
+            className="page-tab-bar"
             style={{
               display: 'flex',
               gap: '8px',

@@ -194,9 +194,10 @@ export default function ExpensesClient() {
   }
 
   return (
-    <div className="page-container" style={{ padding: '40px' }}>
+    <div className="page-container page-surface" style={{ padding: 'clamp(16px, 4vw, 40px)' }}>
       {/* Header Section: Ultra-minimalist */}
       <div
+        className="page-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -219,7 +220,10 @@ export default function ExpensesClient() {
             Real-time spending intelligence
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div
+          className="page-toolbar"
+          style={{ display: 'flex', gap: '16px', alignItems: 'center' }}
+        >
           <div
             className="glass-container"
             style={{ display: 'flex', padding: '5px', borderRadius: '14px' }}
@@ -344,7 +348,7 @@ export default function ExpensesClient() {
 
       {/* Detail Grid */}
       <div
-        className="dashboard-grid"
+        className="dashboard-grid page-split-layout page-split-layout--aside-360"
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 360px',
@@ -649,6 +653,7 @@ export default function ExpensesClient() {
             style={{ maxWidth: '520px', padding: '48px', borderRadius: '40px' }}
           >
             <div
+              className="page-toolbar page-toolbar--spread"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -697,7 +702,10 @@ export default function ExpensesClient() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <label className="form-label" style={{ fontSize: '0.7rem' }}>
                     Amount (₹)

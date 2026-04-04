@@ -492,7 +492,10 @@ export default function MutualFundsClient() {
         <div>
           <h1 className="dashboard-title">Mutual Funds</h1>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div
+          className="page-toolbar"
+          style={{ display: 'flex', gap: '12px', alignItems: 'center' }}
+        >
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
@@ -686,7 +689,7 @@ export default function MutualFundsClient() {
 
       {/* Tabs */}
       <div
-        className="mobile-tab-scroll"
+        className="mobile-tab-scroll page-tab-bar"
         style={{
           display: 'flex',
           width: 'fit-content',

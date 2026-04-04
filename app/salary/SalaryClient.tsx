@@ -157,10 +157,11 @@ export default function SalaryClient() {
   if (loading) return null;
 
   return (
-    <div className="main-content fade-in" style={{ padding: '40px' }}>
+    <div className="page-container page-surface fade-in">
       <div style={{ margin: '0 auto' }}>
         {/* Header - Ultra Minimalist Iris/Emerald Mix */}
         <div
+          className="page-header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -183,7 +184,10 @@ export default function SalaryClient() {
               Your dedicated professional compensation tracker
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div
+            className="page-toolbar"
+            style={{ display: 'flex', gap: '16px', alignItems: 'center' }}
+          >
             <button
               onClick={() => {
                 exportTransactionsToCSV(salaryItems);
@@ -296,13 +300,13 @@ export default function SalaryClient() {
 
         {/* Content Layout */}
         <div
+          className="dashboard-grid page-split-layout page-split-layout--aside-340"
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 1fr) 340px',
             gap: '40px',
             alignItems: 'start',
           }}
-          className="dashboard-grid"
         >
           {/* Main List & History */}
           <div>
@@ -570,6 +574,7 @@ export default function SalaryClient() {
         <div className="modal-overlay fade-in">
           <div className="modal-card slide-up" style={{ maxWidth: '500px', width: '100%' }}>
             <div
+              className="page-toolbar page-toolbar--spread"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -603,7 +608,10 @@ export default function SalaryClient() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Payout Amount (₹)</label>
                   <input
@@ -627,7 +635,10 @@ export default function SalaryClient() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Compensation Type</label>
                   <select

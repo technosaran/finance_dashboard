@@ -663,7 +663,7 @@ export default function AccountsClient() {
         <div>
           <h1 className="dashboard-title">Accounts</h1>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="page-toolbar" style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={() => {
               exportAccountsToCSV(accounts);

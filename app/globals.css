@@ -5270,3 +5270,140 @@ body {
 .login-submit:hover {
   box-shadow: 0 20px 36px rgba(13, 78, 68, 0.34);
 }
+
+/* ====== SHARED LAYOUT HARDENING ====== */
+
+:root {
+  --shell-gutter: clamp(16px, 4vw, 40px);
+  --mobile-bottom-nav-clearance: 118px;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.page-container {
+  min-width: 0;
+}
+
+.page-container > * {
+  min-width: 0;
+}
+
+.main-content {
+  min-width: 0;
+}
+
+.page-surface {
+  color: #f8fafc;
+}
+
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.page-toolbar > * {
+  flex-shrink: 0;
+}
+
+.page-toolbar--spread {
+  justify-content: space-between;
+}
+
+.page-tab-bar {
+  width: min(100%, max-content) !important;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.page-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.page-tab-bar > * {
+  flex-shrink: 0;
+}
+
+.page-split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 40px);
+  align-items: start;
+}
+
+.form-grid-2,
+.form-grid-3 {
+  min-width: 0;
+}
+
+@media (min-width: 1200px) {
+  .page-split-layout--aside-340 {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px) !important;
+  }
+
+  .page-split-layout--aside-360 {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 360px) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    padding: 16px;
+    padding-top: 12px;
+    padding-bottom: calc(var(--mobile-bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .dashboard-header,
+  .page-header {
+    align-items: stretch;
+  }
+
+  .page-toolbar {
+    width: 100%;
+  }
+
+  .page-toolbar > * {
+    max-width: 100%;
+  }
+
+  .page-toolbar .header-add-btn,
+  .page-toolbar .glass-button,
+  .page-toolbar .secondary-btn {
+    justify-content: center;
+  }
+
+  .page-toolbar .header-add-btn,
+  .page-toolbar .glass-button {
+    width: 100%;
+  }
+
+  .page-tab-bar {
+    width: 100% !important;
+  }
+
+  .form-grid-2 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .form-grid-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 767px) {
+    .main-content {
+      padding-bottom: calc(var(--mobile-bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
+    }
+  }
+}

@@ -170,7 +170,7 @@ export default function FnOClient() {
   if (loading) {
     return (
       <div
-        className="main-content"
+        className="page-container page-surface"
         style={{
           background: '#000000',
           minHeight: '100vh',
@@ -358,6 +358,7 @@ export default function FnOClient() {
 
       {/* Tabs */}
       <div
+        className="page-tab-bar"
         style={{
           display: 'flex',
           gap: '12px',

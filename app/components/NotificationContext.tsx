@@ -99,6 +99,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       {/* Notifications Portal */}
       <div
+        className="notification-viewport"
         style={{
           position: 'fixed',
           top: '24px',
@@ -113,6 +114,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         {notifications.map((n) => (
           <div
             key={n.id}
+            className="notification-toast"
             style={{
               background: colors.bgCard,
               border: `1px solid ${
@@ -131,8 +133,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
               alignItems: 'center',
               gap: '12px',
               boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-              minWidth: '300px',
-              maxWidth: '450px',
+              width: 'min(100%, 420px)',
+              minWidth: 0,
+              maxWidth: '100%',
               animation: 'slideIn 0.3s ease-out',
               pointerEvents: 'auto',
               backdropFilter: 'blur(10px)',
@@ -161,6 +164,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       {/* Confirm Dialog Modal */}
       {confirmDialog && (
         <div
+          className="confirm-dialog-overlay"
           style={{
             position: 'fixed',
             top: 0,
@@ -177,6 +181,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           }}
         >
           <div
+            className="confirm-dialog"
             style={{
               background: colors.bgCard,
               padding: '32px',
@@ -205,7 +210,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             >
               {confirmDialog.options.message}
             </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="confirm-dialog__actions" style={{ display: 'flex', gap: '12px' }}>
               <button
                 type="button"
                 onClick={() => handleConfirm(false)}
@@ -250,6 +255,35 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         @keyframes slideIn {
           from { transform: translateX(100%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 767px) {
+          .notification-viewport {
+            top: calc(12px + env(safe-area-inset-top, 0px)) !important;
+            right: 12px !important;
+            left: 12px !important;
+            align-items: stretch !important;
+          }
+
+          .notification-toast {
+            width: 100% !important;
+          }
+
+          .confirm-dialog-overlay {
+            align-items: flex-end !important;
+            padding: 12px !important;
+          }
+
+          .confirm-dialog {
+            width: 100% !important;
+            max-width: none !important;
+            padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+            border-radius: 24px !important;
+          }
+
+          .confirm-dialog__actions {
+            flex-direction: column;
+          }
         }
       `}</style>
     </NotificationContext.Provider>

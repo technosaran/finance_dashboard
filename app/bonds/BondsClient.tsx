@@ -534,7 +534,7 @@ export default function BondsClient() {
         <div>
           <h1 className="dashboard-title">Bonds Terminal</h1>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="page-toolbar" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             onClick={openCreateModal}
             style={{
@@ -573,7 +573,7 @@ export default function BondsClient() {
 
       {/* Tab Navigation */}
       <div
-        className="mobile-tab-scroll"
+        className="mobile-tab-scroll page-tab-bar"
         style={{
           display: 'flex',
           width: 'fit-content',
