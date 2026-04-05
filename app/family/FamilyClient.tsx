@@ -637,7 +637,7 @@ export default function FamilyClient() {
                   style={{
                     background: 'rgba(255,255,255,0.02)',
                     borderRadius: 'clamp(20px, 4vw, 28px)',
-                    border: '2px dashed #111111',
+                    border: '2px dashed rgba(255, 255, 255, 0.12)',
                     padding: 'clamp(24px, 5vw, 40px)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -656,7 +656,8 @@ export default function FamilyClient() {
                       'rgba(30, 166, 114, 0.03)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = '#111111';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor =
+                      'rgba(255, 255, 255, 0.12)';
                     (e.currentTarget as HTMLButtonElement).style.color = '#475569';
                     (e.currentTarget as HTMLButtonElement).style.background =
                       'rgba(255,255,255,0.02)';
@@ -688,7 +689,7 @@ export default function FamilyClient() {
                   textAlign: 'center',
                   background: 'rgba(0, 0, 0, 0.3)',
                   borderRadius: 'clamp(24px, 5vw, 32px)',
-                  border: '2px dashed #111111',
+                  border: '2px dashed rgba(255, 255, 255, 0.12)',
                 }}
               >
                 <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'center' }}>
@@ -753,7 +754,7 @@ export default function FamilyClient() {
               style={{
                 background: '#050505',
                 borderRadius: 'clamp(20px, 4vw, 28px)',
-                border: '1px solid #111111',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 padding: 'clamp(16px, 4vw, 28px)',
               }}
             >
