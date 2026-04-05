@@ -59,6 +59,7 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
     addFnoTrade,
     addStock,
     addMutualFund,
+    loading: portfolioLoading,
   } = usePortfolio();
   const { settings } = useSettings();
   const { showNotification } = useNotifications();
@@ -506,6 +507,57 @@ export default function AddTransactionModal({ isOpen, onClose }: AddTransactionM
   };
 
   if (!isOpen) return null;
+
+  const isPreparingPortfolioTools =
+    portfolioLoading && stocks.length === 0 && mutualFunds.length === 0;
+
+  if (isPreparingPortfolioTools) {
+    return (
+      <div
+        className="modal-overlay"
+        style={{ zIndex: 2000 }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="modal-card entry-sheet">
+          <div
+            style={{
+              minHeight: '280px',
+              display: 'grid',
+              placeItems: 'center',
+              textAlign: 'center',
+              gap: '12px',
+              color: '#c7d8d3',
+            }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'rgba(26, 142, 104, 0.16)',
+                border: '1px solid rgba(26, 142, 104, 0.28)',
+                color: '#7ee1b4',
+              }}
+            >
+              <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: '900', fontSize: '1rem', color: '#f4f8f7' }}>
+                Preparing investment tools
+              </div>
+              <div style={{ fontSize: '0.88rem', color: '#9ab0a8', marginTop: '6px' }}>
+                Loading holdings, history, and trade helpers for this account.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNotifications } from '../components/NotificationContext';
 import { useLedger } from '../components/FinanceContext';
 import { Goal } from '@/lib/types';
@@ -14,14 +14,23 @@ export default function GoalsClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<number | ''>('');
-
-  // Form State
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
   const [deadline, setDeadline] = useState('');
   const [category, setCategory] = useState('Savings');
   const [description, setDescription] = useState('');
+
+  const resetForm = () => {
+    setEditId(null);
+    setSelectedAccountId('');
+    setName('');
+    setTargetAmount('');
+    setCurrentAmount('');
+    setDeadline('');
+    setCategory('Savings');
+    setDescription('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +43,7 @@ export default function GoalsClient() {
       deadline,
       category,
       description,
+      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
     };
 
     if (editId) {
@@ -48,111 +58,74 @@ export default function GoalsClient() {
     setIsModalOpen(false);
   };
 
-  const resetForm = () => {
-    setEditId(null);
-    setName('');
-    setTargetAmount('');
-    setCurrentAmount('');
-    setDeadline('');
-    setCategory('Savings');
-    setDescription('');
-    setSelectedAccountId('');
-  };
-
   const handleEdit = (goal: Goal) => {
     setEditId(goal.id);
+    setSelectedAccountId('');
     setName(goal.name);
-    setTargetAmount(goal.targetAmount.toString());
-    setCurrentAmount(goal.currentAmount.toString());
+    setTargetAmount(String(goal.targetAmount));
+    setCurrentAmount(String(goal.currentAmount));
     setDeadline(goal.deadline || '');
     setCategory(goal.category);
     setDescription(goal.description || '');
     setIsModalOpen(true);
   };
 
-  const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
-  const totalCurrent = goals.reduce((sum, g) => sum + g.currentAmount, 0);
+  const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+  const totalCurrent = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const completedGoals = goals.filter((goal) => goal.currentAmount >= goal.targetAmount).length;
+  const activeGoals = Math.max(goals.length - completedGoals, 0);
+  const remainingAmount = Math.max(totalTarget - totalCurrent, 0);
   const overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
+  const averageFunding = goals.length > 0 ? totalCurrent / goals.length : 0;
+  const completionRate = goals.length > 0 ? (completedGoals / goals.length) * 100 : 0;
+
+  const nextGoal = useMemo(
+    () =>
+      [...goals]
+        .filter((goal) => goal.currentAmount < goal.targetAmount)
+        .sort((a, b) => b.currentAmount / b.targetAmount - a.currentAmount / a.targetAmount)[0] ??
+      null,
+    [goals]
+  );
+
+  const topCategories = useMemo(() => {
+    const totals = goals.reduce<Record<string, number>>((acc, goal) => {
+      acc[goal.category] = (acc[goal.category] || 0) + goal.targetAmount;
+      return acc;
+    }, {});
+    return Object.entries(totals)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+  }, [goals]);
 
   if (loading) {
     return (
       <div className="page-container">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-            color: '#94a3b8',
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                border: '3px solid rgba(30, 166, 114, 0.1)',
-                borderTopColor: '#1ea672',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                margin: '0 auto 16px',
-              }}
-            />
-            <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
-              Preparing your milestones...
-            </div>
-          </div>
-          <style jsx>{`
-            @keyframes spin {
-              to {
-                transform: rotate(360deg);
-              }
-            }
-          `}</style>
+        <div className="goals-loading">
+          <div className="goals-spinner" />
+          <div>Preparing your milestones...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="page-container page-surface fade-in">
-      <div className="page-shell__inner" style={{ margin: '0 auto' }}>
-        {/* Header - Ultra Minimalist Iris */}
-        <div
-          className="page-header page-shell__header"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            marginBottom: '56px',
-          }}
-        >
+    <div className="page-container page-surface page-shell fade-in">
+      <div className="page-shell__inner">
+        <div className="page-header page-shell__header goals-header">
           <div>
-            <h1
-              style={{
-                fontSize: '3.5rem',
-                fontWeight: 950,
-                letterSpacing: '-2px',
-                fontFamily: 'var(--font-outfit)',
-              }}
-            >
-              Goals<span style={{ color: '#1ea672' }}>.</span>
+            <h1 className="goals-title">
+              Goals<span>.</span>
             </h1>
-            <p className="stat-label" style={{ fontSize: '0.85rem' }}>
-              Track your financial milestones and peak performance
-            </p>
+            <p className="stat-label">Track milestones with a cleaner planning workspace</p>
           </div>
-          <div
-            className="page-toolbar"
-            style={{ display: 'flex', gap: '16px', alignItems: 'center' }}
-          >
+          <div className="page-toolbar goals-header__actions">
             <button
               onClick={() => {
                 exportGoalsToCSV(goals);
                 showNotification('success', 'Goals exported successfully');
               }}
               className="glass-button hide-xs"
-              style={{ padding: '12px 20px', borderRadius: '14px' }}
             >
               <Download size={18} />
             </button>
@@ -161,226 +134,122 @@ export default function GoalsClient() {
                 resetForm();
                 setIsModalOpen(true);
               }}
-              className="header-add-btn"
-              style={{
-                padding: '14px 28px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
-                boxShadow: '0 12px 30px rgba(30, 166, 114, 0.25)',
-              }}
+              className="header-add-btn goals-add-btn"
             >
               <Plus size={20} /> Create Goal
             </button>
           </div>
         </div>
 
-        {/* Hero Section - Oversized Progress */}
-        <div
-          className="premium-card page-shell__hero"
-          style={{
-            padding: '48px',
-            marginBottom: '64px',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              background:
-                'radial-gradient(circle at top right, rgba(30, 166, 114, 0.15), transparent 70%)',
-              position: 'absolute',
-              inset: 0,
-            }}
-          />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <span
-                className="stat-label"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  color: '#a78bfa',
-                  marginBottom: '16px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: 900,
-                }}
-              >
-                <Trophy size={16} /> Portfolio Progression
-              </span>
-              <div
-                style={{
-                  fontSize: '6rem',
-                  fontWeight: 950,
-                  letterSpacing: '-5px',
-                  fontFamily: 'var(--font-outfit)',
-                  lineHeight: 0.9,
-                }}
-              >
-                {overallProgress.toFixed(1)}%
+        <div className="page-shell__summary-grid goals-summary">
+          {[
+            {
+              label: 'Saved So Far',
+              value: `Rs. ${totalCurrent.toLocaleString()}`,
+              note: `${overallProgress.toFixed(1)}% of total target`,
+              color: '#1ea672',
+              icon: Trophy,
+            },
+            {
+              label: 'Still Needed',
+              value: `Rs. ${remainingAmount.toLocaleString()}`,
+              note: `${activeGoals} active goals`,
+              color: '#f59e0b',
+              icon: Clock,
+            },
+            {
+              label: 'Completed',
+              value: String(completedGoals),
+              note: `${goals.length} total milestones`,
+              color: '#22c55e',
+              icon: CheckCircle2,
+            },
+          ].map((card) => (
+            <div key={card.label} className="stat-card" style={{ minHeight: 'auto' }}>
+              <div className="stat-card__glow" />
+              <div className="goals-stat" style={{ color: card.color }}>
+                <div
+                  className="goals-stat__icon"
+                  style={{ background: `${card.color}1a`, borderColor: `${card.color}33` }}
+                >
+                  <card.icon size={18} />
+                </div>
+                <div>
+                  <div className="stat-label">{card.label}</div>
+                  <div className="goals-stat__value">{card.value}</div>
+                  <div className="stat-label">{card.note}</div>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div style={{ display: 'flex', gap: '48px', textAlign: 'right' }} className="hide-sm">
+        <div className="premium-card page-shell__hero goals-hero">
+          <div className="goals-hero__top">
+            <div>
+              <div className="goals-kicker">
+                <Trophy size={16} /> Goal Progress
+              </div>
+              <div className="goals-hero__progress">{overallProgress.toFixed(1)}%</div>
+            </div>
+            <div className="goals-hero__stats">
               <div>
-                <div className="stat-label" style={{ fontSize: '0.7rem', marginBottom: '8px' }}>
-                  Total Retained
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--success)' }}>
-                  ₹{totalCurrent.toLocaleString()}
-                </div>
+                <span className="stat-label">Retained</span>
+                <strong>Rs. {totalCurrent.toLocaleString()}</strong>
               </div>
               <div>
-                <div className="stat-label" style={{ fontSize: '0.7rem', marginBottom: '8px' }}>
-                  Aspiration Total
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 950, color: '#fff' }}>
-                  ₹{totalTarget.toLocaleString()}
-                </div>
+                <span className="stat-label">Target</span>
+                <strong>Rs. {totalTarget.toLocaleString()}</strong>
+              </div>
+              <div>
+                <span className="stat-label">Closed</span>
+                <strong>{completedGoals}</strong>
               </div>
             </div>
           </div>
-
-          <div
-            style={{
-              marginTop: '48px',
-              height: '12px',
-              background: 'var(--surface-hover)',
-              borderRadius: '100px',
-              overflow: 'hidden',
-              border: '1px solid var(--surface-border)',
-              position: 'relative',
-            }}
-          >
-            <div
-              style={{
-                width: `${overallProgress}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #1ea672 0%, #34d399 100%)',
-                borderRadius: '100px',
-                transition: 'width 2s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 0 30px rgba(30, 166, 114, 0.4)',
-              }}
-            />
+          <div className="goals-progressbar">
+            <div style={{ width: `${Math.min(overallProgress, 100)}%` }} />
           </div>
         </div>
 
-        {/* Dashboard Grid */}
-        <div
-          className="dashboard-grid page-split-layout page-split-layout--aside-340"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 340px',
-            gap: '40px',
-            alignItems: 'start',
-          }}
-        >
-          {/* Main Content: Goals Grid */}
+        <div className="dashboard-grid page-split-layout page-split-layout--aside-340 goals-layout">
           <div>
-            <div
-              className="page-toolbar page-toolbar--spread"
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '32px',
-              }}
-            >
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 950 }}>Active Milestones</h3>
-              <span className="stat-label" style={{ fontSize: '0.65rem' }}>
-                {goals.length} TARGETS FOUND
-              </span>
+            <div className="page-toolbar page-toolbar--spread goals-toolbar">
+              <h3>Active Milestones</h3>
+              <span className="stat-label">{goals.length} TARGETS FOUND</span>
             </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))',
-                gap: '24px',
-              }}
-            >
+            <div className="goals-grid">
               {goals.length > 0 ? (
                 goals.map((goal) => {
-                  const progress = (goal.currentAmount / goal.targetAmount) * 100;
+                  const progress =
+                    goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
                   const isCompleted = progress >= 100;
-
+                  const remaining = Math.max(goal.targetAmount - goal.currentAmount, 0);
                   return (
-                    <div
-                      key={goal.id}
-                      className="premium-card goal-card-hover"
-                      style={{
-                        padding: '32px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '28px',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        background: 'rgba(255,255,255,0.01)',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div key={goal.id} className="premium-card goal-card-hover goals-card">
+                      <div className="goals-card__head">
+                        <div className="goals-card__identity">
                           <div
+                            className="goals-card__badge"
                             style={{
-                              width: '52px',
-                              height: '52px',
-                              borderRadius: '18px',
                               background: isCompleted ? '#22c55e22' : '#1ea67222',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
                               color: isCompleted ? '#22c55e' : '#1ea672',
                             }}
                           >
-                            {isCompleted ? <CheckCircle2 size={24} /> : <Flame size={24} />}
+                            {isCompleted ? <CheckCircle2 size={22} /> : <Flame size={22} />}
                           </div>
                           <div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{goal.name}</h3>
-                            <span
-                              className="stat-label"
-                              style={{
-                                fontSize: '0.7rem',
-                                color: isCompleted ? '#22c55e' : '#43c08a',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                              }}
-                            >
-                              {goal.category}
-                            </span>
+                            <h3>{goal.name}</h3>
+                            <span className="stat-label">{goal.category}</span>
                           </div>
                         </div>
-
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => handleEdit(goal)}
-                            style={{
-                              padding: '10px',
-                              borderRadius: '12px',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--text-secondary)',
-                              cursor: 'pointer',
-                            }}
-                            className="action-btn--hover"
-                          >
+                        <div className="goals-card__actions">
+                          <button className="action-btn--hover" onClick={() => handleEdit(goal)}>
                             <Edit3 size={16} />
                           </button>
                           <button
+                            className="action-btn-danger--hover"
                             onClick={async () => {
                               const confirmed = await customConfirm({
                                 title: 'Remove Landmark',
@@ -390,246 +259,135 @@ export default function GoalsClient() {
                               });
                               if (confirmed) await deleteGoal(goal.id);
                             }}
-                            style={{
-                              padding: '10px',
-                              borderRadius: '12px',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--text-secondary)',
-                              cursor: 'pointer',
-                            }}
-                            className="action-btn-danger--hover"
                           >
                             <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
-
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '12px',
-                          }}
-                        >
-                          <span style={{ fontSize: '1.3rem', fontWeight: 950 }}>
-                            {progress.toFixed(0)}%
-                          </span>
-                          <span className="stat-label" style={{ fontSize: '0.75rem' }}>
-                            {isCompleted ? 'Goal Fully Met' : 'In Progress'}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            height: '6px',
-                            background: 'var(--surface-hover)',
-                            borderRadius: '100px',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${Math.min(progress, 100)}%`,
-                              height: '100%',
-                              background: isCompleted ? '#22c55e' : '#1ea672',
-                              borderRadius: '100px',
-                              transition: 'width 1.5s ease',
-                              opacity: 0.8,
-                            }}
-                          />
-                        </div>
+                      <div className="goals-card__progress">
+                        <span>{progress.toFixed(0)}%</span>
+                        <span className="stat-label">
+                          {isCompleted
+                            ? 'Goal Fully Met'
+                            : `Rs. ${remaining.toLocaleString()} to go`}
+                        </span>
                       </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          paddingTop: '20px',
-                          borderTop: '1px solid var(--surface-border)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', gap: '32px' }}>
-                          <div>
-                            <div className="stat-label" style={{ fontSize: '0.65rem' }}>
-                              Target
-                            </div>
-                            <div style={{ fontWeight: 900, fontSize: '1rem' }}>
-                              ₹{goal.targetAmount.toLocaleString()}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="stat-label" style={{ fontSize: '0.65rem' }}>
-                              Saved
-                            </div>
-                            <div
-                              style={{
-                                fontWeight: 900,
-                                fontSize: '1rem',
-                                color: isCompleted ? '#22c55e' : '#fff',
-                              }}
-                            >
-                              ₹{goal.currentAmount.toLocaleString()}
-                            </div>
-                          </div>
+                      <div className="goals-progressbar goals-progressbar--small">
+                        <div
+                          style={{
+                            width: `${Math.min(progress, 100)}%`,
+                            background: isCompleted ? '#22c55e' : '#1ea672',
+                          }}
+                        />
+                      </div>
+                      <div className="goals-card__meta">
+                        <div>
+                          <span className="stat-label">Target</span>
+                          <strong>Rs. {goal.targetAmount.toLocaleString()}</strong>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div className="stat-label" style={{ fontSize: '0.65rem' }}>
-                            Timeline
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '0.85rem',
-                              fontWeight: 700,
-                              color: 'var(--text-secondary)',
-                            }}
-                          >
+                        <div>
+                          <span className="stat-label">Saved</span>
+                          <strong>Rs. {goal.currentAmount.toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span className="stat-label">Timeline</span>
+                          <strong>
                             {goal.deadline
                               ? new Date(goal.deadline).toLocaleDateString(undefined, {
                                   month: 'short',
                                   day: 'numeric',
                                 })
                               : 'Ongoing'}
-                          </div>
+                          </strong>
                         </div>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div
-                  style={{
-                    gridColumn: '1 / -1',
-                    padding: '120px 40px',
-                    textAlign: 'center',
-                    border: '1px dashed var(--surface-border)',
-                    borderRadius: '40px',
-                    background: 'rgba(255,255,255,0.01)',
-                  }}
-                >
+                <div className="goals-empty">
                   <EmptyGoalsVisual />
-                  <p className="stat-label" style={{ marginTop: '24px' }}>
-                    Awaiting your first milestone definition.
-                  </p>
+                  <p className="stat-label">Awaiting your first milestone definition.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Sidebar Analytics - Iris Style */}
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}
-            className="hide-md"
-          >
-            {/* Spotlight Card */}
-            {goals.filter((g) => g.currentAmount < g.targetAmount).length > 0 && (
-              <div
-                className="premium-card"
-                style={{
-                  padding: '32px',
-                  background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  boxShadow: '0 20px 40px rgba(30, 166, 114, 0.2)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '24px',
-                  }}
-                >
-                  <Flame size={18} />
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 900,
-                      letterSpacing: '1px',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    High Momentum
-                  </span>
+          <div className="goals-rail">
+            {nextGoal && (
+              <div className="premium-card goals-spotlight">
+                <div className="goals-kicker">
+                  <Flame size={16} /> High Momentum
                 </div>
-                {(() => {
-                  const nextGoal = [...goals]
-                    .filter((g) => g.currentAmount < g.targetAmount)
-                    .sort(
-                      (a, b) => b.currentAmount / b.targetAmount - a.currentAmount / a.targetAmount
-                    )[0];
-                  const p = (nextGoal.currentAmount / nextGoal.targetAmount) * 100;
-                  return (
-                    <>
-                      <h4
-                        style={{
-                          fontSize: '1.4rem',
-                          fontWeight: 950,
-                          marginBottom: '8px',
-                          letterSpacing: '-0.5px',
-                        }}
-                      >
-                        {nextGoal.name}
-                      </h4>
-                      <p style={{ fontSize: '0.85rem', opacity: 0.9, marginBottom: '24px' }}>
-                        ₹{(nextGoal.targetAmount - nextGoal.currentAmount).toLocaleString()} more
-                        needed for victory
-                      </p>
-                      <div
-                        style={{
-                          height: '8px',
-                          background: 'rgba(255,255,255,0.2)',
-                          borderRadius: '100px',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${p}%`,
-                            height: '100%',
-                            background: '#fff',
-                            borderRadius: '100px',
-                          }}
-                        />
-                      </div>
-                    </>
-                  );
-                })()}
+                <h4>{nextGoal.name}</h4>
+                <p>
+                  Rs. {Math.max(nextGoal.targetAmount - nextGoal.currentAmount, 0).toLocaleString()}{' '}
+                  more needed for victory
+                </p>
+                <div className="goals-progressbar goals-progressbar--light">
+                  <div
+                    style={{
+                      width: `${Math.min((nextGoal.currentAmount / nextGoal.targetAmount) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
               </div>
             )}
+            <div className="premium-card goals-rail-card">
+              <div className="stat-label">Category Focus</div>
+              {topCategories.length > 0 ? (
+                topCategories.map(([goalCategory, amount]) => (
+                  <div key={goalCategory} className="goals-rail__row">
+                    <div>
+                      <strong>{goalCategory}</strong>
+                      <span className="stat-label">
+                        Rs. {amount.toLocaleString()} target allocation
+                      </span>
+                    </div>
+                    <strong>
+                      {totalTarget > 0 ? `${Math.round((amount / totalTarget) * 100)}%` : '0%'}
+                    </strong>
+                  </div>
+                ))
+              ) : (
+                <div className="stat-label">Add a goal to unlock category insights.</div>
+              )}
+            </div>
+            <div className="premium-card goals-rail-card">
+              <div className="stat-label">Planning Rhythm</div>
+              <div className="goals-rail__row">
+                <div>
+                  <strong>Average funded</strong>
+                  <span className="stat-label">Per milestone</span>
+                </div>
+                <strong>Rs. {Math.round(averageFunding).toLocaleString()}</strong>
+              </div>
+              <div className="goals-rail__row">
+                <div>
+                  <strong>Completion rate</strong>
+                  <span className="stat-label">Goals already closed</span>
+                </div>
+                <strong>{completionRate.toFixed(0)}%</strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Modern Modal */}
       {isModalOpen && (
         <div className="modal-overlay fade-in">
-          <div className="modal-card slide-up" style={{ maxWidth: '480px', width: '100%' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px',
-              }}
-            >
+          <div className="modal-card slide-up goals-modal">
+            <div className="goals-modal__head">
               <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-                  {editId ? 'Edit Goal' : 'New Goal'}
-                </h2>
+                <h2>{editId ? 'Edit Goal' : 'New Goal'}</h2>
                 <p className="stat-label">Define your next milestone</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="modal-close">
                 <X size={24} />
               </button>
             </div>
-
-            <form
-              onSubmit={handleSubmit}
-              style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <form onSubmit={handleSubmit} className="goals-form">
+              <div>
                 <label className="form-label">Goal Name</label>
                 <input
                   className="form-input"
@@ -640,13 +398,9 @@ export default function GoalsClient() {
                   autoFocus
                 />
               </div>
-
-              <div
-                className="form-grid-2"
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label className="form-label">Target (₹)</label>
+              <div className="form-grid-2 goals-form__grid">
+                <div>
+                  <label className="form-label">Target (Rs.)</label>
                   <input
                     className="form-input"
                     type="number"
@@ -656,8 +410,8 @@ export default function GoalsClient() {
                     required
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label className="form-label">Current (₹)</label>
+                <div>
+                  <label className="form-label">Current (Rs.)</label>
                   <input
                     className="form-input"
                     type="number"
@@ -667,12 +421,8 @@ export default function GoalsClient() {
                   />
                 </div>
               </div>
-
-              <div
-                className="form-grid-2"
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="form-grid-2 goals-form__grid">
+                <div>
                   <label className="form-label">Category</label>
                   <select
                     className="form-input"
@@ -686,35 +436,46 @@ export default function GoalsClient() {
                     <option value="Purchase">Purchase</option>
                   </select>
                 </div>
+                <div>
+                  <label className="form-label">Target Date</label>
+                  <input
+                    className="form-input"
+                    type="date"
+                    value={deadline}
+                    onChange={(e) => setDeadline(e.target.value)}
+                  />
+                </div>
               </div>
-
-              {editId && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div>
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-input"
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Why this goal matters and how you plan to reach it"
+                />
+              </div>
+              {accounts.length > 0 && (
+                <div>
                   <label className="form-label">Funding Account</label>
                   <select
                     className="form-input"
                     value={selectedAccountId}
-                    onChange={(e) => setSelectedAccountId(Number(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedAccountId(e.target.value ? Number(e.target.value) : '')
+                    }
                   >
                     <option value="">No account link</option>
-                    {accounts.map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} - ₹{acc.balance.toLocaleString()}
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} - Rs. {account.balance.toLocaleString()}
                       </option>
                     ))}
                   </select>
-                  <p className="stat-label" style={{ fontSize: '0.65rem', marginTop: '4px' }}>
-                    If the current amount increases, the difference will be deducted from this
-                    account.
-                  </p>
                 </div>
               )}
-
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ marginTop: '12px', padding: '14px', fontSize: '1rem' }}
-              >
+              <button type="submit" className="btn-primary goals-submit">
                 {editId ? 'Save Changes' : 'Launch Goal'}
               </button>
             </form>
@@ -723,18 +484,7 @@ export default function GoalsClient() {
       )}
 
       <style>{`
-        .goal-card-hover {
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .goal-card-hover:hover {
-          transform: translateY(-4px) scale(1.02);
-          background: rgba(15, 25, 30, 0.9) !important;
-          border-color: var(--accent) !important;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px var(--accent-glow) !important;
-        }
-        .activity-item-hover:hover {
-          background: var(--surface-hover);
-        }
+        .goals-loading{display:flex;align-items:center;justify-content:center;min-height:60vh;gap:16px;color:#94a3b8}.goals-spinner{width:40px;height:40px;border:3px solid rgba(30,166,114,.1);border-top-color:#1ea672;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.goals-title{font-size:clamp(2.4rem,6vw,3.5rem);font-weight:950;letter-spacing:-2px;font-family:var(--font-outfit)}.goals-title span{color:#1ea672}.goals-header,.goals-hero__top,.goals-card__head,.goals-card__progress,.goals-rail__row,.goals-modal__head{display:flex;justify-content:space-between;gap:16px}.goals-header{align-items:flex-end;flex-wrap:wrap}.goals-header__actions{justify-content:flex-end}.goals-add-btn{padding:14px 28px;border-radius:16px;background:linear-gradient(135deg,#1ea672 0%,#146d63 100%);box-shadow:0 12px 30px rgba(30,166,114,.25)}.goals-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}.goals-stat{display:flex;gap:12px;align-items:flex-start;position:relative;z-index:1}.goals-stat__icon{width:40px;height:40px;border:1px solid;border-radius:12px;display:flex;align-items:center;justify-content:center}.goals-stat__value{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:950;color:#fff}.goals-hero{padding:clamp(24px,5vw,48px);overflow:hidden;background:radial-gradient(circle at top right,rgba(30,166,114,.16),transparent 58%),rgba(255,255,255,.02)}.goals-kicker{display:flex;gap:8px;align-items:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;font-weight:900;font-size:.76rem;color:#a78bfa}.goals-hero__progress{font-size:clamp(3.2rem,11vw,5.8rem);font-weight:950;letter-spacing:-5px;line-height:.9;font-family:var(--font-outfit)}.goals-hero__stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;min-width:min(100%,420px)}.goals-hero__stats strong,.goals-card__meta strong,.goals-rail__row strong{display:block;font-size:1rem;color:#fff}.goals-progressbar{height:12px;background:var(--surface-hover);border-radius:999px;overflow:hidden;border:1px solid var(--surface-border);margin-top:24px}.goals-progressbar div{height:100%;background:linear-gradient(90deg,#1ea672 0%,#34d399 100%);border-radius:999px}.goals-progressbar--small{height:6px;margin-top:0}.goals-progressbar--light{height:8px;background:rgba(255,255,255,.18);border:none}.goals-progressbar--light div{background:#fff}.goals-layout{gap:clamp(24px,4vw,40px);align-items:start}.goals-toolbar{margin-bottom:32px}.goals-toolbar h3{font-size:1.2rem;font-weight:950}.goals-grid,.goals-rail,.goals-form{display:grid;gap:20px}.goals-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:24px}.goals-card{padding:28px;display:grid;gap:22px;background:rgba(255,255,255,.01)}.goals-card__identity{display:flex;gap:14px;min-width:0;flex:1;align-items:center}.goals-card__identity h3{margin:0 0 6px;overflow-wrap:anywhere}.goals-card__badge{width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.goals-card__actions{display:flex;gap:8px}.goals-card__actions button{padding:10px;border:none;border-radius:12px;background:transparent;color:var(--text-secondary);cursor:pointer}.goals-card__meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:16px;padding-top:18px;border-top:1px solid var(--surface-border)}.goal-card-hover{transition:all .3s cubic-bezier(.16,1,.3,1)}.goal-card-hover:hover{transform:translateY(-4px) scale(1.02);background:rgba(15,25,30,.9)!important;border-color:var(--accent)!important;box-shadow:0 20px 40px rgba(0,0,0,.4),0 0 20px var(--accent-glow)!important}.goals-empty{grid-column:1/-1;padding:96px 32px;text-align:center;border:1px dashed var(--surface-border);border-radius:40px;background:rgba(255,255,255,.01)}.goals-empty p{margin-top:24px}.goals-spotlight{padding:28px;background:linear-gradient(135deg,#1ea672 0%,#146d63 100%);color:#fff;border:none;box-shadow:0 20px 40px rgba(30,166,114,.2)}.goals-spotlight h4{font-size:1.4rem;font-weight:950;margin:0 0 8px}.goals-spotlight p{margin:0 0 18px;opacity:.9}.goals-rail-card{padding:24px}.goals-rail__row{align-items:center;padding:14px 0;border-top:1px solid rgba(255,255,255,.06)}.goals-rail__row:first-of-type{border-top:none}.goals-rail__row div{display:grid;gap:4px}.goals-modal{max-width:520px;width:100%}.goals-modal__head h2{font-size:1.5rem;font-weight:800}.goals-form textarea{resize:vertical;min-height:110px}.goals-form__grid{display:grid;gap:16px}.goals-submit{margin-top:8px;padding:14px;font-size:1rem}.page-shell__inner{margin:0 auto}@media (max-width:1023px){.goals-hero__top{flex-direction:column}}@media (max-width:767px){.goals-header__actions{width:100%}.goals-header__actions>*{flex:1 1 180px}.goals-card__head,.goals-card__progress,.goals-rail__row,.goals-modal__head{flex-direction:column}.goals-card__actions{align-self:flex-end}}
       `}</style>
     </div>
   );

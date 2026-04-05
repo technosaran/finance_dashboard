@@ -673,11 +673,6 @@ export default function AccountsClient() {
             style={{
               padding: '12px 20px',
               borderRadius: '14px',
-              background: '#050505',
-              color: '#fff',
-              border: '1px solid #111',
-              fontWeight: '700',
-              cursor: 'pointer',
             }}
           >
             <Download size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -689,11 +684,6 @@ export default function AccountsClient() {
             style={{
               padding: '12px 20px',
               borderRadius: '14px',
-              background: '#050505',
-              color: '#fff',
-              border: '1px solid #111',
-              fontWeight: '700',
-              cursor: 'pointer',
             }}
           >
             <ArrowRightLeft size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -704,14 +694,11 @@ export default function AccountsClient() {
               resetAccountForm();
               setIsModalOpen(true);
             }}
+            className="header-add-btn header-add-btn--green"
             style={{
               padding: '14px 28px',
               borderRadius: '16px',
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              color: '#fff',
-              border: 'none',
               fontWeight: '900',
-              cursor: 'pointer',
               boxShadow: '0 12px 30px rgba(16, 185, 129, 0.25)',
               display: 'flex',
               alignItems: 'center',

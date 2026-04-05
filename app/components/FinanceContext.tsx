@@ -43,6 +43,7 @@ import {
   dbBondTransactionToBondTransaction,
   AppSettingsRow,
 } from '../../lib/utils/db-converters';
+import { getSafeAccountId } from '../../lib/utils/transaction-form';
 
 // NOTE: All tables (fno_trades, stock_transactions,
 // mutual_fund_transactions) are fully present in database.types.ts
@@ -77,7 +78,10 @@ export const useFinance = () => {
   return context;
 };
 
-export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const FinanceProvider: React.FC<{
+  children: React.ReactNode;
+  isPortfolioRoute?: boolean;
+}> = ({ children, isPortfolioRoute = false }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -113,14 +117,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     forexVisible: true,
   });
   const { user, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [baseLoading, setBaseLoading] = useState(true);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioLoadedForUserId, setPortfolioLoadedForUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const shouldLoadPortfolio = isPortfolioRoute || isTransactionModalOpen;
+  const hasLoadedPortfolio = Boolean(user && portfolioLoadedForUserId === user.id);
+  const loading = baseLoading || (isPortfolioRoute ? portfolioLoading : false);
+  const portfolioContextLoading = baseLoading || portfolioLoading;
 
   // Ref to always hold latest refreshLivePrices â€” prevents interval from resetting on every price update
   const refreshLivePricesRef = useRef<(silent?: boolean) => Promise<void>>(async () => {});
   // Track the last date prices were refreshed to detect new trading days
   const lastRefreshDateRef = useRef<string>('');
+  const previousShouldLoadPortfolioRef = useRef(false);
 
   // â”€â”€â”€ GENERIC HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -159,47 +170,106 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     else setTransactions(data.map(dbTransactionToTransaction));
   }, []);
 
-  const refreshPortfolio = useCallback(async (silent: boolean = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const [stockResult, mfResult, fnoResult, bondResult] = await Promise.allSettled([
-        supabase.from('stocks').select('*'),
-        supabase.from('mutual_funds').select('*'),
-        supabase.from('fno_trades').select('*'),
-        supabase.from('bonds').select('*'),
-      ]);
-
-      if (stockResult.status === 'fulfilled' && stockResult.value.data)
-        setStocks(stockResult.value.data.map(dbStockToStock));
-      else if (stockResult.status === 'rejected')
-        logError('Error refreshing stocks:', stockResult.reason);
-
-      if (mfResult.status === 'fulfilled' && mfResult.value.data)
-        setMutualFunds(mfResult.value.data.map(dbMutualFundToMutualFund));
-      else if (mfResult.status === 'rejected')
-        logError('Error refreshing mutual funds:', mfResult.reason);
-
-      if (fnoResult.status === 'fulfilled' && fnoResult.value.data)
-        setFnoTrades(fnoResult.value.data.map(dbFnoTradeToFnoTrade));
-      else if (fnoResult.status === 'rejected') logError('Error refreshing F&O:', fnoResult.reason);
-
-      if (bondResult.status === 'fulfilled' && bondResult.value.data)
-        setBonds(bondResult.value.data.map(dbBondToBond));
-      else if (bondResult.status === 'rejected')
-        logError('Error refreshing bonds:', bondResult.reason);
-
-      logInfo('Portfolio refreshed successfully');
-    } catch (err) {
-      logError('Error refreshing portfolio:', err);
-    } finally {
-      if (!silent) setLoading(false);
-    }
+  const refreshGoals = useCallback(async () => {
+    const { data, error } = await supabase.from('goals').select('*');
+    if (error) logError('Error refreshing goals:', error);
+    else setGoals(data.map(dbGoalToGoal));
   }, []);
+
+  const refreshFamilyTransfers = useCallback(async () => {
+    const { data, error } = await supabase.from('family_transfers').select('*');
+    if (error) logError('Error refreshing family transfers:', error);
+    else setFamilyTransfers(data.map(dbFamilyTransferToFamilyTransfer));
+  }, []);
+
+  const refreshSettings = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) logError('Error refreshing settings:', error);
+    else if (data) setSettings(dbSettingsToSettings(data as AppSettingsRow));
+  }, [user]);
+
+  const refreshStockTransactions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('stock_transactions')
+      .select('*')
+      .order('transaction_date', { ascending: false });
+    if (error) logError('Error refreshing stock transactions:', error);
+    else setStockTransactions(data.map(dbStockTransactionToStockTransaction));
+  }, []);
+
+  const refreshMutualFundTransactions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('mutual_fund_transactions')
+      .select('*')
+      .order('transaction_date', { ascending: false });
+    if (error) logError('Error refreshing mutual fund transactions:', error);
+    else setMutualFundTransactions(data.map(dbMutualFundTransactionToMutualFundTransaction));
+  }, []);
+
+  const refreshBondTransactions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('bond_transactions')
+      .select('*')
+      .order('transaction_date', { ascending: false });
+    if (error) logError('Error refreshing bond transactions:', error);
+    else setBondTransactions(data.map(dbBondTransactionToBondTransaction));
+  }, []);
+
+  const refreshPortfolio = useCallback(
+    async (silent: boolean = false) => {
+      if (!user) return;
+      if (!silent) setPortfolioLoading(true);
+      try {
+        const [stockResult, mfResult, fnoResult, bondResult] = await Promise.allSettled([
+          supabase.from('stocks').select('*'),
+          supabase.from('mutual_funds').select('*'),
+          supabase.from('fno_trades').select('*'),
+          supabase.from('bonds').select('*'),
+        ]);
+
+        if (stockResult.status === 'fulfilled' && stockResult.value.data)
+          setStocks(stockResult.value.data.map(dbStockToStock));
+        else if (stockResult.status === 'rejected')
+          logError('Error refreshing stocks:', stockResult.reason);
+
+        if (mfResult.status === 'fulfilled' && mfResult.value.data)
+          setMutualFunds(mfResult.value.data.map(dbMutualFundToMutualFund));
+        else if (mfResult.status === 'rejected')
+          logError('Error refreshing mutual funds:', mfResult.reason);
+
+        if (fnoResult.status === 'fulfilled' && fnoResult.value.data)
+          setFnoTrades(fnoResult.value.data.map(dbFnoTradeToFnoTrade));
+        else if (fnoResult.status === 'rejected')
+          logError('Error refreshing F&O:', fnoResult.reason);
+
+        if (bondResult.status === 'fulfilled' && bondResult.value.data)
+          setBonds(bondResult.value.data.map(dbBondToBond));
+        else if (bondResult.status === 'rejected')
+          logError('Error refreshing bonds:', bondResult.reason);
+
+        setPortfolioLoadedForUserId(user.id);
+        logInfo('Portfolio refreshed successfully');
+      } catch (err) {
+        logError('Error refreshing portfolio:', err);
+      } finally {
+        if (!silent) setPortfolioLoading(false);
+      }
+    },
+    [user]
+  );
 
   // â”€â”€â”€ ACCOUNTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const addTransaction = useCallback(
     async (transactionData: Omit<Transaction, 'id'>) => {
+      const safeAccountId = getSafeAccountId(transactionData.accountId, accounts);
       const { data, error } = await supabase
         .from('transactions')
         .insert({
@@ -208,7 +278,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           category: transactionData.category,
           type: transactionData.type,
           amount: transactionData.amount,
-          account_id: transactionData.accountId || null,
+          account_id: safeAccountId ?? null,
         })
         .select()
         .single();
@@ -222,11 +292,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTransactions((prev) => [newTransaction, ...prev]);
       refreshAccounts();
     },
-    [refreshAccounts]
+    [accounts, refreshAccounts]
   );
 
   const updateTransaction = useCallback(
     async (id: number, transaction: Partial<Transaction>) => {
+      const safeAccountId = getSafeAccountId(transaction.accountId, accounts);
       const { error } = await supabase
         .from('transactions')
         .update({
@@ -235,7 +306,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           category: transaction.category,
           type: transaction.type,
           amount: transaction.amount,
-          account_id: transaction.accountId || null,
+          account_id: safeAccountId ?? null,
         })
         .eq('id', id);
 
@@ -247,7 +318,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, ...transaction } : t)));
       refreshAccounts();
     },
-    [refreshAccounts]
+    [accounts, refreshAccounts]
   );
 
   const deleteTransaction = useCallback(
@@ -965,7 +1036,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const refreshLivePrices = useCallback(
     async (silent: boolean = false) => {
-      if (!silent) setLoading(true);
+      if (!shouldLoadPortfolio) return;
+      if (!silent) setPortfolioLoading(true);
 
       // 1. Stocks
       try {
@@ -1068,10 +1140,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         logError('Failed to refresh MF NAVs:', err);
       }
 
-      if (!silent) setLoading(false);
+      if (!silent) setPortfolioLoading(false);
       logInfo('Live prices refresh completed');
     },
-    [stocks, mutualFunds]
+    [shouldLoadPortfolio, stocks, mutualFunds]
   );
 
   // Keep the ref always pointing at the latest version of refreshLivePrices
@@ -1080,46 +1152,31 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     refreshLivePricesRef.current = refreshLivePrices;
   }, [refreshLivePrices]);
 
-  // â”€â”€â”€ INITIAL DATA LOAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const loadPortfolioData = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!user) return;
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (!user) {
-        if (!authLoading) setLoading(false);
-        return;
-      }
+      if (!silent) setPortfolioLoading(true);
 
-      // Safety timeout for data loading (15 seconds)
-      const dataTimeout = setTimeout(() => {
-        if (loading) {
-          logError('Initial data load timed out. Proceeding with partial/empty state.');
-          setLoading(false);
-        }
-      }, 15000);
+      const dataTimeout = !silent
+        ? setTimeout(() => {
+            logError('Portfolio data load timed out. Proceeding with cached or empty state.');
+            setPortfolioLoading(false);
+          }, 15000)
+        : null;
 
       try {
-        // FIX: Promise.allSettled â€” individual query failures no longer abort all data loading
         const [
-          accResult,
-          txResult,
-          settingsResult,
           stockResult,
           mfResult,
-          goalResult,
-          familyResult,
           fnoResult,
           bondResult,
           bondTxResult,
           stockTxResult,
           mfTxResult,
         ] = await Promise.allSettled([
-          supabase.from('accounts').select('*').order('name'),
-          supabase.from('transactions').select('*').order('date', { ascending: false }),
-          supabase.from('app_settings').select('*').eq('user_id', user.id).maybeSingle(),
           supabase.from('stocks').select('*'),
           supabase.from('mutual_funds').select('*'),
-          supabase.from('goals').select('*'),
-          supabase.from('family_transfers').select('*'),
           supabase.from('fno_trades').select('*'),
           supabase.from('bonds').select('*'),
           supabase
@@ -1136,22 +1193,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
             .order('transaction_date', { ascending: false }),
         ]);
 
-        // Apply each result independently â€” partial failures are tolerated
-        if (accResult.status === 'fulfilled' && accResult.value.data)
-          setAccounts(accResult.value.data.map(dbAccountToAccount));
-        else if (accResult.status === 'rejected')
-          logError('Failed to load accounts:', accResult.reason);
-
-        if (txResult.status === 'fulfilled' && txResult.value.data)
-          setTransactions(txResult.value.data.map(dbTransactionToTransaction));
-        else if (txResult.status === 'rejected')
-          logError('Failed to load transactions:', txResult.reason);
-
-        if (settingsResult.status === 'fulfilled' && settingsResult.value.data)
-          setSettings(dbSettingsToSettings(settingsResult.value.data as AppSettingsRow));
-        else if (settingsResult.status === 'rejected')
-          logError('Failed to load settings:', settingsResult.reason);
-
         if (stockResult.status === 'fulfilled' && stockResult.value.data)
           setStocks(stockResult.value.data.map(dbStockToStock));
         else if (stockResult.status === 'rejected')
@@ -1161,16 +1202,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setMutualFunds(mfResult.value.data.map(dbMutualFundToMutualFund));
         else if (mfResult.status === 'rejected')
           logError('Failed to load mutual funds:', mfResult.reason);
-
-        if (goalResult.status === 'fulfilled' && goalResult.value.data)
-          setGoals(goalResult.value.data.map(dbGoalToGoal));
-        else if (goalResult.status === 'rejected')
-          logError('Failed to load goals:', goalResult.reason);
-
-        if (familyResult.status === 'fulfilled' && familyResult.value.data)
-          setFamilyTransfers(familyResult.value.data.map(dbFamilyTransferToFamilyTransfer));
-        else if (familyResult.status === 'rejected')
-          logError('Failed to load family transfers:', familyResult.reason);
 
         if (fnoResult.status === 'fulfilled' && fnoResult.value.data)
           setFnoTrades(fnoResult.value.data.map(dbFnoTradeToFnoTrade));
@@ -1199,20 +1230,105 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         else if (mfTxResult.status === 'rejected')
           logError('Failed to load MF transactions:', mfTxResult.reason);
 
-        setLoading(false);
-        clearTimeout(dataTimeout);
+        setPortfolioLoadedForUserId(user.id);
+      } catch (err) {
+        logError('Failed to load portfolio data:', err);
+        if (!silent) setError('Failed to load portfolio data');
+      } finally {
+        if (dataTimeout) clearTimeout(dataTimeout);
+        if (!silent) setPortfolioLoading(false);
+      }
+    },
+    [user]
+  );
+
+  // â”€â”€â”€ INITIAL DATA LOAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (!user) {
+        if (!authLoading) setBaseLoading(false);
+        return;
+      }
+
+      // Safety timeout for data loading (15 seconds)
+      setBaseLoading(true);
+      const dataTimeout = setTimeout(() => {
+        logError('Initial data load timed out. Proceeding with partial or empty state.');
+        setBaseLoading(false);
+      }, 15000);
+
+      try {
+        // FIX: Promise.allSettled â€” individual query failures no longer abort all data loading
+        const [accResult, txResult, settingsResult, goalResult, familyResult] =
+          await Promise.allSettled([
+            supabase.from('accounts').select('*').order('name'),
+            supabase.from('transactions').select('*').order('date', { ascending: false }),
+            supabase.from('app_settings').select('*').eq('user_id', user.id).maybeSingle(),
+            supabase.from('goals').select('*'),
+            supabase.from('family_transfers').select('*'),
+          ]);
+
+        // Apply each result independently â€” partial failures are tolerated
+        if (accResult.status === 'fulfilled' && accResult.value.data)
+          setAccounts(accResult.value.data.map(dbAccountToAccount));
+        else if (accResult.status === 'rejected')
+          logError('Failed to load accounts:', accResult.reason);
+
+        if (txResult.status === 'fulfilled' && txResult.value.data)
+          setTransactions(txResult.value.data.map(dbTransactionToTransaction));
+        else if (txResult.status === 'rejected')
+          logError('Failed to load transactions:', txResult.reason);
+
+        if (settingsResult.status === 'fulfilled' && settingsResult.value.data)
+          setSettings(dbSettingsToSettings(settingsResult.value.data as AppSettingsRow));
+        else if (settingsResult.status === 'rejected')
+          logError('Failed to load settings:', settingsResult.reason);
+
+        if (goalResult.status === 'fulfilled' && goalResult.value.data)
+          setGoals(goalResult.value.data.map(dbGoalToGoal));
+        else if (goalResult.status === 'rejected')
+          logError('Failed to load goals:', goalResult.reason);
+
+        if (familyResult.status === 'fulfilled' && familyResult.value.data)
+          setFamilyTransfers(familyResult.value.data.map(dbFamilyTransferToFamilyTransfer));
+        else if (familyResult.status === 'rejected')
+          logError('Failed to load family transfers:', familyResult.reason);
       } catch (err) {
         logError('Failed to load initial data:', err);
         setError('Failed to load financial data');
-        setLoading(false);
+      } finally {
         clearTimeout(dataTimeout);
+        setBaseLoading(false);
       }
     };
 
-    loadInitialData();
+    void loadInitialData();
   }, [user, authLoading]);
 
   // â”€â”€â”€ MEMOISED CONTEXT VALUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  useEffect(() => {
+    const becameActive = shouldLoadPortfolio && !previousShouldLoadPortfolioRef.current;
+    previousShouldLoadPortfolioRef.current = shouldLoadPortfolio;
+
+    if (!user) {
+      setPortfolioLoadedForUserId(null);
+      setPortfolioLoading(false);
+      return;
+    }
+
+    if (!shouldLoadPortfolio) return;
+
+    if (!hasLoadedPortfolio) {
+      void loadPortfolioData();
+      return;
+    }
+
+    if (becameActive) {
+      void loadPortfolioData({ silent: true });
+    }
+  }, [user, shouldLoadPortfolio, hasLoadedPortfolio, loadPortfolioData]);
 
   const value = useMemo(
     () => ({
@@ -1326,28 +1442,58 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // â”€â”€â”€ LIVE PRICE EFFECTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Automatic initial refresh after data loads (once)
-  const dataLoaded = !loading;
+  const portfolioDataReady = !baseLoading && hasLoadedPortfolio && !portfolioLoading;
   useEffect(() => {
-    if (dataLoaded && (stocks.length > 0 || mutualFunds.length > 0)) {
-      const timeout = setTimeout(() => {
-        refreshLivePricesRef.current(true);
-      }, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [dataLoaded, stocks.length, mutualFunds.length]);
+    if (!shouldLoadPortfolio) return;
+    if (!portfolioDataReady) return;
+    if (stocks.length === 0 && mutualFunds.length === 0) return;
 
-  // --- REAL-TIME SUBSCRIPTION ---
+    const timeout = setTimeout(() => {
+      refreshLivePricesRef.current(true);
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [shouldLoadPortfolio, portfolioDataReady, stocks.length, mutualFunds.length]);
+
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('schema-changes')
+      .channel(`ledger-schema-changes-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'accounts' }, () =>
         refreshAccounts()
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () =>
         refreshTransactions()
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () =>
+        refreshGoals()
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_transfers' }, () =>
+        refreshFamilyTransfers()
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () =>
+        refreshSettings()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [
+    user,
+    refreshAccounts,
+    refreshTransactions,
+    refreshGoals,
+    refreshFamilyTransfers,
+    refreshSettings,
+  ]);
+
+  useEffect(() => {
+    if (!user || !shouldLoadPortfolio) return;
+
+    const channel = supabase
+      .channel(`portfolio-schema-changes-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'stocks' }, () =>
         refreshPortfolio(true)
       )
@@ -1361,6 +1507,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         refreshPortfolio(true)
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_transactions' }, () => {
+        refreshStockTransactions();
         refreshPortfolio(true);
         refreshTransactions();
         refreshAccounts();
@@ -1369,54 +1516,39 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         'postgres_changes',
         { event: '*', schema: 'public', table: 'mutual_fund_transactions' },
         () => {
+          refreshMutualFundTransactions();
           refreshPortfolio(true);
           refreshTransactions();
           refreshAccounts();
         }
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bond_transactions' }, () => {
+        refreshBondTransactions();
         refreshPortfolio(true);
         refreshTransactions();
         refreshAccounts();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, () => {
-        supabase
-          .from('goals')
-          .select('*')
-          .then(({ data }) => {
-            if (data) setGoals(data.map(dbGoalToGoal));
-          });
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_transfers' }, () => {
-        supabase
-          .from('family_transfers')
-          .select('*')
-          .then(({ data }) => {
-            if (data) setFamilyTransfers(data.map(dbFamilyTransferToFamilyTransfer));
-          });
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => {
-        supabase
-          .from('app_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            if (data) setSettings(dbSettingsToSettings(data as AppSettingsRow));
-          });
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, refreshAccounts, refreshTransactions, refreshPortfolio]);
+  }, [
+    user,
+    shouldLoadPortfolio,
+    refreshAccounts,
+    refreshTransactions,
+    refreshPortfolio,
+    refreshStockTransactions,
+    refreshMutualFundTransactions,
+    refreshBondTransactions,
+  ]);
 
   // Periodic refresh: uses ref so the interval is NOT reset on every price update.
   // Also detects new trading days: if the calendar date has changed since the last
   // refresh, an immediate refresh is triggered so previousClose resets correctly.
   useEffect(() => {
-    if (!user) return;
+    if (!user || !shouldLoadPortfolio) return;
     // 5 minute interval (reduced from 1 minute to cut unnecessary API calls)
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
     let intervalId: ReturnType<typeof setInterval>;
@@ -1455,7 +1587,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user]); // only resets when user logs in/out
+  }, [user, shouldLoadPortfolio]); // only resets when user logs in/out or portfolio usage changes
 
   const ledgerValue = useMemo(
     () => ({
@@ -1536,7 +1668,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteBondTransaction,
       refreshPortfolio,
       refreshLivePrices,
-      loading,
+      loading: portfolioContextLoading,
       error,
     }),
     [
@@ -1568,14 +1700,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteBondTransaction,
       refreshPortfolio,
       refreshLivePrices,
-      loading,
+      portfolioContextLoading,
       error,
     ]
   );
 
   const settingsValue = useMemo(
-    () => ({ settings, updateSettings, loading, error }),
-    [settings, updateSettings, loading, error]
+    () => ({ settings, updateSettings, loading: baseLoading, error }),
+    [settings, updateSettings, baseLoading, error]
   );
 
   return (

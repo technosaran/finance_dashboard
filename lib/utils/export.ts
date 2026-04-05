@@ -20,19 +20,18 @@ export function downloadCSV(filename: string, csvContent: string) {
   }
 }
 
-export function arrayToCSV<T extends Record<string, unknown>>(
-  data: T[],
-  headers?: string[]
-): string {
+export function arrayToCSV<T extends object>(data: T[], headers?: string[]): string {
   if (data.length === 0) return '';
 
-  const columnHeaders = headers || Object.keys(data[0]);
+  const firstRow = data[0] as Record<string, unknown>;
+  const columnHeaders = headers || Object.keys(firstRow);
   const headerRow = columnHeaders.join(',');
 
   const rows = data.map((row) => {
+    const csvRow = row as Record<string, unknown>;
     return columnHeaders
       .map((header) => {
-        const value = row[header];
+        const value = csvRow[header];
         // Handle values that might contain commas or quotes
         const stringValue = String(value ?? '');
         if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
@@ -46,24 +45,21 @@ export function arrayToCSV<T extends Record<string, unknown>>(
   return [headerRow, ...rows].join('\n');
 }
 
-export function exportTransactionsToCSV(
-  transactions: Array<{
-    date: string;
-    description: string;
-    category: string;
-    type: string;
-    amount: number;
-  }>
+export function exportTransactionsToCSV<T extends object>(
+  transactions: T[],
+  options: {
+    headers?: string[];
+    filenamePrefix?: string;
+  } = {}
 ) {
-  const csvContent = arrayToCSV(transactions, [
-    'date',
-    'description',
-    'category',
-    'type',
-    'amount',
-  ]);
+  const csvContent = arrayToCSV(
+    transactions,
+    options.headers || ['date', 'description', 'category', 'type', 'amount']
+  );
 
-  const filename = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `${options.filenamePrefix || 'transactions'}_${
+    new Date().toISOString().split('T')[0]
+  }.csv`;
   downloadCSV(filename, csvContent);
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Sidebar from './Sidebar';
@@ -26,15 +26,24 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+const PORTFOLIO_ROUTE_PREFIXES = ['/stocks', '/mutual-funds', '/fno', '/bonds'];
+
+function isPortfolioPath(pathname: string) {
+  return pathname === '/' || PORTFOLIO_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === '/login';
+  const isPortfolioRoute = isPortfolioPath(pathname);
 
   return (
     <ErrorBoundary>
       <AuthProvider>
         <NotificationProvider>
-          <AuthConsumer isAuthPage={isAuthPage}>{children}</AuthConsumer>
+          <AuthConsumer isAuthPage={isAuthPage} isPortfolioRoute={isPortfolioRoute}>
+            {children}
+          </AuthConsumer>
         </NotificationProvider>
       </AuthProvider>
     </ErrorBoundary>
@@ -44,9 +53,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 function AuthConsumer({
   children,
   isAuthPage,
+  isPortfolioRoute,
 }: {
   children: React.ReactNode;
   isAuthPage: boolean;
+  isPortfolioRoute: boolean;
 }) {
   const { loading: authLoading, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -63,8 +74,8 @@ function AuthConsumer({
   }
 
   return (
-    <FinanceProvider>
-      <TransactionModalWrapper />
+    <FinanceProvider isPortfolioRoute={isPortfolioRoute}>
+      <TransactionModalWrapper isPortfolioRoute={isPortfolioRoute} />
       {/* Global ambient background for liquid glass depth */}
       <div className="bg-mesh" aria-hidden="true" />
       {/* Skip to main content link for accessibility */}
@@ -185,8 +196,17 @@ function AuthConsumer({
   );
 }
 
-function TransactionModalWrapper() {
+function TransactionModalWrapper({ isPortfolioRoute }: { isPortfolioRoute: boolean }) {
   const { isTransactionModalOpen, setIsTransactionModalOpen } = useLedger();
+
+  useEffect(() => {
+    if (isPortfolioRoute) {
+      void import('./AddTransactionModal');
+    }
+  }, [isPortfolioRoute]);
+
+  if (!isTransactionModalOpen) return null;
+
   return (
     <AddTransactionModal
       isOpen={isTransactionModalOpen}

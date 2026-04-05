@@ -1,159 +1,295 @@
 'use client';
 
-import { useState } from 'react';
-import { useNotifications } from '../components/NotificationContext';
-import { useLedger, useSettings } from '../components/FinanceContext';
-import { Transaction } from '@/lib/types';
+import { useMemo, useState } from 'react';
+import type { Transaction } from '@/lib/types';
 import {
-  TrendingDown,
   Calendar,
-  Plus,
-  X,
-  Clock,
-  ShoppingBag,
-  Coffee,
-  Edit3,
-  Trash2,
   Car,
-  Home,
-  Heart,
+  Coffee,
+  Download,
+  Edit3,
   GraduationCap,
+  Heart,
+  Home,
+  PiggyBank,
+  Plus,
+  Search,
+  ShoppingBag,
+  Tags,
+  Trash2,
+  TrendingDown,
+  Wallet,
+  X,
   Zap,
 } from 'lucide-react';
+import { useLedger, useSettings } from '../components/FinanceContext';
+import { useNotifications } from '../components/NotificationContext';
 import { EmptyTransactionsVisual } from '../components/Visuals';
+import { formatDateForInput } from '@/lib/utils/date';
+import { exportTransactionsToCSV } from '@/lib/utils/export';
+import { formatCompactNumber, formatCurrency } from '@/lib/utils/number';
+import {
+  buildMonthlyTotals,
+  COMMON_EXPENSE_CATEGORIES,
+  filterTransactionsByTimeRange,
+  matchesTransactionQuery,
+  summarizeCategories,
+  type TransactionTimeRange,
+} from '@/lib/utils/transaction-insights';
+import {
+  getSafeAccountSelectValue,
+  getTransactionSaveErrorMessage,
+  isKnownAccountId,
+} from '@/lib/utils/transaction-form';
+
+const RANGE_OPTIONS: TransactionTimeRange[] = ['This Month', 'This Year', 'All Time'];
+const EXPENSE_SECTIONS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'trend', label: 'Trend' },
+  { id: 'history', label: 'History' },
+] as const;
+
+type ExpenseSection = (typeof EXPENSE_SECTIONS)[number]['id'];
+
+const sortTransactionsNewestFirst = (items: Transaction[]) =>
+  [...items].sort((left, right) => {
+    const dateCompare = right.date.localeCompare(left.date);
+    return dateCompare !== 0 ? dateCompare : right.id - left.id;
+  });
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'Food':
+      return <Coffee size={20} />;
+    case 'Transport':
+    case 'Travel':
+      return <Car size={20} />;
+    case 'Shopping':
+      return <ShoppingBag size={20} />;
+    case 'Healthcare':
+      return <Heart size={20} />;
+    case 'Education':
+      return <GraduationCap size={20} />;
+    case 'Utilities':
+      return <Zap size={20} />;
+    case 'Rent':
+    case 'Entertainment':
+      return <Home size={20} />;
+    default:
+      return <Wallet size={20} />;
+  }
+};
 
 export default function ExpensesClient() {
   const { accounts, transactions, addTransaction, updateTransaction, deleteTransaction, loading } =
     useLedger();
   const { settings } = useSettings();
   const { showNotification, confirm: customConfirm } = useNotifications();
+
+  const safeDefaultAccountId = useMemo(
+    () => getSafeAccountSelectValue(settings.defaultSalaryAccountId, accounts),
+    [accounts, settings.defaultSalaryAccountId]
+  );
+
+  const [activeSection, setActiveSection] = useState<ExpenseSection>('overview');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'This Year' | 'All Time'>('This Year');
-  const [selectedAccountId, setSelectedAccountId] = useState<number | ''>(
-    settings.defaultSalaryAccountId || ''
-  );
+  const [activeRange, setActiveRange] = useState<TransactionTimeRange>('This Month');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedAccountId, setSelectedAccountId] = useState<number | ''>(safeDefaultAccountId);
 
-  // Expense Data Filtering
-  const expenseItems = transactions.filter(
-    (t) =>
-      t.type === 'Expense' &&
-      !['Investment', 'Stocks', 'Mutual Funds', 'Bonds'].includes(t.category)
-  );
-
-  // Process Categories
-  const categoriesMap = expenseItems.reduce(
-    (acc, item) => {
-      const category = item.category || 'Other';
-      if (!acc[category]) acc[category] = { total: 0, count: 0 };
-      acc[category].total += item.amount;
-      acc[category].count += 1;
-      return acc;
-    },
-    {} as Record<string, { total: number; count: number }>
-  );
-
-  const categories = Object.entries(categoriesMap).sort((a, b) => b[1].total - a[1].total);
-  const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
-
-  // Calculate average monthly spending
-  const avgMonthlySpending = (() => {
-    if (activeTab === 'This Year') {
-      return totalExpenses / Math.max(new Date().getMonth() + 1, 1);
-    } else if (expenseItems.length > 0) {
-      const dates = expenseItems.map((e) => new Date(e.date).getTime());
-      const earliest = Math.min(...dates);
-      const latest = Math.max(...dates);
-      const monthsDiff = Math.max(1, Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24 * 30)));
-      return totalExpenses / monthsDiff;
-    }
-    return 0;
-  })();
-
-  // Calculate monthly data for the last 6 months
-  const monthlyData = (() => {
-    const months = [];
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthLabel = d.toLocaleString('default', { month: 'short' });
-      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const total = expenseItems
-        .filter((item) => item.date.startsWith(monthKey))
-        .reduce((sum, item) => sum + item.amount, 0);
-      months.push({ label: monthLabel, total });
-    }
-    return months;
-  })();
-
-  const maxMonthSpend = Math.max(...monthlyData.map((d) => d.total), 1);
-
-  // Form State
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Food');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [category, setCategory] = useState(COMMON_EXPENSE_CATEGORIES[0]);
+  const [date, setDate] = useState(formatDateForInput(new Date()));
 
-  const handleLogExpense = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || !description) return;
+  const accountNameById = useMemo(
+    () => new Map(accounts.map((account) => [account.id, account.name])),
+    [accounts]
+  );
 
-    const txData = {
-      date,
-      description,
-      category,
-      type: 'Expense' as const,
-      amount: parseFloat(amount),
-      accountId: selectedAccountId ? Number(selectedAccountId) : undefined,
-    };
+  const baseExpenseItems = useMemo(
+    () =>
+      sortTransactionsNewestFirst(
+        transactions.filter(
+          (transaction) =>
+            transaction.type === 'Expense' &&
+            !['Investment', 'Stocks', 'Mutual Funds', 'Bonds'].includes(
+              String(transaction.category)
+            )
+        )
+      ),
+    [transactions]
+  );
 
-    if (editId) {
-      await updateTransaction(editId, txData);
-      showNotification('success', 'Expense record updated');
-    } else {
-      await addTransaction(txData);
-      showNotification('success', 'Expense saved');
+  const rangedExpenseItems = useMemo(
+    () => filterTransactionsByTimeRange(baseExpenseItems, activeRange),
+    [activeRange, baseExpenseItems]
+  );
+
+  const availableCategories = useMemo(
+    () =>
+      [...new Set(rangedExpenseItems.map((item) => String(item.category || 'Other')))].sort(
+        (left, right) => left.localeCompare(right)
+      ),
+    [rangedExpenseItems]
+  );
+
+  const effectiveSelectedCategory =
+    selectedCategory !== 'All' && !availableCategories.includes(selectedCategory)
+      ? 'All'
+      : selectedCategory;
+
+  const effectiveSelectedAccountId =
+    selectedAccountId === ''
+      ? safeDefaultAccountId
+      : isKnownAccountId(selectedAccountId, accounts)
+        ? selectedAccountId
+        : safeDefaultAccountId;
+
+  const categoryScopedItems = useMemo(
+    () =>
+      rangedExpenseItems.filter(
+        (item) =>
+          effectiveSelectedCategory === 'All' || String(item.category) === effectiveSelectedCategory
+      ),
+    [effectiveSelectedCategory, rangedExpenseItems]
+  );
+
+  const visibleExpenseItems = useMemo(
+    () =>
+      categoryScopedItems.filter((item) =>
+        matchesTransactionQuery(
+          item,
+          searchQuery,
+          item.accountId ? (accountNameById.get(item.accountId) ?? '') : ''
+        )
+      ),
+    [accountNameById, categoryScopedItems, searchQuery]
+  );
+
+  const totalExpenses = visibleExpenseItems.reduce((sum, item) => sum + item.amount, 0);
+  const averageTicket =
+    visibleExpenseItems.length > 0 ? totalExpenses / visibleExpenseItems.length : 0;
+
+  const monthsInScope =
+    activeRange === 'This Month'
+      ? 1
+      : Math.max(1, new Set(visibleExpenseItems.map((item) => item.date.substring(0, 7))).size);
+
+  const avgMonthlySpending = totalExpenses / monthsInScope;
+  const largestExpense = visibleExpenseItems.reduce<Transaction | null>(
+    (largest, current) => (largest === null || current.amount > largest.amount ? current : largest),
+    null
+  );
+
+  const insightExpenseItems = searchQuery.trim() ? visibleExpenseItems : categoryScopedItems;
+  const categoryBreakdown = useMemo(
+    () => summarizeCategories(insightExpenseItems).slice(0, 6),
+    [insightExpenseItems]
+  );
+  const topCategory = categoryBreakdown[0];
+
+  const monthlyData = useMemo(
+    () => buildMonthlyTotals(insightExpenseItems, 6),
+    [insightExpenseItems]
+  );
+  const maxMonthSpend = Math.max(...monthlyData.map((item) => item.total), 1);
+  const historyVisibleLimit = activeSection === 'history' ? visibleExpenseItems.length : 18;
+  const latestExpense = visibleExpenseItems[0] ?? null;
+  const activeExpenseFilterCount =
+    (activeRange !== 'This Month' ? 1 : 0) +
+    (effectiveSelectedCategory !== 'All' ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0);
+
+  const handleExport = () => {
+    if (visibleExpenseItems.length === 0) {
+      showNotification('error', 'No expense rows match the current filters');
+      return;
     }
 
-    resetForm();
-    setIsModalOpen(false);
+    exportTransactionsToCSV(
+      visibleExpenseItems.map((item) => ({
+        date: item.date,
+        description: item.description,
+        category: item.category,
+        account: item.accountId
+          ? (accountNameById.get(item.accountId) ?? 'No Account')
+          : 'No Account',
+        type: item.type,
+        amount: item.amount,
+      })),
+      {
+        headers: ['date', 'description', 'category', 'account', 'type', 'amount'],
+        filenamePrefix: 'expenses',
+      }
+    );
+
+    showNotification('success', 'Filtered expenses exported');
   };
 
   const resetForm = () => {
     setAmount('');
     setDescription('');
-    setCategory('Food');
-    setDate(new Date().toISOString().split('T')[0]);
+    setCategory(COMMON_EXPENSE_CATEGORIES[0]);
+    setDate(formatDateForInput(new Date()));
+    setSelectedAccountId(safeDefaultAccountId);
     setEditId(null);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsModalOpen(true);
   };
 
   const handleEdit = (item: Transaction) => {
     setEditId(item.id);
     setAmount(item.amount.toString());
     setDescription(item.description);
-    setCategory(item.category);
+    setCategory(String(item.category || 'Other'));
     setDate(item.date);
+    setSelectedAccountId(getSafeAccountSelectValue(item.accountId, accounts));
     setIsModalOpen(true);
   };
 
-  const getCategoryIcon = (cat: string) => {
-    switch (cat) {
-      case 'Food':
-        return <Coffee size={24} />;
-      case 'Transport':
-        return <Car size={24} />;
-      case 'Shopping':
-        return <ShoppingBag size={24} />;
-      case 'Healthcare':
-        return <Heart size={24} />;
-      case 'Education':
-        return <GraduationCap size={24} />;
-      case 'Utilities':
-        return <Zap size={24} />;
-      case 'Entertainment':
-        return <Home size={24} />;
-      default:
-        return <ShoppingBag size={24} />;
+  const handleLogExpense = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const parsedAmount = Number(amount);
+
+    if (
+      !description.trim() ||
+      !category.trim() ||
+      Number.isNaN(parsedAmount) ||
+      parsedAmount <= 0
+    ) {
+      showNotification('error', 'Enter a valid description, category, and amount');
+      return;
+    }
+
+    const payload = {
+      date,
+      description: description.trim(),
+      category: category.trim(),
+      type: 'Expense' as const,
+      amount: parsedAmount,
+      accountId: effectiveSelectedAccountId ? Number(effectiveSelectedAccountId) : undefined,
+    };
+
+    try {
+      if (editId !== null) {
+        await updateTransaction(editId, payload);
+        showNotification('success', 'Expense record updated');
+      } else {
+        await addTransaction(payload);
+        showNotification('success', 'Expense saved');
+      }
+
+      resetForm();
+      setIsModalOpen(false);
+    } catch (error) {
+      showNotification('error', getTransactionSaveErrorMessage(error, 'Failed to save expense'));
     }
   };
 
@@ -183,13 +319,6 @@ export default function ExpensesClient() {
             />
             <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>Loading your expenses...</div>
           </div>
-          <style jsx>{`
-            @keyframes spin {
-              to {
-                transform: rotate(360deg);
-              }
-            }
-          `}</style>
         </div>
       </div>
     );
@@ -197,14 +326,13 @@ export default function ExpensesClient() {
 
   return (
     <div className="page-container page-surface page-shell">
-      {/* Header Section: Ultra-minimalist */}
       <div
         className="page-header page-shell__header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          marginBottom: '56px',
+          gap: '20px',
         }}
       >
         <div>
@@ -219,44 +347,32 @@ export default function ExpensesClient() {
             Expenses<span style={{ color: 'var(--error)' }}>.</span>
           </h1>
           <p className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Real-time spending intelligence
+            Filterable spend tracking with sharper category and monthly insight
           </p>
         </div>
-        <div
-          className="page-toolbar"
-          style={{ display: 'flex', gap: '16px', alignItems: 'center' }}
-        >
-          <div
-            className="glass-container"
-            style={{ display: 'flex', padding: '5px', borderRadius: '14px' }}
-          >
-            {['This Year', 'All Time'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as 'This Year' | 'All Time')}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: activeTab === tab ? 'var(--error)' : 'transparent',
-                  color: activeTab === tab ? '#fff' : 'var(--text-secondary)',
-                  fontWeight: 800,
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+
+        <div className="page-toolbar" style={{ justifyContent: 'flex-end' }}>
           <button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
+            type="button"
+            onClick={handleExport}
+            className="secondary-btn hide-xs"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '14px 18px',
+              borderRadius: '16px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--surface-border)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
             }}
+          >
+            <Download size={18} /> Export
+          </button>
+          <button
+            type="button"
+            onClick={openCreateModal}
             className="header-add-btn header-add-btn--red"
             style={{
               display: 'flex',
@@ -272,324 +388,723 @@ export default function ExpensesClient() {
         </div>
       </div>
 
-      {/* Hero Analytics Section */}
+      <div className="premium-card" style={{ padding: '24px', display: 'grid', gap: '18px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div className="page-tab-bar" style={{ display: 'flex', gap: '8px' }}>
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setActiveRange(option)}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '999px',
+                  border:
+                    activeRange === option
+                      ? '1px solid rgba(239, 93, 93, 0.35)'
+                      : '1px solid transparent',
+                  background:
+                    activeRange === option ? 'rgba(239, 93, 93, 0.12)' : 'var(--surface-hover)',
+                  color: activeRange === option ? '#ffd9d9' : 'var(--text-secondary)',
+                  fontWeight: 800,
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              minWidth: 'min(100%, 280px)',
+              flex: '1 1 280px',
+              maxWidth: '420px',
+            }}
+          >
+            <Search
+              size={16}
+              style={{
+                position: 'absolute',
+                left: '14px',
+                color: 'var(--text-secondary)',
+              }}
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search description, category, or account"
+              className="form-input"
+              style={{
+                width: '100%',
+                paddingLeft: '42px',
+                borderRadius: '999px',
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('All')}
+            style={{
+              padding: '9px 14px',
+              borderRadius: '999px',
+              border: '1px solid transparent',
+              background:
+                effectiveSelectedCategory === 'All' ? 'var(--error-light)' : 'var(--surface-hover)',
+              color: effectiveSelectedCategory === 'All' ? 'var(--error)' : 'var(--text-secondary)',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            All Categories
+          </button>
+          {availableCategories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setSelectedCategory(item)}
+              style={{
+                padding: '9px 14px',
+                borderRadius: '999px',
+                border: '1px solid transparent',
+                background:
+                  effectiveSelectedCategory === item
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'var(--surface-hover)',
+                color:
+                  effectiveSelectedCategory === item
+                    ? 'var(--text-primary)'
+                    : 'var(--text-secondary)',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div
         className="page-shell__hero"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '32px',
-          marginBottom: '64px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '24px',
         }}
       >
-        <div className="premium-card" style={{ padding: '32px', position: 'relative' }}>
+        {[
+          {
+            label: 'Total Outflow',
+            value: formatCurrency(totalExpenses),
+            subtitle: `${visibleExpenseItems.length} matching expense entr${visibleExpenseItems.length === 1 ? 'y' : 'ies'}`,
+            icon: <TrendingDown size={20} />,
+            accent: 'var(--error)',
+            glow: 'var(--error-light)',
+          },
+          {
+            label: 'Monthly Velocity',
+            value: formatCurrency(avgMonthlySpending),
+            subtitle: `Average across ${monthsInScope} active month${monthsInScope === 1 ? '' : 's'}`,
+            icon: <Calendar size={20} />,
+            accent: 'var(--warning)',
+            glow: 'var(--warning-light)',
+          },
+          {
+            label: 'Average Ticket',
+            value: formatCurrency(averageTicket),
+            subtitle: largestExpense
+              ? `Largest spend: ${formatCurrency(largestExpense.amount)}`
+              : 'No expense in scope yet',
+            icon: <Wallet size={20} />,
+            accent: 'var(--accent)',
+            glow: 'var(--accent-light)',
+          },
+          {
+            label: 'Top Category',
+            value: topCategory ? topCategory.name : 'No data',
+            subtitle: topCategory
+              ? `${formatCurrency(topCategory.total)} across ${topCategory.count} entr${
+                  topCategory.count === 1 ? 'y' : 'ies'
+                }`
+              : 'Add an expense to unlock the category mix',
+            icon: <Tags size={20} />,
+            accent: '#8b5cf6',
+            glow: 'rgba(139, 92, 246, 0.14)',
+          },
+        ].map((card) => (
           <div
-            style={{
-              background:
-                'radial-gradient(circle at top right, var(--error-light), transparent 70%)',
-              position: 'absolute',
-              inset: 0,
-              opacity: 0.5,
-            }}
-          />
-          <div style={{ position: 'relative' }}>
-            <span
-              className="stat-label"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--error)' }}
-            >
-              <TrendingDown size={14} /> Total Outflow
-            </span>
+            key={card.label}
+            className="premium-card"
+            style={{ padding: '28px', position: 'relative' }}
+          >
             <div
               style={{
-                fontSize: '3.5rem',
-                fontWeight: 950,
-                letterSpacing: '-3px',
-                marginTop: '12px',
+                position: 'absolute',
+                inset: 0,
+                background: `radial-gradient(circle at top right, ${card.glow}, transparent 70%)`,
+                opacity: 0.9,
               }}
-            >
-              ₹{totalExpenses.toLocaleString()}
+            />
+            <div style={{ position: 'relative' }}>
+              <div
+                className="stat-label"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', color: card.accent }}
+              >
+                {card.icon}
+                {card.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 'clamp(1.5rem, 4vw, 2.6rem)',
+                  fontWeight: 950,
+                  letterSpacing: '-0.06em',
+                  marginTop: '12px',
+                  color: '#fff',
+                }}
+              >
+                {card.value}
+              </div>
+              <p className="stat-label" style={{ marginTop: '10px', fontSize: '0.72rem' }}>
+                {card.subtitle}
+              </p>
             </div>
-            <p className="stat-label" style={{ marginTop: '12px', fontSize: '0.75rem' }}>
-              {activeTab === 'This Year' ? 'Since Jan 1st' : 'Accumulated total spend'}
-            </p>
           </div>
-        </div>
-
-        <div className="premium-card" style={{ padding: '32px', position: 'relative' }}>
-          <div
-            style={{
-              background:
-                'radial-gradient(circle at top right, var(--warning-light), transparent 70%)',
-              position: 'absolute',
-              inset: 0,
-              opacity: 0.5,
-            }}
-          />
-          <div style={{ position: 'relative' }}>
-            <span
-              className="stat-label"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--warning)' }}
-            >
-              <Calendar size={14} /> Monthly Velocity
-            </span>
-            <div
-              style={{
-                fontSize: '3.5rem',
-                fontWeight: 950,
-                letterSpacing: '-3px',
-                marginTop: '12px',
-              }}
-            >
-              ₹{avgMonthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </div>
-            <p className="stat-label" style={{ marginTop: '12px', fontSize: '0.75rem' }}>
-              Typical monthly expenditure
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Detail Grid */}
       <div
-        className="dashboard-grid page-split-layout page-split-layout--aside-360"
+        className="mobile-tab-scroll page-tab-bar page-shell__tabs"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 360px',
-          gap: '40px',
-          alignItems: 'start',
+          display: 'flex',
+          width: 'fit-content',
+          maxWidth: '100%',
+          overflowX: 'auto',
+          gap: '8px',
+          padding: '6px',
+          borderRadius: '20px',
+          border: '1px solid var(--surface-border)',
+          background: 'rgba(255,255,255,0.02)',
+          marginTop: '28px',
         }}
       >
-        {/* Recent History Table-less List */}
-        <div>
-          <div
+        {EXPENSE_SECTIONS.map((section) => (
+          <button
+            key={section.id}
+            type="button"
+            onClick={() => setActiveSection(section.id)}
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '32px',
+              padding: '10px 18px',
+              borderRadius: '16px',
+              border: 'none',
+              background: activeSection === section.id ? 'var(--error)' : 'transparent',
+              color: activeSection === section.id ? '#fff' : 'var(--text-secondary)',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
             }}
           >
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Recent Transactions</h3>
-            <span className="stat-label" style={{ fontSize: '0.6rem' }}>
-              Last 15 ENTRIES
-            </span>
+            {section.label}
+          </button>
+        ))}
+      </div>
+
+      {activeSection !== 'trend' && (
+        <div
+          className="dashboard-grid page-split-layout page-split-layout--aside-360"
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              activeSection === 'history' ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 360px',
+            gap: '32px',
+            alignItems: 'start',
+            marginTop: '32px',
+          }}
+        >
+          <div className="premium-card" style={{ padding: '24px', display: 'grid', gap: '18px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>
+                  {activeSection === 'history' ? 'Expense History' : 'Recent Expenses'}
+                </h3>
+                <p className="stat-label" style={{ marginTop: '6px', fontSize: '0.7rem' }}>
+                  {activeSection === 'history'
+                    ? 'Full filtered expense log for the selected view'
+                    : 'Sorted by newest activity first'}
+                </p>
+              </div>
+
+              {(effectiveSelectedCategory !== 'All' || searchQuery.trim()) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('All');
+                    setSearchQuery('');
+                  }}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid var(--surface-border)',
+                    background: 'transparent',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {visibleExpenseItems.length > 0 ? (
+                visibleExpenseItems.slice(0, historyVisibleLimit).map((item) => {
+                  const accountName = item.accountId
+                    ? (accountNameById.get(item.accountId) ?? 'No Account')
+                    : 'No Account';
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="expense-row-hover"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        padding: '18px 20px',
+                        borderRadius: '20px',
+                        background: 'rgba(255, 255, 255, 0.01)',
+                        border: '1px solid var(--surface-border)',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '16px',
+                          background: 'var(--surface-hover)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--text-secondary)',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {getCategoryIcon(String(item.category))}
+                      </div>
+
+                      <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: 800,
+                            fontSize: '1rem',
+                            marginBottom: '4px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {item.description}
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '10px',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            fontSize: '0.74rem',
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          <span
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '999px',
+                              background: 'var(--surface-hover)',
+                              color: '#d4e1df',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {item.category}
+                          </span>
+                          <span>
+                            {new Date(`${item.date}T00:00:00`).toLocaleDateString('en-IN')}
+                          </span>
+                          <span>{accountName}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontWeight: 900, color: '#ff7a7a', fontSize: '1.05rem' }}>
+                          -{formatCurrency(item.amount)}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(item)}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                          }}
+                          className="action-btn--hover"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const confirmed = await customConfirm({
+                              title: 'Delete expense',
+                              message: 'This action cannot be undone.',
+                              type: 'error',
+                              confirmLabel: 'Delete',
+                            });
+
+                            if (!confirmed) {
+                              return;
+                            }
+
+                            await deleteTransaction(item.id);
+                            showNotification('success', 'Expense deleted');
+                          }}
+                          style={{
+                            padding: '10px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                          }}
+                          className="action-btn-danger--hover"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div
+                  style={{
+                    padding: '90px 32px',
+                    textAlign: 'center',
+                    background: 'rgba(255,255,255,0.01)',
+                    borderRadius: '28px',
+                    border: '1px dashed var(--surface-border)',
+                  }}
+                >
+                  <EmptyTransactionsVisual />
+                  <p className="stat-label" style={{ marginTop: '22px' }}>
+                    No expenses match the current view yet
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {expenseItems.length > 0 ? (
-              expenseItems.slice(0, 15).map((item) => (
+          {activeSection === 'overview' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div
+                className="premium-card"
+                style={{ padding: '24px', display: 'grid', gap: '18px' }}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 900 }}>View Summary</h3>
+                  <p className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                    Fast context for the current spending view without repeating trend widgets
+                  </p>
+                </div>
+
+                {[
+                  {
+                    label: 'Range',
+                    value: activeRange,
+                    meta: `${monthsInScope} active month${monthsInScope === 1 ? '' : 's'}`,
+                  },
+                  {
+                    label: 'Focus',
+                    value: topCategory ? topCategory.name : 'No category yet',
+                    meta: topCategory
+                      ? formatCurrency(topCategory.total)
+                      : 'Add expenses to unlock insight',
+                  },
+                  {
+                    label: 'Filters',
+                    value: `${activeExpenseFilterCount}`,
+                    meta: activeExpenseFilterCount === 0 ? 'Default view' : 'Active refinements',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--surface-border)',
+                      background: 'rgba(255,255,255,0.03)',
+                    }}
+                  >
+                    <div className="stat-label">{item.label}</div>
+                    <div style={{ marginTop: '8px', fontWeight: 900, color: '#fff' }}>
+                      {item.value}
+                    </div>
+                    <div className="stat-label" style={{ marginTop: '4px', fontSize: '0.66rem' }}>
+                      {item.meta}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className="premium-card"
+                style={{ padding: '24px', display: 'grid', gap: '18px' }}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 900 }}>Current Signal</h3>
+                  <p className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                    What matters most right now in the selected expense scope
+                  </p>
+                </div>
+
                 <div
-                  key={item.id}
-                  className="ledger-row-hover"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '20px 24px',
-                    borderRadius: '20px',
-                    background: 'rgba(255, 255, 255, 0.01)',
+                    padding: '16px',
+                    borderRadius: '18px',
+                    background: 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid var(--surface-border)',
                   }}
                 >
                   <div
+                    className="stat-label"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <PiggyBank size={16} />
+                    Largest spend
+                  </div>
+                  <div style={{ marginTop: '10px', fontWeight: 800 }}>
+                    {largestExpense
+                      ? `${largestExpense.description} is the largest expense in view`
+                      : 'Start logging spending to surface larger trends'}
+                  </div>
+                  {largestExpense && (
+                    <div className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                      {formatCurrency(largestExpense.amount)} on{' '}
+                      {new Date(`${largestExpense.date}T00:00:00`).toLocaleDateString('en-IN')}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    padding: '16px',
+                    borderRadius: '18px',
+                    background: 'rgba(239, 93, 93, 0.08)',
+                    border: '1px solid rgba(239, 93, 93, 0.16)',
+                  }}
+                >
+                  <div className="stat-label" style={{ color: '#ffc9c9' }}>
+                    Latest logged expense
+                  </div>
+                  <div style={{ marginTop: '8px', fontWeight: 900, color: '#fff' }}>
+                    {latestExpense ? latestExpense.description : 'No recent expense yet'}
+                  </div>
+                  <div className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                    {latestExpense
+                      ? `${formatCurrency(latestExpense.amount)} · ${new Date(
+                          `${latestExpense.date}T00:00:00`
+                        ).toLocaleDateString('en-IN')}`
+                      : 'Use the New Expense button to start the stream'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeSection === 'trend' && (
+        <div
+          className="dashboard-grid page-split-layout"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '24px',
+            alignItems: 'start',
+            marginTop: '32px',
+          }}
+        >
+          <div className="premium-card" style={{ padding: '24px', display: 'grid', gap: '18px' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 900 }}>Category Mix</h3>
+              <p className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                Top spend buckets for the selected period
+              </p>
+            </div>
+
+            {categoryBreakdown.length > 0 ? (
+              categoryBreakdown.map((item) => (
+                <div key={item.name} style={{ display: 'grid', gap: '8px' }}>
+                  <div
                     style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '16px',
-                      background: 'var(--surface-hover)',
                       display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '12px',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      marginRight: '20px',
                     }}
                   >
-                    {getCategoryIcon(item.category)}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, color: '#f4f8f7' }}>{item.name}</div>
+                      <div className="stat-label" style={{ fontSize: '0.64rem', marginTop: '2px' }}>
+                        {item.count} entr{item.count === 1 ? 'y' : 'ies'}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 800 }}>{formatCurrency(item.total)}</div>
+                      <div className="stat-label" style={{ fontSize: '0.64rem', marginTop: '2px' }}>
+                        {item.share.toFixed(1)}%
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, marginRight: '24px' }}>
+                  <div
+                    style={{
+                      height: '8px',
+                      borderRadius: '999px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      overflow: 'hidden',
+                    }}
+                  >
                     <div
                       style={{
-                        fontWeight: 700,
-                        fontSize: '1rem',
-                        marginBottom: '4px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        width: `${Math.min(item.share, 100)}%`,
+                        height: '100%',
+                        borderRadius: '999px',
+                        background: 'linear-gradient(90deg, #ef5d5d 0%, #f59e0b 100%)',
                       }}
-                    >
-                      {item.description}
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '12px',
-                        fontSize: '0.75rem',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      <span style={{ fontWeight: 700, color: 'var(--text-tertiary)' }}>
-                        {item.category}
-                      </span>
-                      <span>•</span>
-                      <span>
-                        {new Date(item.date).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', marginRight: '24px' }}>
-                    <div style={{ fontWeight: 950, color: '#ff4d4d', fontSize: '1.1rem' }}>
-                      -₹{item.amount.toLocaleString()}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => handleEdit(item)}
-                      style={{
-                        padding: '10px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        transition: '0.2s',
-                      }}
-                      className="action-btn--hover"
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const confirmed = await customConfirm({
-                          title: 'Delete record',
-                          message: 'This action cannot be undone.',
-                          type: 'error',
-                          confirmLabel: 'Delete',
-                        });
-                        if (confirmed) await deleteTransaction(item.id);
-                      }}
-                      style={{
-                        padding: '10px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        transition: '0.2s',
-                      }}
-                      className="action-btn-danger--hover"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    />
                   </div>
                 </div>
               ))
             ) : (
-              <div
-                style={{
-                  padding: '100px 40px',
-                  textAlign: 'center',
-                  background: 'rgba(255,255,255,0.01)',
-                  borderRadius: '32px',
-                  border: '1px dashed var(--surface-border)',
-                }}
-              >
-                <EmptyTransactionsVisual />
-                <p className="stat-label" style={{ marginTop: '24px' }}>
-                  Awaiting your first expense...
-                </p>
-              </div>
+              <div className="stat-label">No category data yet.</div>
             )}
           </div>
-        </div>
 
-        {/* Sidebar: Analytics & Insights */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }} className="hide-md">
-          {/* Monthly Trend - Linear Style */}
-          <div className="premium-card" style={{ padding: '32px' }}>
-            <h3
-              style={{
-                fontSize: '0.9rem',
-                fontWeight: 800,
-                marginBottom: '40px',
-                color: 'var(--text-secondary)',
-                letterSpacing: '1px',
-              }}
-            >
-              MONTHLY VELOCITY
-            </h3>
+          <div className="premium-card" style={{ padding: '24px', display: 'grid', gap: '18px' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 900 }}>Monthly Trend</h3>
+              <p className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                Last 6 calendar months
+              </p>
+            </div>
+
             <div
               style={{
                 display: 'flex',
                 alignItems: 'flex-end',
                 justifyContent: 'space-between',
-                height: '160px',
-                gap: '12px',
-                position: 'relative',
+                gap: '10px',
+                minHeight: '180px',
               }}
             >
-              {monthlyData.map((d, i) => (
-                <div
-                  key={i}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '12px',
-                  }}
-                >
+              {monthlyData.map((item, index) => {
+                const isCurrentMonth = index === monthlyData.length - 1;
+
+                return (
                   <div
+                    key={item.key}
                     style={{
-                      width: '100%',
-                      height: `${(d.total / maxMonthSpend) * 100}%`,
-                      background:
-                        i === monthlyData.length - 1
-                          ? 'linear-gradient(to top, var(--error), #ff6b6b)'
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <span className="stat-label" style={{ fontSize: '0.62rem' }}>
+                      {item.total > 0 ? formatCompactNumber(item.total) : '-'}
+                    </span>
+                    <div
+                      style={{
+                        width: '100%',
+                        minHeight: item.total > 0 ? '10px' : '4px',
+                        height: `${(item.total / maxMonthSpend) * 100}%`,
+                        borderRadius: '10px 10px 4px 4px',
+                        background: isCurrentMonth
+                          ? 'linear-gradient(180deg, #ff857a 0%, #ef5d5d 100%)'
                           : 'var(--surface-hover)',
-                      borderRadius: '8px 8px 4px 4px',
-                      minHeight: d.total > 0 ? '6px' : '0',
-                      transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
-                      position: 'relative',
-                      border:
-                        i === monthlyData.length - 1 ? 'none' : '1px solid var(--surface-border)',
-                    }}
-                  >
-                    {d.total > 0 && (
-                      <div
-                        className="stat-label"
-                        style={{
-                          position: 'absolute',
-                          top: '-24px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          fontSize: '0.6rem',
-                          color: i === monthlyData.length - 1 ? '#fff' : 'var(--text-secondary)',
-                        }}
-                      >
-                        {d.total > 1000 ? `${(d.total / 1000).toFixed(0)}k` : d.total}
-                      </div>
-                    )}
+                        border: isCurrentMonth ? 'none' : '1px solid var(--surface-border)',
+                      }}
+                    />
+                    <span className="stat-label" style={{ fontSize: '0.64rem' }}>
+                      {item.label}
+                    </span>
                   </div>
-                  <span
-                    className="stat-label"
-                    style={{
-                      fontSize: '0.65rem',
-                      color: i === monthlyData.length - 1 ? '#fff' : 'var(--text-secondary)',
-                    }}
-                  >
-                    {d.label}
-                  </span>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '18px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--surface-border)',
+              }}
+            >
+              <div
+                className="stat-label"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <PiggyBank size={16} />
+                Current signal
+              </div>
+              <div style={{ marginTop: '10px', fontWeight: 800 }}>
+                {largestExpense
+                  ? `${largestExpense.description} is the largest expense in view`
+                  : 'Start logging spending to surface larger trends'}
+              </div>
+              {largestExpense && (
+                <div className="stat-label" style={{ marginTop: '6px', fontSize: '0.68rem' }}>
+                  {formatCurrency(largestExpense.amount)} on{' '}
+                  {new Date(`${largestExpense.date}T00:00:00`).toLocaleDateString('en-IN')}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Refined Modal - New UI */}
       {isModalOpen && (
         <div
           className="modal-overlay"
@@ -597,7 +1112,7 @@ export default function ExpensesClient() {
         >
           <div
             className="modal-card"
-            style={{ maxWidth: '520px', padding: '48px', borderRadius: '40px' }}
+            style={{ maxWidth: '560px', width: '100%', padding: '40px', borderRadius: '32px' }}
           >
             <div
               className="page-toolbar page-toolbar--spread"
@@ -605,19 +1120,23 @@ export default function ExpensesClient() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'baseline',
-                marginBottom: '40px',
+                marginBottom: '28px',
               }}
             >
               <div>
                 <h2 style={{ fontSize: '2rem', fontWeight: 950, letterSpacing: '-1.5px' }}>
-                  {editId ? 'Modify Entry' : 'Log Expense'}
+                  {editId !== null ? 'Update Expense' : 'Log Expense'}
                 </h2>
                 <p className="stat-label" style={{ fontSize: '0.7rem' }}>
-                  Keep your records precise
+                  Keep your outflow clean and attributable
                 </p>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  resetForm();
+                }}
                 className="modal-close"
                 style={{ position: 'relative', top: 'auto', right: 'auto' }}
               >
@@ -627,114 +1146,131 @@ export default function ExpensesClient() {
 
             <form
               onSubmit={handleLogExpense}
-              style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <label className="form-label" style={{ fontSize: '0.7rem' }}>
-                  What did you spend on?
+                  Description
                 </label>
                 <input
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Groceries, Uber, etc."
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Groceries, cab fare, subscriptions..."
                   required
                   className="form-input"
-                  style={{
-                    fontSize: '1.1rem',
-                    padding: '20px',
-                    borderRadius: '20px',
-                    borderColor: 'var(--surface-border)',
-                  }}
+                  style={{ fontSize: '1rem', padding: '18px', borderRadius: '18px' }}
                   autoFocus
                 />
               </div>
 
               <div
                 className="form-grid-2"
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <label className="form-label" style={{ fontSize: '0.7rem' }}>
-                    Amount (₹)
+                    Amount
                   </label>
                   <input
                     type="number"
+                    min="0.01"
+                    step="0.01"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(event) => setAmount(event.target.value)}
                     required
                     className="form-input"
-                    style={{ fontSize: '1.1rem', padding: '20px', borderRadius: '20px' }}
+                    style={{ fontSize: '1rem', padding: '18px', borderRadius: '18px' }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <label className="form-label" style={{ fontSize: '0.7rem' }}>
                     Date
                   </label>
                   <input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(event) => setDate(event.target.value)}
                     className="form-input"
-                    style={{ fontSize: '1rem', padding: '20px', borderRadius: '20px' }}
+                    style={{ fontSize: '1rem', padding: '18px', borderRadius: '18px' }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <label className="form-label" style={{ fontSize: '0.7rem' }}>
-                  Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="form-input"
-                  style={{ fontSize: '1rem', padding: '18px', borderRadius: '20px' }}
-                >
-                  <option value="Food">Food & Dining</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Healthcare">Healthcare</option>
-                  <option value="Education">Education</option>
-                  <option value="Utilities">Utilities</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div
+                className="form-grid-2"
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem' }}>
+                    Category
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(event) => setCategory(event.target.value)}
+                    className="form-input"
+                    style={{ fontSize: '1rem', padding: '18px', borderRadius: '18px' }}
+                  >
+                    {COMMON_EXPENSE_CATEGORIES.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem' }}>
+                    Account
+                  </label>
+                  <select
+                    value={effectiveSelectedAccountId}
+                    onChange={(event) =>
+                      setSelectedAccountId(event.target.value ? Number(event.target.value) : '')
+                    }
+                    className="form-input"
+                    style={{ fontSize: '1rem', padding: '18px', borderRadius: '18px' }}
+                  >
+                    <option value="">No Account</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <button
                 type="submit"
                 className="btn-primary btn-primary--red"
                 style={{
-                  padding: '24px',
-                  borderRadius: '24px',
-                  fontSize: '1.05rem',
+                  padding: '20px',
+                  borderRadius: '22px',
+                  fontSize: '1rem',
                   fontWeight: 900,
-                  marginTop: '12px',
+                  marginTop: '6px',
                   boxShadow: '0 20px 40px rgba(239, 68, 68, 0.25)',
                 }}
               >
-                {editId ? 'Confirm Updates' : 'Sync Expense'}
+                {editId !== null ? 'Save Changes' : 'Save Expense'}
               </button>
             </form>
           </div>
         </div>
       )}
+
       <style>{`
-        .ledger-row-hover:hover {
+        .expense-row-hover:hover {
           background: var(--surface-hover);
         }
+
         .action-btn--hover:hover {
           background: var(--accent-light);
           color: var(--accent-hover) !important;
         }
+
         .action-btn-danger--hover:hover {
           background: var(--error-light);
           color: var(--error) !important;
-        }
-        .glass-container {
-          background: var(--surface-hover);
-          border: 1px solid var(--surface-border);
-          box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
         }
       `}</style>
     </div>

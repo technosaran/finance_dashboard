@@ -218,13 +218,10 @@ export default function FamilyClient() {
   }
 
   return (
-    <div className="page-container page-surface">
+    <div className="page-container page-surface page-shell">
       <div className="page-shell__inner" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Section */}
-        <div
-          className="page-header page-shell__header"
-          style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}
-        >
+        <div className="page-header page-shell__header family-header">
           <div>
             <h1
               className="page-title"
@@ -238,19 +235,21 @@ export default function FamilyClient() {
             </h1>
             <p className="page-subtitle">Track support, shared expenses, and recurring transfers</p>
           </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
-            }}
-            className="header-add-btn"
-            style={{
-              background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
-              boxShadow: '0 10px 30px rgba(30, 166, 114, 0.3)',
-            }}
-          >
-            <Heart size={18} fill="currentColor" /> Log Transfer
-          </button>
+          <div className="page-toolbar family-header__actions">
+            <button
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
+              className="header-add-btn"
+              style={{
+                background: 'linear-gradient(135deg, #1ea672 0%, #146d63 100%)',
+                boxShadow: '0 10px 30px rgba(30, 166, 114, 0.3)',
+              }}
+            >
+              <Heart size={18} fill="currentColor" /> Log Transfer
+            </button>
+          </div>
         </div>
 
         {/* Stats Row */}
@@ -386,6 +385,7 @@ export default function FamilyClient() {
           <div className="section-fade-in">
             {familyMembers.length > 0 ? (
               <div
+                className="family-members-grid"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
@@ -400,6 +400,7 @@ export default function FamilyClient() {
                   return (
                     <div
                       key={member.name}
+                      className="family-member-card"
                       style={{
                         background: '#050505',
                         borderRadius: 'clamp(20px, 4vw, 28px)',
@@ -435,6 +436,7 @@ export default function FamilyClient() {
 
                       {/* Top row: Avatar + name + quick send */}
                       <div
+                        className="family-member-card__header"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -460,7 +462,7 @@ export default function FamilyClient() {
                         >
                           {emoji}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="family-member-card__meta" style={{ flex: 1, minWidth: 0 }}>
                           <div
                             style={{
                               fontWeight: '800',
@@ -518,6 +520,7 @@ export default function FamilyClient() {
 
                       {/* Stats row */}
                       <div
+                        className="family-member-card__stats"
                         style={{
                           display: 'grid',
                           gridTemplateColumns: '1fr 1fr',
@@ -595,6 +598,7 @@ export default function FamilyClient() {
 
                       {/* Last transfer info */}
                       <div
+                        className="family-member-card__footer"
                         style={{
                           marginTop: '12px',
                           paddingTop: '12px',
@@ -745,6 +749,7 @@ export default function FamilyClient() {
         {activeTab === 'history' && (
           <div className="section-fade-in">
             <div
+              className="family-history-panel"
               style={{
                 background: '#050505',
                 borderRadius: 'clamp(20px, 4vw, 28px)',
@@ -753,7 +758,10 @@ export default function FamilyClient() {
               }}
             >
               {familyTransfers.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div
+                  className="family-history-list"
+                  style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+                >
                   {familyTransfers.map((transfer) => {
                     const memberIdx = familyMembers.findIndex((m) => m.name === transfer.recipient);
                     const colorScheme =
@@ -763,6 +771,7 @@ export default function FamilyClient() {
                     return (
                       <div
                         key={transfer.id}
+                        className="family-history-item"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -800,7 +809,7 @@ export default function FamilyClient() {
                         </div>
 
                         {/* Info */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="family-history-item__meta" style={{ flex: 1, minWidth: 0 }}>
                           <div
                             style={{
                               fontWeight: '800',
@@ -855,6 +864,7 @@ export default function FamilyClient() {
 
                         {/* Amount + Actions */}
                         <div
+                          className="family-history-item__trailing"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -873,7 +883,10 @@ export default function FamilyClient() {
                           >
                             ₹{transfer.amount.toLocaleString()}
                           </div>
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                          <div
+                            className="family-history-item__actions"
+                            style={{ display: 'flex', gap: '4px' }}
+                          >
                             <button
                               onClick={() => handleEdit(transfer)}
                               aria-label={`Edit transfer to ${transfer.recipient}`}
@@ -1141,6 +1154,69 @@ export default function FamilyClient() {
           </div>
         </div>
       )}
+
+      <style>{`
+        .family-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: clamp(16px, 4vw, 28px);
+          flex-wrap: wrap;
+        }
+        .family-header__actions {
+          justify-content: flex-end;
+        }
+        .family-member-card__header {
+          flex-wrap: wrap;
+        }
+        .family-member-card__stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .family-member-card__footer {
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .family-history-item {
+          display: grid !important;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          align-items: center;
+        }
+        .family-history-item__meta {
+          min-width: 0;
+        }
+        .family-history-item__trailing {
+          justify-content: flex-end;
+        }
+        .family-history-item__actions {
+          flex-shrink: 0;
+        }
+        @media (max-width: 767px) {
+          .family-header__actions {
+            width: 100%;
+          }
+          .family-header__actions > * {
+            flex: 1 1 220px;
+          }
+          .family-member-card__stats {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+          .family-history-item {
+            grid-template-columns: auto minmax(0, 1fr) !important;
+            gap: 12px;
+          }
+          .family-history-item__trailing {
+            grid-column: 1 / -1;
+            justify-content: space-between;
+            padding-left: calc(clamp(38px, 8vw, 44px) + 12px);
+          }
+        }
+        @media (max-width: 479px) {
+          .family-history-item__trailing {
+            flex-direction: column;
+            align-items: flex-start !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -224,7 +224,7 @@ export default function SettingsPage() {
   return (
     <div className="page-container page-surface page-shell" style={{ paddingBottom: '80px' }}>
       {/* Header */}
-      <header className="fade-in page-shell__header" style={{ marginBottom: '40px' }}>
+      <header className="fade-in page-header page-shell__header" style={{ marginBottom: '40px' }}>
         <h1
           style={{
             fontSize: 'clamp(2rem, 5vw, 2.75rem)',
@@ -247,7 +247,7 @@ export default function SettingsPage() {
         {/* Tab Navigation - Horizontal Scrollable */}
         <div className="fade-in" style={{ animationDelay: '0.05s' }}>
           <div
-            className="page-tab-bar"
+            className="page-tab-bar page-shell__tabs"
             style={{
               display: 'flex',
               gap: '8px',
@@ -260,25 +260,11 @@ export default function SettingsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                className={
+                  activeTab === tab.id ? 'workspace-tab workspace-tab--active' : 'workspace-tab'
+                }
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
                   padding: '14px 20px',
-                  borderRadius: '14px',
-                  background:
-                    activeTab === tab.id
-                      ? 'linear-gradient(135deg, rgba(30, 166, 114, 0.15) 0%, rgba(20, 109, 99, 0.15) 100%)'
-                      : 'rgba(255, 255, 255, 0.03)',
-                  color: activeTab === tab.id ? '#43c08a' : '#9aaea9',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                  whiteSpace: 'nowrap',
-                  border:
-                    activeTab === tab.id
-                      ? '1px solid rgba(30, 166, 114, 0.3)'
-                      : '1px solid transparent',
-                  boxShadow: activeTab === tab.id ? '0 4px 20px rgba(30, 166, 114, 0.15)' : 'none',
                 }}
               >
                 {tab.icon}
