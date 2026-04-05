@@ -411,7 +411,14 @@ export default function LedgerClient() {
             </div>
           </div>
 
-          <div style={{ position: 'relative' }}>
+          <div
+            style={{
+              position: 'relative',
+              maxHeight: 'min(800px, 75vh)',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+            }}
+          >
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr
@@ -731,25 +738,31 @@ export default function LedgerClient() {
 
       {/* Modern Modal */}
       {isModalOpen && (
-        <div className="modal-overlay fade-in">
+        <div
+          className="modal-overlay fade-in"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
           <div className="modal-card slide-up" style={{ maxWidth: '500px', width: '100%' }}>
             <div
               className="page-toolbar page-toolbar--spread"
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px',
+                marginBottom: '32px',
               }}
             >
               <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-                  {editId ? 'Edit Entry' : 'New Entry'}
-                </h2>
-                <p className="stat-label">Fill in the details below</p>
+                <h2 className="modal-title">{editId ? 'Edit Entry' : 'New Entry'}</h2>
+                <p className="modal-subtitle">
+                  Fill in the details below to record your transaction
+                </p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="modal-close">
-                <X size={24} />
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="modal-close"
+                aria-label="Close modal"
+              >
+                <X size={20} />
               </button>
             </div>
 
@@ -813,15 +826,13 @@ export default function LedgerClient() {
                 />
               </div>
 
-              <div
-                className="form-grid-2"
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
-              >
+              <div className="form-grid-2">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Amount ({currencySymbol})</label>
                   <input
                     className="form-input"
                     type="number"
+                    step="any"
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
@@ -840,10 +851,7 @@ export default function LedgerClient() {
                 </div>
               </div>
 
-              <div
-                className="form-grid-2"
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
-              >
+              <div className="form-grid-2">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <label className="form-label">Category</label>
                   <input
@@ -873,8 +881,8 @@ export default function LedgerClient() {
 
               <button
                 type="submit"
-                className="btn-primary"
-                style={{ marginTop: '12px', padding: '14px', fontSize: '1rem' }}
+                className="btn-primary btn-primary--indigo w-full"
+                style={{ marginTop: '12px' }}
               >
                 {editId ? 'Update Entry' : 'Save Entry'}
               </button>

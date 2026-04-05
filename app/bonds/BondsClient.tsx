@@ -18,13 +18,23 @@ import {
   ArrowRight,
   Calendar,
   X,
+  PieChart as PieChartIcon,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { EmptyPortfolioVisual } from '@/app/components/Visuals';
 import { logError } from '@/lib/utils/logger';
 import { calculateApproxBondYield, calculateBondPositionMetrics } from '@/lib/utils/bonds';
 import { calculateLifetimePerformance, calculateWeightedAverageYield } from '@/lib/utils/portfolio';
 
 import { Bond } from '@/lib/types';
+
+const COLORS = ['#0d9488', '#0f766e', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1'];
+
+const inrFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0,
+});
 
 interface BondSearchResult {
   symbol: string;
@@ -171,7 +181,9 @@ export default function BondsClient() {
   } = usePortfolio();
   const { showNotification, confirm: customConfirm } = useNotifications();
 
-  const [activeTab, setActiveTab] = useState<'holdings' | 'history' | 'lifetime'>('holdings');
+  const [activeTab, setActiveTab] = useState<'holdings' | 'history' | 'lifetime' | 'allocation'>(
+    'holdings'
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'bond' | 'transaction'>('bond');
 
@@ -348,6 +360,20 @@ export default function BondsClient() {
       lifetimeReturnPct: lifetime.lifetimeReturnPercentage,
     };
   }, [bondTransactions, stats.totalCurrent]);
+
+  const issuerData = useMemo(() => {
+    const activeBonds = bonds.filter((b) => b.status !== 'SOLD' && b.quantity > 0);
+    const groups: Record<string, number> = {};
+
+    activeBonds.forEach((bond) => {
+      const issuer = bond.companyName || 'Other Issuers';
+      groups[issuer] = (groups[issuer] || 0) + (bond.currentValue || 0);
+    });
+
+    return Object.entries(groups)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [bonds]);
 
   const handleAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -591,12 +617,15 @@ export default function BondsClient() {
       >
         {[
           { id: 'holdings', label: 'Holdings', icon: <BarChart3 size={16} /> },
+          { id: 'allocation', label: 'Allocation', icon: <PieChartIcon size={16} /> },
           { id: 'history', label: 'History', icon: <History size={16} /> },
           { id: 'lifetime', label: 'Lifetime', icon: <Star size={16} /> },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as 'holdings' | 'history' | 'lifetime')}
+            onClick={() =>
+              setActiveTab(tab.id as 'holdings' | 'allocation' | 'history' | 'lifetime')
+            }
             style={{
               padding: '10px 16px',
               borderRadius: '12px',
@@ -843,13 +872,201 @@ export default function BondsClient() {
               </tbody>
             </table>
           ) : (
-            <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
+            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
               <EmptyPortfolioVisual />
-              <div style={{ fontWeight: '700', marginTop: '20px' }}>
-                No bonds found in your portfolio.
+              <div style={{ fontWeight: '700', marginTop: '20px', color: '#fff' }}>
+                No active bonds found
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
+                Start building your fixed income portfolio by adding your first bond holding.
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Allocation Tab */}
+      {activeTab === 'allocation' && (
+        <div
+          className="fade-in"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px',
+          }}
+        >
+          {/* Chart Card */}
+          <div
+            className="premium-card"
+            style={{
+              background: '#050505',
+              padding: '32px',
+              borderRadius: '24px',
+              border: '1px solid #111111',
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '900', marginBottom: '32px' }}>
+              Issuer Concentration
+            </h3>
+            <div style={{ flex: 1, minHeight: '300px' }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={issuerData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={110}
+                    paddingAngle={5}
+                    dataKey="value"
+                    animationBegin={0}
+                    animationDuration={1200}
+                  >
+                    {issuerData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                        stroke="rgba(0,0,0,0.5)"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip
+                    contentStyle={{
+                      background: '#000',
+                      border: '1px solid #111',
+                      borderRadius: '12px',
+                      padding: '12px',
+                    }}
+                    itemStyle={{ color: '#fff', fontWeight: '800' }}
+                    formatter={(value: number | undefined) =>
+                      value != null ? inrFormatter.format(value) : '₹0'
+                    }
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px',
+                justifyContent: 'center',
+                marginTop: '24px',
+              }}
+            >
+              {issuerData.slice(0, 5).map((entry, index) => (
+                <div
+                  key={entry.name}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}
+                >
+                  <div
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '3px',
+                      background: COLORS[index % COLORS.length],
+                    }}
+                  />
+                  <span style={{ color: '#64748b', fontWeight: '700' }}>{entry.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* weightage Breakdown */}
+          <div
+            className="premium-card"
+            style={{
+              background: '#050505',
+              padding: '32px',
+              borderRadius: '24px',
+              border: '1px solid #111111',
+            }}
+          >
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '900', marginBottom: '24px' }}>
+              Bond weightage
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {bonds
+                .filter((b) => b.status !== 'SOLD' && b.quantity > 0)
+                .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0))
+                .slice(0, 6)
+                .map((bond) => (
+                  <div key={bond.id}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '8px',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      <span style={{ fontWeight: '800', color: '#fff' }}>{bond.name}</span>
+                      <span style={{ fontWeight: '900', color: '#2dd4bf' }}>
+                        {((bond.currentValue / (stats.totalCurrent || 1)) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        height: '6px',
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${(bond.currentValue / (stats.totalCurrent || 1)) * 100}%`,
+                          background: 'linear-gradient(90deg, #0d9488, #2dd4bf)',
+                          borderRadius: '10px',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            <div
+              style={{
+                marginTop: '40px',
+                padding: '24px',
+                background: 'rgba(45, 212, 191, 0.05)',
+                borderRadius: '20px',
+                border: '1px solid rgba(45, 212, 191, 0.1)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginBottom: '12px',
+                  color: '#2dd4bf',
+                }}
+              >
+                <BarChart3 size={18} />
+                <span style={{ fontSize: '0.7rem', fontWeight: '900', textTransform: 'uppercase' }}>
+                  Portfolio Insight
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: '1.6' }}>
+                Your fixed income portfolio is distributed across {issuerData.length} issuers. The
+                top holding represents{' '}
+                {stats.totalCurrent > 0
+                  ? (
+                      (Math.max(...bonds.map((b) => b.currentValue || 0)) / stats.totalCurrent) *
+                      100
+                    ).toFixed(1)
+                  : '0.0'}
+                % of your total bond exposure.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

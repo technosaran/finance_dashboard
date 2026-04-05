@@ -36,7 +36,9 @@ export default function ExpensesClient() {
 
   // Expense Data Filtering
   const expenseItems = transactions.filter(
-    (t) => t.type === 'Expense' && t.category !== 'Investment'
+    (t) =>
+      t.type === 'Expense' &&
+      !['Investment', 'Stocks', 'Mutual Funds', 'Bonds'].includes(t.category)
   );
 
   // Process Categories
@@ -582,62 +584,6 @@ export default function ExpensesClient() {
                   </span>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Top Expenditures */}
-          <div className="premium-card" style={{ padding: '32px' }}>
-            <h3
-              style={{
-                fontSize: '0.9rem',
-                fontWeight: 800,
-                marginBottom: '32px',
-                color: 'var(--text-secondary)',
-                letterSpacing: '1px',
-              }}
-            >
-              BURN BY CATEGORY
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {categories.slice(0, 5).map(([name, stats]) => {
-                const perc = (stats.total / totalExpenses) * 100;
-                return (
-                  <div key={name}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'baseline',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>{name}</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 950, color: 'var(--error)' }}>
-                        ₹{stats.total.toLocaleString()}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        height: '6px',
-                        background: 'var(--surface-hover)',
-                        borderRadius: '100px',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${perc}%`,
-                          height: '100%',
-                          background: 'var(--error)',
-                          borderRadius: '100px',
-                          opacity: 0.8,
-                          transition: 'width 1s ease',
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
