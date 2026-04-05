@@ -1030,42 +1030,6 @@ export default function BondsClient() {
                   </div>
                 ))}
             </div>
-
-            <div
-              style={{
-                marginTop: '40px',
-                padding: '24px',
-                background: 'rgba(45, 212, 191, 0.05)',
-                borderRadius: '20px',
-                border: '1px solid rgba(45, 212, 191, 0.1)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '12px',
-                  color: '#2dd4bf',
-                }}
-              >
-                <BarChart3 size={18} />
-                <span style={{ fontSize: '0.7rem', fontWeight: '900', textTransform: 'uppercase' }}>
-                  Portfolio Insight
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: '1.6' }}>
-                Your fixed income portfolio is distributed across {issuerData.length} issuers. The
-                top holding represents{' '}
-                {stats.totalCurrent > 0
-                  ? (
-                      (Math.max(...bonds.map((b) => b.currentValue || 0)) / stats.totalCurrent) *
-                      100
-                    ).toFixed(1)
-                  : '0.0'}
-                % of your total bond exposure.
-              </p>
-            </div>
           </div>
         </div>
       )}

@@ -1559,55 +1559,6 @@ export default function MutualFundsClient() {
                   ))}
               </div>
             </div>
-
-            <div
-              style={{
-                background:
-                  'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)',
-                padding: '32px',
-                borderRadius: '40px',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-              }}
-            >
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}
-              >
-                <TrendingUp size={20} color="#10b981" />
-                <span
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: '900',
-                    color: '#10b981',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  Portfolio Health
-                </span>
-              </div>
-              <div
-                style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '950',
-                  color: '#fff',
-                  marginBottom: '8px',
-                }}
-              >
-                Optimized Allocation
-              </div>
-              <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-                Your top three funds command{' '}
-                {(
-                  (activeMutualFunds
-                    .sort((a, b) => b.currentValue - a.currentValue)
-                    .slice(0, 3)
-                    .reduce((s, tx) => s + tx.currentValue, 0) /
-                    totalCurrentValue) *
-                  100
-                ).toFixed(0)}
-                % of your capital, maintaining strong structural balance.
-              </p>
-            </div>
           </div>
         </div>
       )}
